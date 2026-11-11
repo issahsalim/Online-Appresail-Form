@@ -1,0 +1,62 @@
+<section class="previous-appraisal-panel">
+    <div class="previous-appraisal-heading">
+        <h2>Upload a previous appraisal</h2>
+        <p>Submit an appraisal from before {{ current_year }}. HR must approve it before it is added to your records.</p>
+    </div>
+    <form method="post" enctype="multipart/form-data" action="{% url 'upload_previous_appraisal' %}" class="previous-appraisal-form">
+        {% csrf_token %}
+        <div>
+            <label for="{{ previous_appraisal_form.appraisal_cycle.id_for_label }}" class="form-label">{{ previous_appraisal_form.appraisal_cycle.label }}</label>
+            {{ previous_appraisal_form.appraisal_cycle }}
+            <div class="form-text">{{ previous_appraisal_form.appraisal_cycle.help_text }}</div>
+        </div>
+        <div>
+            <label for="{{ previous_appraisal_form.appraisal_file.id_for_label }}" class="form-label">{{ previous_appraisal_form.appraisal_file.label }}</label>
+            {{ previous_appraisal_form.appraisal_file }}
+        </div>
+        <button type="submit" class="previous-appraisal-button">Submit for approval</button>
+    </form>
+
+    <div class="previous-appraisal-list">
+        <h3>Approved previous appraisals</h3>
+        {% if approved_previous_appraisals %}
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead><tr><th>Year</th><th>Reviewed by</th><th>Reviewed on</th><th>File</th></tr></thead>
+                    <tbody>
+                        {% for item in approved_previous_appraisals %}
+                            <tr>
+                                <td>{{ item.appraisal_cycle }}</td>
+                                <td>{{ item.reviewed_by.get_full_name|default:item.reviewed_by.username|default:"HR" }}</td>
+                                <td>{{ item.reviewed_at|date:"d M Y" }}</td>
+                                <td>
+                                    <div class="previous-appraisal-actions">
+                                        {% if item.can_preview %}<a class="previous-appraisal-button previous-appraisal-button-secondary" href="{% url 'view_previous_appraisal_file' item.id %}" target="_blank" rel="noopener">View</a>{% endif %}
+                                        <a class="previous-appraisal-button" href="{% url 'previous_appraisal_file' item.id %}">Download</a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="previous-appraisal-empty">No approved previous appraisal files yet.</p>
+        {% endif %}
+    </div>
+
+    {% if previous_appraisals %}
+        <div class="previous-appraisal-list">
+            <h3>Submission status</h3>
+            <div class="previous-appraisal-status-list">
+                {% for item in previous_appraisals %}
+                    {% if item.status != 'approved' %}
+                        <span class="previous-appraisal-status{% if item.status == 'rejected' %} is-rejected{% endif %}">
+                            {{ item.appraisal_cycle }} · {{ item.get_status_display }}{% if item.status == 'rejected' %} · submit again above{% endif %}
+                        </span>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+</section>

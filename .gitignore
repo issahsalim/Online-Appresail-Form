@@ -1,0 +1,14 @@
+appvenv/ 
+my-react-app/ 
+
+.env
+__pycache__/
+*.py[cod]
+
+appimages/
+
+backend/media/ 
+backend/staticfiles/
+
+backend/db.sqlite3 
+backend/db.sqlite3.bak 

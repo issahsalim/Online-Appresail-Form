@@ -1,0 +1,165 @@
+<style>
+    .return-workflow {
+        --return-rust: #a43a10;
+        --return-rust-dark: #852d0b;
+        --return-ink: #26383f;
+        --return-muted: #68777e;
+        color: var(--return-ink);
+    }
+    .return-workflow-card {
+        background: #fff;
+        border: 1px solid #e7d5cd;
+        border-left: 4px solid var(--return-rust);
+        border-radius: 8px;
+        box-shadow: 0 6px 20px rgba(56, 35, 24, .07);
+        overflow: hidden;
+    }
+    .return-workflow-header {
+        background: #faf7f5;
+        border-bottom: 1px solid #eee3de;
+        color: #344750;
+        padding: .9rem 1.1rem;
+    }
+    .return-workflow-header h2 {
+        font-size: 1rem;
+        font-weight: 750;
+        margin: 0;
+    }
+    .return-workflow-body { padding: 1.1rem; }
+    .return-workflow-description {
+        color: var(--return-muted);
+        line-height: 1.55;
+        margin: 0 0 1rem;
+        max-width: 760px;
+    }
+    .return-workflow label {
+        color: #354952;
+        display: block;
+        font-size: .85rem;
+        font-weight: 700;
+        margin-bottom: .45rem;
+    }
+    .return-workflow textarea,
+    .return-workflow select {
+        border: 1px solid #cfd8dc;
+        border-radius: 6px;
+        box-sizing: border-box;
+        display: block;
+        max-width: 100%;
+        padding: .7rem .8rem;
+        width: 100%;
+    }
+    .return-workflow textarea { min-height: 112px; resize: vertical; }
+    .return-workflow textarea:focus,
+    .return-workflow select:focus {
+        border-color: var(--return-rust);
+        box-shadow: 0 0 0 .2rem rgba(164, 58, 16, .12);
+        outline: 0;
+    }
+    .return-workflow .return-submit {
+        background: var(--return-rust);
+        border: 1px solid var(--return-rust);
+        border-radius: 6px;
+        color: #fff;
+        font-weight: 700;
+        min-height: 42px;
+        padding: .6rem 1rem;
+        transition: background-color .15s ease, border-color .15s ease;
+    }
+    .return-workflow .return-submit:hover,
+    .return-workflow .return-submit:focus {
+        background: var(--return-rust-dark);
+        border-color: var(--return-rust-dark);
+        color: #fff;
+    }
+    .return-workflow-entry {
+        background: #fcfbfa;
+        border: 1px solid #e8edef;
+        border-radius: 7px;
+        padding: 1rem;
+    }
+    .return-workflow-entry + .return-workflow-entry { margin-top: .8rem; }
+    .return-workflow-meta { color: var(--return-muted); font-size: .82rem; }
+    .return-workflow-feedback {
+        background: #f5f7f7;
+        border-left: 3px solid #80939b;
+        border-radius: 0 5px 5px 0;
+        padding: .65rem .8rem;
+    }
+    .return-workflow-error { color: #b02a37; font-size: .85rem; margin-top: .4rem; }
+    @media (max-width: 575.98px) {
+        .return-workflow-body { padding: .9rem; }
+        .return-workflow .return-submit { width: 100%; }
+    }
+</style>
+
+{% if return_requests %}
+    <section class="return-workflow return-workflow-card mb-4" aria-labelledby="return-request-history-heading">
+        <div class="return-workflow-header" id="return-request-history-heading">
+            <h2>Return request history</h2>
+        </div> 
+        <div class="return-workflow-body">
+            {% for item in return_requests %}
+                <article class="return-workflow-entry">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+                        <strong>{{ item.get_stage_display }}</strong>
+                        <span class="badge rounded-pill {% if item.status == 'pending' %}bg-warning text-dark{% elif item.status == 'approved' %}bg-success{% else %}bg-danger{% endif %}">
+                            {{ item.get_status_display }}
+                        </span>
+                    </div>
+                    <small class="return-workflow-meta d-block mb-2">
+                        Requested {{ item.created_at }}{% if item.requester %} by {{ item.requester.get_full_name|default:item.requester.username }}{% endif %}
+                    </small>
+                    <p class="mb-2">{{ item.reason }}</p>
+                    {% if item.decision_comment %}
+                        <div class="return-workflow-feedback mb-2">
+                            <strong>Reviewer feedback:</strong> {{ item.decision_comment }}
+                        </div>
+                    {% endif %}
+                    {% if item.status == 'pending' and item.requester_id == request.user.id %}
+                        <p class="return-workflow-meta mb-0">Your request is waiting for the reviewer’s decision.</p>
+                    {% endif %}
+                    {% if item.status == 'pending' and can_decide_return_request %}
+                        <form method="post" action="{% url 'decide_appraisal_return_request' item.id %}" class="return-workflow-decision mt-3">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label for="id_decision">Decision</label>
+                                {{ return_decision_form.decision }}
+                            </div>
+                            <div class="mb-3">
+                                <label for="id_decision_comment">Feedback for the requester</label>
+                                {{ return_decision_form.decision_comment }}
+                                <small class="return-workflow-meta">Feedback is required when rejecting.</small>
+                            </div>
+                            <button type="submit" class="return-submit">Submit decision</button>
+                        </form>
+                    {% endif %}
+                </article>
+            {% endfor %}
+        </div>
+    </section>
+{% endif %}
+
+{% if can_request_return %}
+    <section class="return-workflow return-workflow-card mb-4" aria-labelledby="request-appraisal-return-heading">
+        <div class="return-workflow-header" id="request-appraisal-return-heading">
+            <h2>Request this appraisal back</h2>
+        </div> 
+        <div class="return-workflow-body"> 
+            <p class="return-workflow-description">Your request will be sent to the current reviewer, who will decide whether the appraisal can be returned for editing.</p>
+            <form method="post" action="{% url 'request_appraisal_return' appraisal.id %}">
+                {% csrf_token %} 
+                <div class="mb-3">
+                    <label for="id_reason">Why are you requesting this appraisal back?</label>
+                    {{ return_request_form.reason }}
+                    {% if return_request_form.reason.errors %}
+                        <div class="return-workflow-error">{{ return_request_form.reason.errors }}</div>
+                    {% endif %}
+                </div>
+                <div class="d-flex justify-content-end">
+                    <button type="submit" class="return-submit">Send return request</button>
+                </div>
+            </form>
+        </div>
+    </section>
+{% endif %}

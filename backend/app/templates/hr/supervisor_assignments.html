@@ -1,0 +1,318 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5 mb-5">
+    <h2>Department Reviewer Assignments</h2>
+    <p class="text-muted">Each department has one reviewer. Employees in the department submit their appraisals to this person.</p>
+
+    <div class="card mb-4">
+        <div class="card-header">Assign or Change Department Reviewer</div>
+        <div class="card-body">
+            {% if transfer_confirmation and not transfer_confirmation.reporting %}
+                <div class="alert alert-warning" role="alert">
+                    <strong>Confirm appraisal transfer</strong>
+                    <p class="mb-2">
+                        This will transfer {{ transfer_confirmation.appraisal_count }} in-progress
+                        appraisal(s) for the {{ transfer_confirmation.department_name }} department to
+                        {{ transfer_confirmation.supervisor_name }}. Existing scores, comments,
+                        and return history will be preserved.
+                    </p>
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="department" value="{{ transfer_confirmation.department_id }}">
+                        <input type="hidden" name="supervisor" value="{{ transfer_confirmation.supervisor_id }}">
+                        <input type="hidden" name="confirm_transfer" value="1">
+                        <button type="submit" class="btn btn-warning">Confirm reviewer transfer</button>
+                        <a href="{% url 'hr_supervisor_assignments' %}" class="btn btn-secondary">Cancel</a>
+                    </form>
+                </div>
+            {% endif %}
+            <form method="post">
+                {% csrf_token %}
+                {% for field in form %}
+                    <div class="mb-3">
+                        {{ field.label_tag }}
+                        {{ field }}
+                        {% for error in field.errors %}
+                            <div class="text-danger">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+                {% endif %}
+                <button type="submit" class="btn btn-primary">Save Department Reviewer</button>
+                <a href="{% url 'hr_dashboard' %}" class="btn btn-secondary">Back to HR Dashboard</a>
+            </form>
+        </div>
+    </div>
+
+    <h3>Current Assignments</h3>
+    <div class="row g-3 mb-3">
+        <div class="col-md-7">
+            <label for="assignment-search" class="form-label">Search assignments</label>
+            <input
+                id="assignment-search"
+                type="search"
+                class="form-control"
+                placeholder="Department reviewer or department"
+                autocomplete="off"
+            >
+        </div>
+        <div class="col-md-5">
+            <label for="assignment-department-filter" class="form-label">Filter by department</label>
+            <select id="assignment-department-filter" class="form-select">
+                <option value="">All departments</option>
+                {% for department in departments %}
+                    <option value="{{ department.id }}">{{ department.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+    <p id="assignment-search-status" class="text-muted" role="status" aria-live="polite">Loading assignments...</p>
+    <div class="table-responsive">
+        <table class="table table-hover bg-white">
+            <thead class="table-dark">
+                <tr>
+                    <th>Department</th>
+                    <th>Department reviewer</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="assignment-results"></tbody>
+        </table>
+    </div>
+    <nav aria-label="Supervisor assignment results">
+        <ul id="assignment-pagination" class="pagination"></ul>
+    </nav>
+</div>
+
+<div class="container mb-5">
+    <div class="card mb-4">
+        <div class="card-header">Assign a Supervisor's Manager</div>
+        <div class="card-body">
+            <p class="text-muted">Assign the HOD who reviews each supervisor's own appraisal.</p>
+            {% if transfer_confirmation.reporting %}
+                <div class="alert alert-warning" role="alert">
+                    This will transfer {{ transfer_confirmation.appraisal_count }} in-progress appraisal(s)
+                    for {{ transfer_confirmation.supervisor_name }} to {{ transfer_confirmation.manager_name }}.
+                    Existing scores, comments, and return history will be preserved.
+                    <form method="post" class="mt-2">
+                        {% csrf_token %}
+                        <input type="hidden" name="reporting_action" value="save">
+                        <input type="hidden" name="reporting-supervisor" value="{{ transfer_confirmation.supervisor_id }}">
+                        <input type="hidden" name="reporting-manager" value="{{ transfer_confirmation.manager_id }}">
+                        <input type="hidden" name="confirm_transfer" value="1">
+                        <button type="submit" class="btn btn-warning">Confirm supervisor transfer</button>
+                    </form>
+                </div>
+            {% endif %}
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="reporting_action" value="save">
+                {% for field in reporting_form %}
+                    <div class="mb-3">
+                        {{ field.label_tag }}
+                        {{ field }}
+                        {% for error in field.errors %}
+                            <div class="text-danger">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+                {% if reporting_form.non_field_errors %}
+                    <div class="alert alert-danger">{{ reporting_form.non_field_errors }}</div>
+                {% endif %}
+                <button type="submit" class="btn btn-primary">Save Supervisor Reporting Line</button>
+            </form>
+        </div>
+    </div>
+    <h3>Supervisor Reporting Lines</h3>
+    <div class="table-responsive">
+        <table class="table table-hover bg-white">
+            <thead class="table-dark">
+                <tr><th>Supervisor</th><th>Reports to</th></tr>
+            </thead>
+            <tbody>
+                {% for assignment in reporting_assignments %}
+                    <tr>
+                        <td>{{ assignment.supervisor.user.username }} - {{ assignment.supervisor.user.get_full_name|default:assignment.supervisor.user.username }}</td>
+                        <td>{{ assignment.manager.user.username }} - {{ assignment.manager.user.get_full_name|default:assignment.manager.user.username }}</td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="2" class="text-center">No supervisor reporting lines assigned.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    (function () {
+        const departmentSelect = document.getElementById('id_department');
+        const supervisorSelect = document.getElementById('id_supervisor');
+        const optionsUrl = "{% url 'hr_assignment_options' %}";
+        const initialSupervisor = supervisorSelect.value;
+        const searchInput = document.getElementById('assignment-search');
+        const departmentFilter = document.getElementById('assignment-department-filter');
+        const resultsBody = document.getElementById('assignment-results');
+        const statusElement = document.getElementById('assignment-search-status');
+        const pagination = document.getElementById('assignment-pagination');
+        const searchUrl = "{% url 'hr_search_supervisor_assignments' %}";
+        let searchTimer;
+        let activeSearch;
+
+        function resetSelect(select, placeholder) {
+            select.replaceChildren(new Option(placeholder, ''));
+        }
+
+        async function loadOptions(preserveSupervisor) {
+            const departmentId = departmentSelect.value;
+            resetSelect(supervisorSelect, 'Select a department reviewer');
+            supervisorSelect.disabled = true;
+
+            if (!departmentId) {
+                return;
+            }
+
+            const params = new URLSearchParams({ department_id: departmentId });
+
+            try {
+                const response = await fetch(`${optionsUrl}?${params.toString()}`);
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.error || 'Could not load department reviewers.');
+                }
+
+                data.supervisors.forEach((supervisor) => {
+                    supervisorSelect.add(new Option(supervisor.label, supervisor.id));
+                });
+
+                if (preserveSupervisor) {
+                    supervisorSelect.value = preserveSupervisor;
+                } else if (data.current_supervisor_id) {
+                    supervisorSelect.value = data.current_supervisor_id;
+                }
+            } catch (error) {
+                window.showAppModal(error.message, 'Could not load assignments');
+            } finally {
+                supervisorSelect.disabled = false;
+            }
+        }
+
+        departmentSelect.addEventListener('change', function () {
+            loadOptions('');
+        });
+
+        function renderPagination(data) {
+            pagination.replaceChildren();
+            if (data.pages <= 1) {
+                return;
+            }
+
+            const addPageButton = (label, page, disabled, active) => {
+                const item = document.createElement('li');
+                item.className = `page-item${disabled ? ' disabled' : ''}${active ? ' active' : ''}`;
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'page-link';
+                button.textContent = label;
+                button.disabled = disabled;
+                button.addEventListener('click', () => searchAssignments(page));
+                item.append(button);
+                pagination.append(item);
+            };
+
+            addPageButton('Previous', data.page - 1, !data.has_previous, false);
+            const start = Math.max(1, data.page - 2);
+            const end = Math.min(data.pages, data.page + 2);
+            for (let page = start; page <= end; page += 1) {
+                addPageButton(String(page), page, false, page === data.page);
+            }
+            addPageButton('Next', data.page + 1, !data.has_next, false);
+        }
+
+        function renderAssignments(data) {
+            resultsBody.replaceChildren();
+            if (!data.results.length) {
+                const row = document.createElement('tr');
+                const cell = document.createElement('td');
+                cell.colSpan = 3;
+                cell.className = 'text-center';
+                cell.textContent = 'No matching department reviewer assignments found.';
+                row.append(cell);
+                resultsBody.append(row);
+                return;
+            }
+
+            data.results.forEach((assignment) => {
+                const row = document.createElement('tr');
+                [
+                    assignment.department,
+                    `${assignment.supervisor_staff_id} - ${assignment.supervisor_name}`,
+                ].forEach((value) => {
+                    const cell = document.createElement('td');
+                    cell.textContent = value;
+                    row.append(cell);
+                });
+
+                const actionCell = document.createElement('td');
+                const editLink = document.createElement('a');
+                editLink.className = 'btn btn-sm btn-outline-primary';
+                editLink.href = assignment.edit_url;
+                editLink.textContent = 'Change';
+                actionCell.append(editLink);
+                row.append(actionCell);
+                resultsBody.append(row);
+            });
+        }
+
+        async function searchAssignments(page) {
+            if (activeSearch) {
+                activeSearch.abort();
+            }
+            activeSearch = new AbortController();
+            const params = new URLSearchParams({
+                q: searchInput.value,
+                department: departmentFilter.value,
+                page: String(page || 1),
+            });
+            statusElement.textContent = 'Searching assignments...';
+
+            try {
+                const response = await fetch(`${searchUrl}?${params.toString()}`, {
+                    signal: activeSearch.signal,
+                    headers: {'Accept': 'application/json'},
+                });
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.error || 'Could not search supervisor assignments.');
+                }
+                renderAssignments(data);
+                renderPagination(data);
+                statusElement.textContent = `${data.total} assignment${data.total === 1 ? '' : 's'} found.`;
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    return;
+                }
+                resultsBody.replaceChildren();
+                pagination.replaceChildren();
+                statusElement.textContent = error.message;
+            }
+        }
+
+        searchInput.addEventListener('input', function () {
+            window.clearTimeout(searchTimer);
+            searchTimer = window.setTimeout(() => searchAssignments(1), 250);
+        });
+        departmentFilter.addEventListener('change', () => searchAssignments(1));
+        searchAssignments(1);
+
+        if (departmentSelect.value) {
+            loadOptions(initialSupervisor);
+        } else {
+            resetSelect(supervisorSelect, 'Select a department first');
+            supervisorSelect.disabled = true;
+        }
+    })();
+</script>
+{% endblock %}

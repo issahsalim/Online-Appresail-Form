@@ -1,0 +1,30 @@
+<section class="appraisal-paper appraisal-planning-paper" aria-labelledby="performance-planning-readonly-heading">
+    <h2 class="appraisal-section-title" id="performance-planning-readonly-heading">SECTION 2: Performance Planning Form</h2>
+    <div class="appraisal-section-body">
+        <p class="appraisal-help text-center">To be agreed between the appraiser and the employee at the start of the annual appraisal cycle or when a new employee commences.</p>
+        <div class="table-responsive">
+            <table class="table table-bordered align-middle appraisal-target-review-table">
+                <thead>
+                    <tr>
+                        <th>No.</th>
+                        <th>Key result areas<br><span class="fw-normal">(Not more than 5)</span></th>
+                        <th>Targets<br><span class="fw-normal">(Specific, measurable, realistic and time-framed)</span></th>
+                        <th>Resources required</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for target in targets %}
+                        <tr>
+                            <td class="text-center">{{ forloop.counter }}</td>
+                            <td>{{ target.key_result_area|default:"—" }}</td>
+                            <td>{{ target.target_description|default:"—" }}</td>
+                            <td>{{ target.resources_required|default:"—" }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="4" class="text-center">No targets have been added to this appraisal yet.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>

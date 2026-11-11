@@ -1,0 +1,18 @@
+<section class="appraisal-paper" aria-labelledby="appraiser-information-readonly-heading">
+    <h2 class="appraisal-section-title" id="appraiser-information-readonly-heading">SECTION 1 - B: Appraiser’s Information</h2>
+    <div class="appraisal-section-body">
+        {% if supervisor %}
+            <div class="appraisal-fields">
+                <div class="appraisal-field">
+                    <strong>Name:</strong>
+                    {{ supervisor.user.get_full_name|default:supervisor.user.username }}
+                    {% if supervisor.other_names %} {{ supervisor.other_names }}{% endif %}
+                </div>
+                <div class="appraisal-field"><strong>Position:</strong> {{ supervisor.job_title|default:"—" }}</div>
+                <div class="appraisal-field"><strong>Email:</strong> {{ supervisor.user.email|default:"—" }}</div>
+            </div>
+        {% else %}
+            <p class="mb-0">A supervisor has not been assigned yet.</p>
+        {% endif %}
+    </div>
+</section>

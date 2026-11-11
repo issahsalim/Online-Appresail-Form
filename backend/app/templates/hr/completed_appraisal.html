@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4 mb-5 appraisal-form-page">
+    <style>
+        .appraisal-form-page { max-width: 1100px; }
+        .appraisal-fields { display: grid; gap: .8rem 1rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .appraisal-field { border-bottom: 1px solid #e8edef; min-width: 0; padding: .35rem 0; }
+        .appraisal-paper .table { margin-bottom: 0; }
+        .appraisal-paper .table thead th { background: #faf7f5; text-align: center; vertical-align: middle; }
+        @media (max-width: 575.98px) { .appraisal-fields { grid-template-columns: 1fr; } }
+    </style>
+    <h2>Completed Appraisal</h2>
+    <p class="text-muted">This appraisal is completed and locked for HR.</p>
+    {% include 'appraisal/_employee_details.html' %}
+    {% include 'appraisal/_training.html' %}
+    {% include 'appraisal/_supervisor_details.html' with supervisor=appraisal.supervisor %}
+    {% include 'appraisal/_guidance_notes.html' %}
+    {% include 'appraisal/_targets_readonly.html' %}
+    {% include 'appraisal/_midyear_endyear_readonly.html' %}
+    {% include 'appraisal/_competencies_readonly.html' %}
+    {% include 'appraisal/_annual_appraisal_results.html' %}
+    {% include 'appraisal/_appraisal_comment_sections.html' %}
+    {% include 'appraisal/_hod_comment_section.html' %}
+    <section class="appraisal-paper">
+        <h2 class="appraisal-section-title">Final HR Approval</h2>
+        <div class="appraisal-section-body">
+            <div class="appraisal-comment-box">{{ appraisal.hr_comments|default:"No HR comments provided."|linebreaksbr }}</div>
+            <p class="appraisal-signature-row"><strong>HR approval date:</strong> {{ appraisal.hr_approved_at|date:"d/m/Y"|default:"—" }}</p>
+        </div>
+    </section>
+
+    {% if return_history %}
+        <div class="card mb-4">
+            <div class="card-header">Return History</div>
+            <div class="card-body">
+                {% for decision in return_history %}
+                    <div class="mb-3">
+                        <strong>{{ decision.get_stage_display }} — {{ decision.reviewer_name }}</strong>
+                        <small class="text-muted">{{ decision.created_at }}</small>
+                        <p class="mb-0">{{ decision.comment }}</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+
+    <a href="{% url 'hr_dashboard' %}" class="btn btn-secondary">Back to HR Dashboard</a>
+</div>
+{% endblock %}

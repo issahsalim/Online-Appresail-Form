@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}Previous Appraisal Reviews | Staff Appraisal System{% endblock %}
+
+{% block content %}
+<main class="container py-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+        <div>
+            <h1 class="h3 mb-1">Previous appraisal uploads</h1>
+            <p class="text-muted mb-0">Approve a file to make it available in the employee's dashboard.</p>
+        </div>
+        <a class="btn btn-outline-secondary" href="{% url 'hr_dashboard' %}">Back to HR dashboard</a>
+    </div>
+
+    <section class="card mb-4">
+        <div class="card-header fw-semibold">Waiting for review ({{ pending_appraisals|length }})</div>
+        {% if pending_appraisals %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr><th>Employee</th><th>Department</th><th>Year</th><th>File</th><th class="text-end">Decision</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for item in pending_appraisals %}
+                            <tr>
+                                <td>{{ item.employee.user.get_full_name|default:item.employee.user.username }}</td>
+                                <td>{{ item.employee.department.name|default:"—" }}</td>
+                                <td>{{ item.appraisal_cycle }}</td>
+                                <td>
+                                    <div class="previous-appraisal-actions">
+                                        {% if item.can_preview %}<a class="previous-appraisal-button previous-appraisal-button-secondary" href="{% url 'view_previous_appraisal_file' item.id %}" target="_blank" rel="noopener">View</a>{% endif %}
+                                        <a class="previous-appraisal-button" href="{% url 'previous_appraisal_file' item.id %}">Download</a>
+                                    </div>
+                                </td>
+                                <td class="text-end">
+                                    <form method="post" action="{% url 'review_previous_appraisal' item.id %}" class="d-inline-flex gap-2">
+                                        {% csrf_token %}
+                                        <button class="previous-appraisal-button" name="action" value="approve" type="submit">Approve</button>
+                                        <button class="previous-appraisal-button previous-appraisal-button-reject" name="action" value="reject" type="submit">Reject</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="card-body text-muted">There are no previous appraisal files waiting for review.</div>
+        {% endif %}
+    </section>
+
+    <section class="card">
+        <div class="card-header fw-semibold">Reviewed files</div>
+        {% if reviewed_appraisals %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr><th>Employee</th><th>Year</th><th>Status</th><th>Reviewed by</th><th>Reviewed on</th><th>File</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for item in reviewed_appraisals %}
+                            <tr>
+                                <td>{{ item.employee.user.get_full_name|default:item.employee.user.username }}</td>
+                                <td>{{ item.appraisal_cycle }}</td>
+                                <td>{{ item.get_status_display }}</td>
+                                <td>{{ item.reviewed_by.get_full_name|default:item.reviewed_by.username|default:"—" }}</td>
+                                <td>{{ item.reviewed_at|date:"d M Y"|default:"—" }}</td>
+                                <td>
+                                    <div class="previous-appraisal-actions">
+                                        {% if item.can_preview %}<a class="previous-appraisal-button previous-appraisal-button-secondary" href="{% url 'view_previous_appraisal_file' item.id %}" target="_blank" rel="noopener">View</a>{% endif %}
+                                        <a class="previous-appraisal-button" href="{% url 'previous_appraisal_file' item.id %}">Download</a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="card-body text-muted">No files have been reviewed yet.</div>
+        {% endif %}
+    </section>
+</main>
+{% endblock %}

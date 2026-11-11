@@ -1,0 +1,21 @@
+<section class="appraisal-paper" aria-labelledby="appraisee-personal-information-heading">
+    <h2 class="appraisal-section-title" id="appraisee-personal-information-heading">SECTION 1 - A: Appraisee’s Personal Information</h2>
+    <div class="appraisal-period">
+        <strong style="text-transform: uppercase;">Period of report:</strong>
+        <span style="font-weight: 700;">From {{ appraisal.cycle.report_period_from|date:"d/m/Y"|default:"Not set" }}</span>
+        <span style="font-weight: 700;">To {{ appraisal.cycle.report_period_to|date:"d/m/Y"|default:"Not set" }}</span>
+    </div>
+    <div class="appraisal-section-body">
+        <div class="appraisal-fields">
+            <div class="appraisal-field"><strong>Title:</strong> {{ appraisal.get_employee_title_display|default:appraisal.employee.get_title_display|default:"—" }}{% if appraisal.employee_other_title or appraisal.employee.other_title %} ({{ appraisal.employee_other_title|default:appraisal.employee.other_title }}){% endif %}</div>
+            <div class="appraisal-field"><strong>Surname:</strong> {{ appraisal.employee_last_name|default:appraisal.employee.user.last_name|default:"—" }}</div>
+            <div class="appraisal-field"><strong>First name:</strong> {{ appraisal.employee_first_name|default:appraisal.employee.user.first_name|default:"—" }}</div>
+            <div class="appraisal-field"><strong>Other name(s):</strong> {{ appraisal.employee_other_names|default:appraisal.employee.other_names|default:"—" }}</div>
+            <div class="appraisal-field"><strong>Gender:</strong> {{ appraisal.get_employee_gender_display|default:appraisal.employee.get_gender_display|default:"—" }}</div>
+            <div class="appraisal-field"><strong>Staff ID:</strong> {{ appraisal.employee.user.username }}</div>
+            <div class="appraisal-field"><strong>Present job title/position:</strong> {{ appraisal.employee_job_title|default:appraisal.employee.job_title|default:"—" }}</div>
+            <div class="appraisal-field"><strong>Department / unit:</strong> {% if appraisal.employee_department_name %}{{ appraisal.employee_department_name }}{% elif appraisal.employee_department %}{{ appraisal.employee_department.name }}{% elif appraisal.employee.department %}{{ appraisal.employee.department.name }}{% else %}—{% endif %}</div>
+            <div class="appraisal-field"><strong>Date of appointment to present grade:</strong> {{ appraisal.employee_appointment_to_present_grade_date|default:appraisal.employee.appointment_to_present_grade_date|date:"d/m/Y"|default:"—" }}</div>
+        </div>
+    </div>
+</section>
