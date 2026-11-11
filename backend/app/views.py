@@ -143,7 +143,7 @@ def _process_hr_supervisor_reporting(request):
     form = SupervisorReportingForm(request.POST, prefix='reporting')
     if not form.is_valid():
         return form, None, None
-
+ 
     supervisor = form.cleaned_data['supervisor']
     manager = form.cleaned_data['manager']
     appraisals_to_transfer = Appraisal.objects.filter(
