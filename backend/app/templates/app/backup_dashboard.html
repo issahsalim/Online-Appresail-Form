@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block title %}Backups | Staff Appraisal System{% endblock %}
+{% block content %}
+<main class="py-3">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+        <div>
+            <h1 class="h3 mb-1">Backups</h1>
+            <p class="text-muted mb-0">Encrypted database and uploaded-file backups. Retained for {{ backup_retention_days }} days.</p>
+        </div>
+        <form method="post" action="{% url 'start_backup' %}">
+            {% csrf_token %}
+            <button class="btn btn-primary" type="submit">Start backup</button>
+        </form>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead>
+                <tr>
+                    <th scope="col">Started</th>
+                    <th scope="col">Type</th>
+                    <th scope="col">Requested by</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Size</th>
+                    <th scope="col">File</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for backup in backup_runs %}
+                    <tr>
+                        <td>{{ backup.started_at|default:backup.created_at|date:"Y-m-d H:i" }}</td>
+                        <td>{{ backup.get_trigger_type_display }}</td>
+                        <td>{{ backup.requested_by.username|default:"Automatic" }}</td>
+                        <td>
+                            {{ backup.get_status_display }}
+                            {% if backup.error %}<div class="small text-danger">{{ backup.error }}</div>{% endif %}
+                        </td>
+                        <td>{% if backup.archive_size_bytes %}{{ backup.archive_size_bytes|filesizeformat }}{% else %}—{% endif %}</td>
+                        <td>
+                            {% if backup.status == 'succeeded' %}
+                                <a class="btn btn-sm btn-outline-primary" href="{% url 'download_backup' backup.pk %}">Download</a>
+                            {% else %}—{% endif %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr><td class="text-muted py-4" colspan="6">No backups have run yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</main>
+{% endblock %}

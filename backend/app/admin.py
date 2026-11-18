@@ -20,6 +20,7 @@ from .models import (
     AppraisalCompetencyStatementScore,
     AuditLog,
     PreviousAppraisal,
+    StaffId,
 )
 
 # ==========================================
@@ -72,6 +73,14 @@ class EmployeeProfileAdmin(admin.ModelAdmin):
     
     # Prevents N+1 queries when loading the list
     list_select_related = ('user', 'department')
+
+
+@admin.register(StaffId)
+class StaffIdAdmin(admin.ModelAdmin):
+    list_display = ('name', 'email', 'registered_user', 'created_at')
+    search_fields = ('name', 'email', 'registered_user__username')
+    list_filter = ('created_at',)
+    readonly_fields = ('registered_user', 'created_at')
 
 
 # ==========================================

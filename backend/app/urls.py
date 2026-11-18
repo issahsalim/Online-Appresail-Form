@@ -17,7 +17,12 @@ urlpatterns = [
     path('employee/appraisal/<int:appraisal_id>/pdf/', views.employee_appraisal_pdf, name='employee_appraisal_pdf'),
     path('employee/submit/<int:appraisal_id>/', views.submit_to_supervisor, name='submit_to_supervisor'),
     path('login/', auth_views.LoginView.as_view(template_name='registration/login.html'), name='login'),
+    path('register/', views.employee_registration, name='employee_registration'),
+    path('register/verify/', views.verify_registration_code, name='verify_registration_code'),
+    path('register/complete/', views.complete_employee_registration, name='complete_employee_registration'),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
+    path('password-reset/', views.request_password_reset, name='password_reset_request'),
+    path('password-reset/confirm/', views.password_reset_confirm, name='password_reset_confirm'),
     path('profile/', views.profile, name='profile'),
     path('profile/password/', views.change_password, name='password_change'),
     path('notifications/', views.notifications, name='notifications'),
@@ -34,6 +39,10 @@ urlpatterns = [
     path('appraisal/return-request/<int:request_id>/decide/', views.decide_appraisal_return_request, name='decide_appraisal_return_request'),
     # ... other urls ...
     path('dashboard/', views.dashboard_router, name='dashboard_router'),
+    path('backups/', views.backup_dashboard, name='backup_dashboard'),
+    path('backups/start/', views.start_backup, name='start_backup'),
+    path('backups/<int:backup_run_id>/download/', views.download_backup, name='download_backup'),
+    path('hr/staff-ids/', views.manage_staff_ids, name='manage_staff_ids'),
     
     path('supervisor/dashboard/', views.supervisor_dashboard, name='supervisor_dashboard'),
     path('supervisor/review/<int:appraisal_id>/', views.supervisor_review, name='supervisor_review'),

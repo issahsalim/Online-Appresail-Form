@@ -9,6 +9,8 @@ appimages/
 
 backend/media/ 
 backend/staticfiles/
+backend/backups/
+backend/celerybeat-schedule*
 
 backend/db.sqlite3 
 backend/db.sqlite3.bak 

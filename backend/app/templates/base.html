@@ -580,6 +580,10 @@
                                     <span>Staff ID</span>
                                     <strong>{{ user.username }}</strong>
                                 </div>
+                                {% if user.is_superuser %}
+                                    <a class="dropdown-item" href="{% url 'backup_dashboard' %}">Backups</a>
+                                    <a class="dropdown-item" href="{% url 'manage_staff_ids' %}">Staff registration</a>
+                                {% endif %}
                                 <a class="dropdown-item" href="{% url 'profile' %}">My Profile</a>
                                 <form class="navbar-account-logout" action="{% url 'logout' %}" method="post">
                                     {% csrf_token %}
