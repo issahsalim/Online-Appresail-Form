@@ -545,6 +545,20 @@
                     <span class="hr-sidebar-link-note">View recorded changes</span>
                 </span>
             </a>
+            <a class="hr-sidebar-link" href="{% url 'backup_dashboard' %}">
+                <span class="hr-sidebar-icon" aria-hidden="true">↓</span>
+                <span class="hr-sidebar-link-copy">
+                    <span class="hr-sidebar-link-title">Backups</span>
+                    <span class="hr-sidebar-link-note">Create and download backups</span>
+                </span>
+            </a>
+            <a class="hr-sidebar-link" href="{% url 'manage_staff_ids' %}">
+                <span class="hr-sidebar-icon" aria-hidden="true">＋</span>
+                <span class="hr-sidebar-link-copy">
+                    <span class="hr-sidebar-link-title">Staff registration</span>
+                    <span class="hr-sidebar-link-note">Manage approved staff IDs</span>
+                </span>
+            </a>
         </nav>
         <div class="hr-sidebar-label">Signed in as</div>
         <div class="small px-2 text-white-50">{{ request.user.username }}</div>

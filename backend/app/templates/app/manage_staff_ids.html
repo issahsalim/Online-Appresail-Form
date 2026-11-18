@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% block title %}Staff registration | Staff Appraisal System{% endblock %}
+{% block content %}
+<main class="py-3">
+    <h1 class="h3 mb-1">Staff registration</h1>
+    <p class="text-muted mb-4">Add staff IDs and their work emails before employees create accounts.</p>
+
+    <div class="row g-4 mb-4">
+        <section class="col-lg-5" aria-labelledby="add-staff-id-heading">
+            <div class="border rounded p-3 h-100">
+                <h2 class="h5" id="add-staff-id-heading">Add one staff member</h2>
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="add">
+                    {% for field in entry_form %}
+                        <div class="mb-3">
+                            <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {{ field }}
+                            {% for error in field.errors %}<div class="small text-danger">{{ error }}</div>{% endfor %}
+                        </div>
+                    {% endfor %}
+                    <button class="btn btn-primary" type="submit">Add staff ID</button>
+                </form>
+            </div>
+        </section>
+
+        <section class="col-lg-7" aria-labelledby="import-staff-ids-heading">
+            <div class="border rounded p-3 h-100">
+                <h2 class="h5" id="import-staff-ids-heading">Import a list</h2>
+                <p class="small text-muted">CSV or Excel (.xlsx), with columns named <code>staff_id</code> and <code>email</code>. Keep IDs as text to preserve leading zeroes.</p>
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="upload">
+                    {% for field in upload_form %}
+                        <div class="mb-3">
+                            <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {{ field }}
+                            {% for error in field.errors %}<div class="small text-danger">{{ error }}</div>{% endfor %}
+                        </div>
+                    {% endfor %}
+                    <button class="btn btn-outline-primary" type="submit">Upload list</button>
+                </form>
+            </div>
+        </section>
+    </div>
+
+    <h2 class="h5">Approved staff IDs</h2>
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead><tr><th>Staff ID</th><th>Work email</th><th>Account</th></tr></thead>
+            <tbody>
+                {% for staff in staff_ids %}
+                    <tr>
+                        <td>{{ staff.name }}</td>
+                        <td>{{ staff.email|default:'Email needed' }}</td>
+                        <td>{% if staff.registered_user_id %}Registered{% else %}Not registered{% endif %}</td>
+                    </tr>
+                {% empty %}
+                    <tr><td class="text-muted py-4" colspan="3">No staff IDs have been added.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</main>
+{% endblock %}
