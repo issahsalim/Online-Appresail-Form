@@ -180,6 +180,53 @@ class StaffRegistrationTests(TestCase):
         self.client.force_login(superuser)
         self.assertEqual(self.client.get(reverse('manage_staff_ids')).status_code, 200)
 
+    def test_staff_id_not_added_by_hr_is_rejected_before_email_code(self):
+        with patch('app.views.send_registration_code.delay') as send_code:
+            response = self.client.post(reverse('employee_registration'), {
+                'staff_id': 'NOT-APPROVED',
+            })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'has not been added by HR')
+        self.assertFalse(RegistrationCode.objects.exists())
+        self.assertNotIn('registration_code_id', self.client.session)
+        send_code.assert_not_called()
+
+    def test_already_registered_staff_id_cannot_request_another_account(self):
+        user = User.objects.create_user(
+            username='EMP-ALREADY-REGISTERED',
+            password='test-password',
+        )
+        staff_id = StaffId.objects.create(
+            name=user.username,
+            email='employee@example.org',
+            registered_user=user,
+        )
+
+        with patch('app.views.send_registration_code.delay') as send_code:
+            response = self.client.post(reverse('employee_registration'), {
+                'staff_id': staff_id.name,
+            })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'An account already exists')
+        self.assertFalse(RegistrationCode.objects.filter(staff_id=staff_id).exists())
+        self.assertNotIn('registration_code_id', self.client.session)
+        send_code.assert_not_called()
+
+    def test_staff_id_without_hr_work_email_is_rejected_before_email_code(self):
+        staff_id = StaffId.objects.create(name='EMP-NO-EMAIL')
+
+        with patch('app.views.send_registration_code.delay') as send_code:
+            response = self.client.post(reverse('employee_registration'), {
+                'staff_id': staff_id.name,
+            })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'has not added a work email')
+        self.assertFalse(RegistrationCode.objects.filter(staff_id=staff_id).exists())
+        send_code.assert_not_called()
+
     @override_settings(MAILERS={
         'default': {'BACKEND': 'django.core.mail.backends.locmem.EmailBackend'},
     })
@@ -226,6 +273,20 @@ class StaffRegistrationTests(TestCase):
         self.assertEqual(result, 'sent')
         self.assertEqual(mail.outbox[-1].to, ['approved@example.org'])
         self.assertIn('123456', mail.outbox[-1].body)
+        self.assertIn('Hello Amina', mail.outbox[-1].body)
+        self.assertEqual(len(mail.outbox[-1].alternatives), 1)
+        html_body, content_type = mail.outbox[-1].alternatives[0]
+        self.assertEqual(content_type, 'text/html')
+        self.assertIn('Hello Amina', html_body)
+        self.assertIn('123456', html_body)
+        self.assertIn('cid:password-reset-logo', html_body)
+        logo = next(
+            attachment
+            for attachment in mail.outbox[-1].attachments
+            if hasattr(attachment, 'get')
+            and attachment.get('Content-ID') == '<password-reset-logo>'
+        )
+        self.assertEqual(logo.get_content_type(), 'image/png')
 
     def test_hr_can_import_staff_id_and_work_email_from_csv(self):
         self.client.force_login(self.hr_user)
@@ -320,6 +381,61 @@ class StaffRegistrationTests(TestCase):
         self.assertTrue(user.check_password('New-strong-password-123!'))
         self.assertFalse(PasswordResetCode.objects.filter(staff_id=staff_id).exists())
 
+    def test_password_reset_code_uses_six_pin_slots_and_can_be_resent(self):
+        user = User.objects.create_user(
+            username='emp-reset-resend',
+            first_name='Jordan',
+            password='old-password',
+        )
+        EmployeeProfile.objects.create(
+            user=user,
+            role='Employee',
+            security_question='first_school',
+            security_answer_hash=make_password('marymount'),
+        )
+        staff_id = StaffId.objects.create(
+            name=user.username,
+            email='approved@example.org',
+            registered_user=user,
+        )
+        self.client.post(reverse('password_reset_request'), {'staff_id': user.username})
+
+        with patch('app.views.send_password_reset_code.delay') as queue_reset_email, patch(
+            'app.views.secrets.randbelow',
+            side_effect=[111111, 222222],
+        ):
+            self.client.post(reverse('password_reset_request'), {
+                'security_answer': 'marymount',
+            })
+            original_code = PasswordResetCode.objects.get(staff_id=staff_id)
+            page = self.client.get(reverse('password_reset_request'))
+
+            self.assertContains(page, 'class="password-reset-code-slot"', count=6)
+            self.assertContains(page, 'data-code-pin-input=""')
+            self.assertContains(page, reverse('password_reset_resend_code'))
+
+            response = self.client.post(reverse('password_reset_resend_code'))
+
+            self.assertRedirects(response, reverse('password_reset_request'))
+            original_code.refresh_from_db()
+            self.assertLessEqual(original_code.expires_at, timezone.now())
+            replacement_code = PasswordResetCode.objects.exclude(
+                pk=original_code.pk,
+            ).get(staff_id=staff_id)
+            self.assertEqual(
+                self.client.session['password_reset_code_id'],
+                replacement_code.pk,
+            )
+            queue_reset_email.assert_any_call(original_code.pk, '111111')
+            queue_reset_email.assert_any_call(replacement_code.pk, '222222')
+
+        response = self.client.post(reverse('password_reset_request'), {'code': '111111'})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'That code is incorrect.')
+
+        response = self.client.post(reverse('password_reset_request'), {'code': '222222'})
+        self.assertRedirects(response, reverse('password_reset_confirm'))
+
     def test_password_reset_does_not_send_code_for_wrong_security_answer(self):
         user = User.objects.create_user(
             username='emp-reset-wrong',
@@ -381,6 +497,31 @@ class StaffRegistrationTests(TestCase):
         self.assertEqual(user.email, 'approved@example.org')
         self.assertEqual(profile.role, 'Employee')
         self.assertEqual(staff_id.registered_user, user)
+
+    def test_registration_code_can_be_resent_with_a_new_six_digit_code(self):
+        staff_id = StaffId.objects.create(
+            name='EMP-2005',
+            email='approved@example.org',
+        )
+        with patch('app.views.secrets.randbelow', side_effect=[111111, 222222]), patch(
+            'app.views.send_registration_code.delay',
+        ) as send_code:
+            self.client.post(reverse('employee_registration'), {'staff_id': staff_id.name})
+            previous_code = RegistrationCode.objects.get(staff_id=staff_id)
+
+            page = self.client.get(reverse('verify_registration_code'))
+            self.assertContains(page, 'class="staff-registration-code-slot"', count=6)
+            self.assertContains(page, 'autocomplete="one-time-code"')
+            self.assertContains(page, 'name="code"')
+
+            response = self.client.post(reverse('resend_registration_code'))
+
+        self.assertRedirects(response, reverse('verify_registration_code'))
+        previous_code.refresh_from_db()
+        self.assertLessEqual(previous_code.expires_at, timezone.now())
+        replacement_code = RegistrationCode.objects.exclude(pk=previous_code.pk).get(staff_id=staff_id)
+        self.assertEqual(self.client.session['registration_code_id'], replacement_code.pk)
+        send_code.assert_any_call(replacement_code.pk, '222222')
 
 
 class EmployeeAppraisalVisibilityTests(TestCase):
@@ -980,7 +1121,9 @@ class LoginPageTests(TestCase):
         self.assertContains(response, 'Welcome back')
         self.assertContains(response, 'Staff ID')
         self.assertContains(response, 'name="username"')
+        self.assertContains(response, 'placeholder="Enter your Staff ID"')
         self.assertContains(response, 'name="password"')
+        self.assertContains(response, 'placeholder="Enter your password"')
         self.assertContains(response, 'aria-label="Show password"')
         self.assertContains(response, 'aria-pressed="false"')
         self.assertContains(response, 'name="csrfmiddlewaretoken"')

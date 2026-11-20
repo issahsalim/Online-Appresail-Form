@@ -1,11 +1,14 @@
 import logging
 from datetime import timedelta
+from email.mime.image import MIMEImage
 from pathlib import Path
 
 import redis
 from celery import shared_task
 from django.conf import settings
-from django.core.mail import send_mail
+from django.core.mail import EmailMultiAlternatives, send_mail
+from django.contrib.staticfiles import finders
+from django.template.loader import render_to_string
 from django.utils import timezone
 
 from .backup_service import BackupCreationError, create_encrypted_backup
@@ -49,17 +52,37 @@ def send_password_reset_code(password_reset_code_id, code):
     if not user or not reset_code.staff_id.email:
         return 'invalid'
 
-    send_mail(
+    name = user.first_name or user.username
+    text_body = (
+        f'Hello {name},\n\n'
+        f'Your password reset code is {code}. It expires in 10 minutes.\n\n'
+        'If you did not request this code, you can ignore this email.'
+    )
+    html_body = render_to_string('emails/password_reset_code.html', {
+        'name': name,
+        'code': code,
+    })
+    logo_path = finders.find('images/mathias-catholic-hospital-logo.png')
+    if not logo_path:
+        raise FileNotFoundError('Password reset email logo was not found in static files.')
+
+    email = EmailMultiAlternatives(
         'Your password reset code',
-        (
-            f'Hello {user.first_name or user.username},\n\n'
-            f'Your password reset code is {code}. It expires in 10 minutes.\n\n'
-            'If you did not request this code, you can ignore this email.'
-        ),
+        text_body,
         settings.DEFAULT_FROM_EMAIL,
         [reset_code.staff_id.email],
-        fail_silently=False,
     )
+    email.attach_alternative(html_body, 'text/html')
+    with open(logo_path, 'rb') as logo_file:
+        logo = MIMEImage(logo_file.read(), _subtype='png')
+    logo.add_header('Content-ID', '<password-reset-logo>')
+    logo.add_header(
+        'Content-Disposition',
+        'inline',
+        filename='mathias-catholic-hospital-logo.png',
+    )
+    email.attach(logo)
+    email.send(fail_silently=False)
     return 'sent'
 
 

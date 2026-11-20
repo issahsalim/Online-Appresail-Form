@@ -554,20 +554,18 @@ def employee_registration(request):
     form = RegistrationStaffIdForm(request.POST or None)
     if request.method == 'POST' and form.is_valid():
         request.session.pop('registration_code_id', None)
-        staff_id = StaffId.objects.filter(
-            name__iexact=form.cleaned_data['staff_id'],
-        ).first()
+        staff_id = form.approved_staff_id
         now = timezone.now()
-        if (
-            staff_id
-            and staff_id.email
-            and not staff_id.registered_user_id
-            and not User.objects.filter(username__iexact=staff_id.name).exists()
-            and RegistrationCode.objects.filter(
-                staff_id=staff_id,
-                created_at__gte=now - timedelta(hours=1),
-            ).count() < 5
-        ):
+        recent_code_count = RegistrationCode.objects.filter(
+            staff_id=staff_id,
+            created_at__gte=now - timedelta(hours=1),
+        ).count()
+        if recent_code_count >= 5:
+            form.add_error(
+                None,
+                'Too many verification codes were requested for this Staff ID. Try again later.',
+            )
+        else:
             RegistrationCode.objects.filter(
                 staff_id=staff_id,
                 verified_at__isnull=True,
@@ -583,14 +581,17 @@ def employee_registration(request):
             except Exception:
                 logger.exception('Could not queue registration email for staff ID %s.', staff_id.pk)
                 registration_code.delete()
+                form.add_error(
+                    None,
+                    'We could not send a verification code right now. Please try again later.',
+                )
             else:
                 request.session['registration_code_id'] = registration_code.pk
-
-        messages.info(
-            request,
-            'If this staff ID is eligible, a verification code has been sent to its registered work email.',
-        )
-        return redirect('verify_registration_code')
+                messages.info(
+                    request,
+                    'A verification code has been sent to the work email HR has on file.',
+                )
+                return redirect('verify_registration_code')
 
     return render(request, 'registration/employee_registration.html', {'form': form})
 
@@ -619,6 +620,53 @@ def verify_registration_code(request):
             form.add_error('code', 'The code is incorrect.')
 
     return render(request, 'registration/verify_registration_code.html', {'form': form})
+
+
+@require_POST
+def resend_registration_code(request):
+    registration_code_id = request.session.get('registration_code_id')
+    previous_code = RegistrationCode.objects.select_related('staff_id').filter(
+        pk=registration_code_id,
+        verified_at__isnull=True,
+    ).first() if registration_code_id else None
+    if not previous_code or previous_code.staff_id.registered_user_id:
+        request.session.pop('registration_code_id', None)
+        messages.error(request, 'Please start registration again to request a verification code.')
+        return redirect('employee_registration')
+
+    now = timezone.now()
+    recent_code_count = RegistrationCode.objects.filter(
+        staff_id=previous_code.staff_id,
+        created_at__gte=now - timedelta(hours=1),
+    ).count()
+    if recent_code_count >= 5:
+        messages.error(request, 'Too many verification codes were requested. Try again later.')
+        return redirect('verify_registration_code')
+
+    code = f'{secrets.randbelow(1_000_000):06d}'
+    replacement_code = RegistrationCode.objects.create(
+        staff_id=previous_code.staff_id,
+        code_hash=make_password(code),
+        expires_at=now + timedelta(minutes=10),
+    )
+    try:
+        send_registration_code.delay(replacement_code.pk, code)
+    except Exception:
+        logger.exception(
+            'Could not queue registration email for staff ID %s.',
+            previous_code.staff_id_id,
+        )
+        replacement_code.delete()
+        messages.error(request, 'We could not send a verification code right now. Please try again later.')
+        return redirect('verify_registration_code')
+
+    RegistrationCode.objects.filter(
+        staff_id=previous_code.staff_id,
+        verified_at__isnull=True,
+    ).exclude(pk=replacement_code.pk).update(expires_at=now)
+    request.session['registration_code_id'] = replacement_code.pk
+    messages.success(request, 'A new verification code has been sent to your work email.')
+    return redirect('verify_registration_code')
 
 
 def complete_employee_registration(request):
@@ -688,6 +736,38 @@ def complete_employee_registration(request):
     })
 
 
+def _issue_password_reset_code(staff_id):
+    now = timezone.now()
+    recent_code_count = PasswordResetCode.objects.filter(
+        staff_id=staff_id,
+        created_at__gte=now - timedelta(hours=1),
+    ).count()
+    if recent_code_count >= 5:
+        return None, 'Too many verification codes were requested. Try again later.'
+
+    code = f'{secrets.randbelow(1_000_000):06d}'
+    reset_code = PasswordResetCode.objects.create(
+        staff_id=staff_id,
+        code_hash=make_password(code),
+        expires_at=now + timedelta(minutes=10),
+    )
+    try:
+        send_password_reset_code.delay(reset_code.pk, code)
+    except Exception:
+        reset_code.delete()
+        logger.exception(
+            'Could not queue password reset email for staff ID %s.',
+            staff_id.name,
+        )
+        return None, 'The verification email could not be queued right now. Please try again later.'
+
+    PasswordResetCode.objects.filter(
+        staff_id=staff_id,
+        verified_at__isnull=True,
+    ).exclude(pk=reset_code.pk).update(expires_at=now)
+    return reset_code, None
+
+
 def request_password_reset(request):
     stage = request.session.get('password_reset_stage', 'staff_id')
     context = {'step': stage, 'form': None}
@@ -753,25 +833,9 @@ def request_password_reset(request):
                     messages.error(request, 'Too many attempts. Start the reset process again.')
                     return redirect('password_reset_request')
             else:
-                code = f'{secrets.randbelow(1_000_000):06d}'
-                PasswordResetCode.objects.filter(staff_id=staff_id).delete()
-                reset_code = PasswordResetCode.objects.create(
-                    staff_id=staff_id,
-                    code_hash=make_password(code),
-                    expires_at=timezone.now() + timedelta(minutes=10),
-                )
-                try:
-                    send_password_reset_code.delay(reset_code.pk, code)
-                except Exception:
-                    reset_code.delete()
-                    logger.exception(
-                        'Could not queue password reset email for staff ID %s.',
-                        staff_id.name,
-                    )
-                    messages.error(
-                        request,
-                        'The verification email could not be queued right now. Please try again later.',
-                    )
+                reset_code, error = _issue_password_reset_code(staff_id)
+                if error:
+                    messages.error(request, error)
                 else:
                     request.session['password_reset_code_id'] = reset_code.pk
                     request.session['password_reset_stage'] = 'code'
@@ -830,6 +894,40 @@ def request_password_reset(request):
         return redirect('password_reset_request')
 
     return render(request, 'registration/password_reset_request.html', context)
+
+
+@require_POST
+def resend_password_reset_code(request):
+    staff_id_id = request.session.get('password_reset_staff_id')
+    reset_code = PasswordResetCode.objects.filter(
+        pk=request.session.get('password_reset_code_id'),
+        staff_id_id=staff_id_id,
+        verified_at__isnull=True,
+    ).first()
+    if (
+        request.session.get('password_reset_stage') != 'code'
+        or not staff_id_id
+        or not reset_code
+        or reset_code.expires_at <= timezone.now()
+        or reset_code.attempts >= 5
+    ):
+        for key in (
+            'password_reset_stage', 'password_reset_staff_id',
+            'password_reset_code_id',
+        ):
+            request.session.pop(key, None)
+        messages.error(request, 'Start the password reset process again to request a new code.')
+        return redirect('password_reset_request')
+
+    staff_id = reset_code.staff_id
+    replacement_code, error = _issue_password_reset_code(staff_id)
+    if error:
+        messages.error(request, error)
+        return redirect('password_reset_request')
+
+    request.session['password_reset_code_id'] = replacement_code.pk
+    messages.success(request, 'A new verification code has been sent to your work email.')
+    return redirect('password_reset_request')
 
 
 def password_reset_confirm(request):

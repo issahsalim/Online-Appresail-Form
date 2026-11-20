@@ -1,5 +1,6 @@
 # yourapp/forms.py
 from django import forms
+from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
@@ -17,12 +18,32 @@ from .models import (
     SupervisorReporting,
     AppraisalCycle,
     PreviousAppraisal,
+    StaffId,
 )
 
 
+class StaffLoginForm(AuthenticationForm):
+    username = forms.CharField(
+        label='Staff ID',
+        widget=forms.TextInput(attrs={
+            # 'autofocus': True,
+            'autocomplete': 'username',
+            'placeholder': 'MOH-123456',
+        }),
+    )
+    password = forms.CharField(
+        label='Password',
+        strip=False,
+        widget=forms.PasswordInput(attrs={
+            'autocomplete': 'current-password',
+            'placeholder': 'Enter your password',
+        }),
+    )
+
+
 class StaffIdEntryForm(forms.Form):
-    staff_id = forms.CharField(max_length=100, label='Staff ID')
-    email = forms.EmailField(label='Work email')
+    staff_id = forms.CharField(max_length=100, label='Staff ID', widget=forms.TextInput(attrs={'autofocus': True, 'placeholder': 'MOH-123456'}))
+    email = forms.EmailField(label='Work email', widget=forms.EmailInput(attrs={'placeholder': 'work.email@yourorg.com'}))
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -60,7 +81,29 @@ class RegistrationStaffIdForm(forms.Form):
         self.fields['staff_id'].widget.attrs['class'] = 'form-control'
 
     def clean_staff_id(self):
-        return self.cleaned_data['staff_id'].strip()
+        staff_id = self.cleaned_data['staff_id'].strip()
+        approved_staff_id = StaffId.objects.filter(
+            name__iexact=staff_id,
+        ).first()
+        if not approved_staff_id:
+            raise ValidationError(
+                'This Staff ID has not been added by HR. Contact HR for assistance.'
+            )
+        if (
+            approved_staff_id.registered_user_id
+            or get_user_model().objects.filter(
+                username__iexact=approved_staff_id.name,
+            ).exists()
+        ):
+            raise ValidationError(
+                'An account already exists for this Staff ID. Please sign in or reset your password.'
+            )
+        if not approved_staff_id.email:
+            raise ValidationError(
+                'HR has not added a work email for this Staff ID. Contact HR for assistance.'
+            )
+        self.approved_staff_id = approved_staff_id
+        return staff_id
 
 
 class RegistrationCodeForm(forms.Form):
@@ -73,9 +116,11 @@ class RegistrationCodeForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['code'].widget.attrs.update({
-            'class': 'form-control',
+            'class': 'form-control staff-registration-code-input',
+            'data-code-pin-input': '',
             'inputmode': 'numeric',
             'autocomplete': 'one-time-code',
+            'maxlength': '6',
         })
 
 
@@ -122,9 +167,11 @@ class PasswordResetCodeForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['code'].widget.attrs.update({
-            'class': 'form-control',
+            'class': 'form-control password-reset-code-input',
+            'data-code-pin-input': '',
             'inputmode': 'numeric',
             'autocomplete': 'one-time-code',
+            'maxlength': '6',
         })
 
 
