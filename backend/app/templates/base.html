@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,6 +8,7 @@
     
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     
     <style>
         html { overflow-x: clip; }
@@ -360,142 +362,530 @@
             .role-sidebar-nav { transition-duration: .01ms !important; }
         }
         .navbar-appraisal {
-            background: #142d3c;
-            box-shadow: 0 3px 14px rgba(9, 43, 70, .12);
+            background: linear-gradient(110deg, #ddfff0 0%, #fff8cc 100%);
+            box-shadow: 0 3px 14px rgba(32, 63, 48, .08);
+            border: 0;
+            border-bottom: 2px solid #07875f !important;
+            left: 0;
+            position: sticky;
+            right: 0;
+            top: 0;
+            z-index: 1030;
         }
-        .navbar-appraisal .navbar-brand { letter-spacing: .02em; }
+        .navbar-appraisal .navbar-brand {
+            align-items: center;
+            color: #07875f;
+            display: inline-flex;
+            gap: .7rem;
+            letter-spacing: .02em;
+        }
+        .navbar-brand-mark {
+            height: 40px;
+            object-fit: contain;
+            width: 40px;
+        }
+        .navbar-brand-copy { display: grid; gap: .05rem; line-height: 1.15; }
+        .navbar-brand-copy small { color: #4a9d77; font-size: .68rem; font-weight: 500; }
         .navbar-account-toggle {
             align-items: center;
-            background: transparent;
-            border: 1px solid rgba(255, 255, 255, .55);
-            border-radius: 12px;
-            color: #fff;
+            background: rgba(255, 255, 255, .88);
+            border: 1px solid #d5e5d9;
+            border-radius: 999px;
+            color: #315d4d;
             display: flex;
-            font-size: 1rem;
+            font-size: .82rem;
             font-weight: 650;
-            gap: .55rem;
-            justify-content: center;
-            min-height: 6px;
-            min-width: 18px;
-            padding: .55rem 1rem;
+            gap: .6rem;
+            justify-content: flex-start;
+            min-height: 44px;
+            min-width: 132px;
+            padding: .25rem .75rem .25rem .3rem;
             transition: background .16s ease, border-color .16s ease;
         }
         .navbar-account-toggle:hover,
         .navbar-account-toggle:focus-visible,
         .navbar-account-toggle[aria-expanded="true"] {
-            background: rgba(255, 255, 255, .08);
-            border-color: #fff;
-            color: #fff;
+            background: #fff;
+            border-color: #07875f;
+            color: #07875f;
         }
-        .navbar-account-icon { flex: 0 0 auto; }
+        .navbar-account-avatar {
+            align-items: center;
+            background: #e8f7cf;
+            border: 1px solid #a6e5c4;
+            border-radius: 50%;
+            color: #07875f;
+            display: inline-flex;
+            flex: 0 0 36px;
+            font-size: .72rem;
+            font-weight: 750;
+            height: 36px;
+            justify-content: center;
+            overflow: hidden;
+            width: 36px;
+        }
+        .navbar-account-avatar img { height: 100%; object-fit: cover; width: 100%; }
+        .navbar-account-copy { display: grid; gap: .08rem; line-height: 1.15; min-width: 0; text-align: left; }
+        .navbar-account-copy strong { color: #315d4d; font-size: .76rem; font-weight: 750; }
+        .navbar-account-copy small { color: #70877c; font-size: .65rem; font-weight: 500; }
         .navbar-account-chevron { flex: 0 0 auto; transition: transform .16s ease; }
         .navbar-account-toggle[aria-expanded="true"] .navbar-account-chevron { transform: rotate(180deg); }
         .navbar-account-menu {
             border: 1px solid #dfe7eb;
             border-radius: 12px;
             box-shadow: 0 14px 36px rgba(9, 43, 70, .16);
-            min-width: 220px;
-            padding: .5rem;
+            min-width: 250px;
+            overflow: hidden;
+            padding: .35rem;
         }
         .navbar-account-details {
+            align-items: center;
             border-bottom: 1px solid #e8eef0;
-            display: grid;
-            gap: .15rem;
-            margin-bottom: .35rem;
-            padding: .55rem .7rem .75rem;
+            display: flex;
+            gap: .65rem;
+            margin: -.35rem -.35rem .35rem;
+            padding: .8rem .9rem;
         }
-        .navbar-account-details span { color: #657983; font-size: .75rem; }
-        .navbar-account-details strong { color: #173747; font-size: .9rem; }
-        .navbar-account-menu .dropdown-item { border-radius: 7px; padding: .55rem .7rem; }
+        .navbar-account-details-copy { display: grid; gap: .12rem; min-width: 0; }
+        .navbar-account-details strong { color: #173747; font-size: .82rem; font-weight: 750; }
+        .navbar-account-details-copy > span { color: #07875f; font-size: .72rem; }
+        .navbar-account-details > .navbar-account-avatar {
+            background: #00b878;
+            border-color: #9de3c0;
+            color: #fff;
+        }
+        .navbar-account-menu .dropdown-item {
+            align-items: center;
+            border-radius: 7px;
+            color: #315d4d;
+            display: flex;
+            font-size: .8rem;
+            gap: .65rem;
+            padding: .65rem .7rem;
+        }
+        .navbar-account-menu .dropdown-item svg { color: #07875f; flex: 0 0 17px; height: 17px; width: 17px; }
         .navbar-account-logout { margin: 0; }
-        .navbar-account-logout button {
+        .navbar-account-menu .navbar-account-logout button {
             background: none;
             border: 0;
-            color: #294653;
+            color: #b42332;
             text-align: left;
             width: 100%;
         }
-        .navbar-account-logout button:hover,
-        .navbar-account-logout button:focus-visible { background: #f2f5f7; }
+        .navbar-account-menu .navbar-account-logout button svg { color: #dc3545; }
+        .navbar-account-menu .navbar-account-logout button:hover,
+        .navbar-account-menu .navbar-account-logout button:focus-visible { background: #fff3f2; color: #9c1c2a; }
         .navbar-notifications { position: relative; }
         .navbar-notifications-toggle {
             align-items: center;
-            background: transparent;
-            border: 1px solid transparent;
-            border-radius: 8px;
-            color: #e6eef1;
+            background: rgba(255, 255, 255, .5);
+            border: 1px solid #dcebdd;
+            border-radius: 999px;
+            color: #07875f;
             display: inline-flex;
-            gap: .5rem;
+            gap: 0;
             margin: .2rem;
-            min-height: 40px;
-            padding: .45rem .7rem;
+            min-height: 42px;
+            padding: .4rem .65rem;
+            transition: background .18s ease, border-color .18s ease, transform .18s ease;
         }
         .navbar-notifications-toggle:hover,
         .navbar-notifications-toggle:focus-visible {
-            background: rgba(255,255,255,.1);
-            border-color: rgba(255,255,255,.18);
-            color: #fff;
+            background: #fff;
+            border-color: #cde8d7;
+            color: #6e0505;
+            transform: translateY(-1px);
         }
+        .navbar-notifications-toggle:focus-visible { outline: 3px solid rgba(7, 135, 95, .18); outline-offset: 2px; }
+        .navbar-notifications-icon-wrap {
+            display: inline-flex;
+            flex: 0 0 23px;
+            height: 23px;
+            position: relative;
+            width: 23px;
+        }
+        .navbar-notifications-icon { height: 23px; width: 23px; }
+        .navbar-notifications-toggle:hover .navbar-notifications-icon { animation: notification-bell-ring .45s ease; }
         .navbar-notification-count {
             align-items: center;
-            background: #e9eef1;
+            background: #6e0505;
             border-radius: 999px;
-            color: #173747;
+            color: #fff;
             display: inline-flex;
-            font-size: .7rem;
+            font-size: .62rem;
             font-weight: 750;
             justify-content: center;
-            min-width: 20px;
-            padding: .12rem .35rem;
+            line-height: 1;
+            min-height: 17px;
+            min-width: 17px;
+            padding: .08rem .23rem;
+            position: absolute;
+            right: -6px;
+            top: -6px;
+            z-index: 1;
+        }
+        .navbar-notifications-toggle.has-unread .navbar-notifications-icon {
+            animation: notification-unread-ring 3.4s ease-in-out infinite;
+            transform-origin: 50% 10%;
+        }
+        .navbar-notifications-toggle.has-unread .navbar-notification-count {
+            animation: notification-count-pulse 2.8s ease-out infinite;
+        }
+        .navbar-notifications-toggle.is-arriving .navbar-notifications-icon {
+            animation: notification-bell-ring .9s ease-in-out 2;
+            transform-origin: 50% 10%;
+        }
+        .navbar-notifications-toggle.is-arriving .navbar-notification-count {
+            animation: notification-count-arrive .55s cubic-bezier(.2, .8, .25, 1.2) both;
         }
         .navbar-notifications-menu {
-            border: 1px solid #dfe7eb;
-            border-radius: 12px;
-            box-shadow: 0 14px 36px rgba(9, 43, 70, .16);
-            max-height: min(70vh, 460px);
+            border: 1px solid #dce9e1;
+            border-radius: 15px;
+            box-shadow: 0 20px 48px rgba(25, 55, 39, .18);
+            max-height: min(70vh, 480px);
             overflow-y: auto;
-            padding: .45rem;
-            width: min(360px, calc(100vw - 2rem));
+            overscroll-behavior: contain;
+            padding: .4rem;
+            scrollbar-color: #b7d5c3 transparent;
+            scrollbar-width: thin;
+            width: min(380px, calc(100vw - 1.5rem));
+        }
+        .navbar-notifications-menu.show {
+            animation: notification-menu-enter .18s ease-out both;
+            transform-origin: top right;
         }
         .navbar-notifications-heading {
             align-items: center;
-            border-bottom: 1px solid #e8eef0;
+            background: #fff;
+            border-bottom: 1px solid #e8f0eb;
             color: #173747;
             display: flex;
-            font-size: .86rem;
+            font-size: .9rem;
             font-weight: 750;
             justify-content: space-between;
-            padding: .65rem .7rem;
+            padding: .75rem .8rem;
+            position: sticky;
+            top: -.4rem;
+            z-index: 1;
+        }
+        .navbar-notification-unread-count {
+            background: #e8f7ef;
+            border-radius: 999px;
+            color: #07875f;
+            font-size: .68rem;
+            font-weight: 700;
+            padding: .25rem .5rem;
         }
         .navbar-notification-open {
             background: transparent;
             border: 0;
-            border-radius: 8px;
+            border-bottom: 1px solid #edf2ef;
+            border-radius: 9px;
             color: #294653;
             display: block;
-            padding: .7rem;
+            padding: .75rem .7rem .75rem 1.05rem;
+            position: relative;
             text-align: left;
+            transition: background .16s ease, transform .16s ease, box-shadow .16s ease;
             white-space: normal;
             width: 100%;
         }
         .navbar-notification-open:hover,
-        .navbar-notification-open:focus-visible { background: #f2f5f7; }
-        .navbar-notification-open.unread { background: #f4f7f8; }
-        .navbar-notification-title { color: #173747; display: block; font-size: .82rem; font-weight: 750; }
-        .navbar-notification-message { color: #657983; display: block; font-size: .76rem; line-height: 1.4; margin-top: .2rem; }
-        .navbar-notification-time { color: #84939a; display: block; font-size: .69rem; margin-top: .35rem; }
-        .navbar-notification-all {
-            border-top: 1px solid #e8eef0;
-            display: block;
-            font-size: .82rem;
-            font-weight: 700;
-            margin-top: .35rem;
-            padding: .7rem;
+        .navbar-notification-open:focus-visible {
+            background: #f6fbf8;
+            box-shadow: 0 4px 12px rgba(25, 55, 39, .06);
+            transform: translateX(2px);
+        }
+        .navbar-notification-open.unread { background: linear-gradient(100deg, #f0fbf4, #fff 75%); }
+        .navbar-notification-open.unread::before {
+            background: #0aa66a;
+            border-radius: 50%;
+            content: "";
+            height: 7px;
+            left: .55rem;
+            position: absolute;
+            top: 1rem;
+            width: 7px;
+        }
+        .navbar-notification-title { color: #173747; display: block; font-size: .84rem; font-weight: 750; line-height: 1.3; }
+        .navbar-notification-message { color: #657983; display: block; font-size: .76rem; line-height: 1.45; margin-top: .22rem; }
+        .navbar-notification-time { color: #84939a; display: block; font-size: .68rem; margin-top: .38rem; }
+        .navbar-notifications-empty {
+            color: #73847a;
+            font-size: .8rem;
+            line-height: 1.5;
+            margin: 0;
+            padding: 1.4rem .8rem;
             text-align: center;
+        }
+        .navbar-notification-all {
+            align-items: center;
+            background: linear-gradient(110deg, #0aa66a, #07875f);
+            border-radius: 10px;
+            box-shadow: 0 5px 14px rgba(7, 135, 95, .18);
+            color: #fff;
+            display: flex;
+            font-size: .8rem;
+            font-weight: 700;
+            gap: .5rem;
+            justify-content: center;
+            margin: .45rem .2rem .2rem;
+            overflow: hidden;
+            padding: .72rem .8rem;
+            position: relative;
             text-decoration: none;
+            transition: box-shadow .2s ease, transform .2s ease;
+        }
+        .navbar-notification-all svg {
+            height: 15px;
+            transition: transform .2s ease;
+            width: 15px;
+        }
+        .navbar-notification-all:hover,
+        .navbar-notification-all:focus-visible {
+            background: linear-gradient(110deg, #07875f, #056e4d);
+            box-shadow: 0 8px 18px rgba(7, 135, 95, .27);
+            color: #fff;
+            transform: translateY(-2px);
+        }
+        .navbar-notification-all:hover svg,
+        .navbar-notification-all:focus-visible svg { transform: translateX(3px); }
+        .navbar-notification-all:focus-visible { outline: 3px solid rgba(7, 135, 95, .22); outline-offset: 2px; }
+        @keyframes notification-menu-enter {
+            from { opacity: 0; transform: translateY(-5px) scale(.985); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes notification-count-arrive {
+            from { opacity: .55; transform: scale(.55); }
+            70% { opacity: 1; transform: scale(1.2); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes notification-count-pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(7, 135, 95, .22); }
+            55% { box-shadow: 0 0 0 5px rgba(7, 135, 95, 0); }
+        }
+        @keyframes notification-bell-ring {
+            0%, 100% { transform: rotate(0); }
+            25% { transform: rotate(-12deg); }
+            65% { transform: rotate(10deg); }
+        }
+        @keyframes notification-unread-ring {
+            0%, 82%, 100% { transform: rotate(0); }
+            86% { transform: rotate(-10deg); }
+            91% { transform: rotate(8deg); }
+            96% { transform: rotate(-4deg); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .navbar-notifications *,
+            .navbar-notifications *::before,
+            .navbar-notifications *::after {
+                animation-duration: .01ms !important;
+                animation-iteration-count: 1 !important;
+                scroll-behavior: auto !important;
+                transition-duration: .01ms !important;
+            }
+        }
+        @media (max-width: 575.98px) {
+            .navbar-notifications-menu {
+                max-height: min(65vh, 420px);
+                width: min(340px, calc(100vw - 1rem));
+            }
         }
         @media (max-width: 991.98px) {
             .navbar-account-toggle { justify-content: flex-start; margin: .25rem 0; min-height: 48px; }
+        }
+        @media (min-width: 768px) {
+            body:has(.role-dashboard-shell) .role-dashboard-shell {
+                background: #f4f7f7;
+                display: block !important;
+            }
+            body:has(.role-dashboard-shell) .role-dashboard-shell > .role-dashboard-sidebar {
+                align-self: auto;
+                background: linear-gradient(90deg, #00ad78 0%, #009e83 100%);
+                border: 0;
+                border-bottom: 1px solid #07875f;
+                box-shadow: 0 5px 16px rgba(7, 135, 95, .12);
+                color: #fff;
+                min-height: 0;
+                padding: .1rem clamp(.75rem, 2vw, 1.5rem);
+                position: relative;
+                top: auto;
+                width: 100%;
+            }
+            body:has(.role-dashboard-shell) .role-dashboard-shell .role-sidebar-brand,
+            body:has(.role-dashboard-shell) .role-dashboard-shell .role-sidebar-label,
+            body:has(.role-dashboard-shell) .role-dashboard-shell .role-sidebar-toggle,
+            body:has(.role-dashboard-shell) .role-dashboard-shell .role-sidebar-backdrop,
+            body:has(.role-dashboard-shell) .role-dashboard-shell .role-sidebar-drawer-brand,
+            body:has(.role-dashboard-shell) .role-dashboard-shell > .role-dashboard-sidebar > .text-white-50 {
+                display: none !important;
+            }
+            body:has(.role-dashboard-shell) .role-dashboard-shell .role-sidebar-nav {
+                align-content: center;
+                background: transparent;
+                box-shadow: none;
+                display: flex;
+                gap: .25rem;
+                grid-template-columns: none;
+                margin: 0;
+                max-width: none;
+                overflow-x: auto;
+                overflow-y: hidden;
+                padding: 0;
+                position: static;
+                transform: none;
+                visibility: visible;
+                width: 100%;
+            }
+            body:has(.role-dashboard-shell) .role-dashboard-shell .role-sidebar-link {
+                background: transparent;
+                border-radius: 0;
+                color: rgba(255,255,255,.88);
+                flex: 0 0 auto;
+                gap: .45rem;
+                min-height: 44px;
+                padding: .4rem .75rem;
+                font-size: .82rem;
+                width: auto;
+            }
+            body:has(.role-dashboard-shell) .role-dashboard-shell .role-sidebar-link:hover {
+                background: rgba(255,255,255,.14);
+                color: #fff;
+                transform: none;
+            }
+            body:has(.role-dashboard-shell) .role-dashboard-shell .role-sidebar-link.active {
+                background: #fff;
+                box-shadow: inset 0 -3px #ffc857;
+                color: #07875f;
+            }
+            body:has(.role-dashboard-shell) .role-dashboard-shell .role-sidebar-icon {
+                background: rgba(255,255,255,.13);
+                border-color: rgba(255,255,255,.18);
+                color: #fff;
+                flex-basis: 26px;
+                height: 26px;
+            }
+            body:has(.role-dashboard-shell) .role-dashboard-shell .role-sidebar-link.active .role-sidebar-icon {
+                background: #e7f7ef;
+                border-color: #d3ebdc;
+                color: #07875f;
+            }
+            body:has(.role-dashboard-shell) .role-dashboard-shell .role-sidebar-link-note {
+                display: none;
+            }
+            body:has(.role-dashboard-shell) .role-dashboard-shell .role-sidebar-count {
+                background: rgba(255,255,255,.18);
+                border-color: rgba(255,255,255,.28);
+                color: #fff;
+            }
+            body:has(.role-dashboard-shell) .role-dashboard-shell .role-sidebar-link.active .role-sidebar-count {
+                background: #e7f7ef;
+                border-color: #d3ebdc;
+                color: #07875f;
+            }
+            body:has(.role-dashboard-shell) .role-dashboard-shell > .role-dashboard-content {
+                padding: clamp(1.25rem, 2.5vw, 2rem);
+            }
+            body:has(.hr-dashboard-shell) .hr-dashboard-shell {
+                background: #f4f7f7;
+                display: block;
+            }
+            body:has(.hr-dashboard-shell) .hr-dashboard-sidebar {
+                align-self: auto;
+                background: linear-gradient(90deg, #00ad78 0%, #009e83 100%);
+                border-bottom: 1px solid #07875f;
+                box-shadow: 0 5px 16px rgba(7, 135, 95, .12);
+                min-height: 0;
+                padding: .1rem clamp(.75rem, 2vw, 1.5rem);
+                position: relative;
+                top: auto;
+                width: 100%;
+            }
+            body:has(.hr-dashboard-shell) .hr-sidebar-brand,
+            body:has(.hr-dashboard-shell) .hr-sidebar-label,
+            body:has(.hr-dashboard-shell) .hr-sidebar-toggle,
+            body:has(.hr-dashboard-shell) .hr-sidebar-backdrop,
+            body:has(.hr-dashboard-shell) .hr-sidebar-drawer-brand,
+            body:has(.hr-dashboard-shell) .hr-dashboard-sidebar > .text-white-50 {
+                display: none !important;
+            }
+            body:has(.hr-dashboard-shell) .hr-sidebar-nav {
+                display: flex;
+                gap: .25rem;
+                grid-template-columns: none;
+                margin: 0;
+                overflow-x: auto;
+                padding: 0;
+                width: 100%;
+            }
+            body:has(.hr-dashboard-shell) .hr-sidebar-link {
+                background: transparent;
+                border-radius: 0;
+                color: rgba(255,255,255,.88);
+                flex: 0 0 auto;
+                min-height: 44px;
+                padding: .4rem .75rem;
+                font-size: .82rem;
+                width: auto;
+            }
+            body:has(.hr-dashboard-shell) .hr-sidebar-link:hover {
+                background: rgba(255,255,255,.14);
+                color: #fff;
+                transform: none;
+            }
+            body:has(.hr-dashboard-shell) .hr-sidebar-link.active {
+                background: #fff;
+                box-shadow: inset 0 -3px #ffc857;
+                color: #07875f;
+            }
+            body:has(.hr-dashboard-shell) .hr-sidebar-icon {
+                background: rgba(255,255,255,.13);
+                border-color: rgba(255,255,255,.18);
+                color: #fff;
+            }
+            body:has(.hr-dashboard-shell) .hr-sidebar-link.active .hr-sidebar-icon {
+                background: #e7f7ef;
+                color: #07875f;
+            }
+            body:has(.hr-dashboard-shell) .hr-sidebar-link-note {
+                display: none;
+            }
+            body:has(.hr-dashboard-shell) .hr-dashboard-content {
+                padding: clamp(1.25rem, 2.5vw, 2rem);
+            }
+        }
+        body:has(.supervisor-page) .supervisor-hero,
+        body:has(.hod-page) .hod-hero {
+            background: linear-gradient(110deg, #00ad78 0%, #009e83 100%);
+            box-shadow: 0 14px 32px rgba(7, 135, 95, .16);
+        }
+        body:has(.supervisor-page) .supervisor-action,
+        body:has(.hod-page) .hod-action {
+            background: #07875f;
+            border-color: #07875f;
+        }
+        body:has(.supervisor-page) .supervisor-action:hover,
+        body:has(.hod-page) .hod-action:hover {
+            background: #056e4d;
+            border-color: #056e4d;
+        }
+        body:has(.supervisor-page) .supervisor-stat-icon {
+            background: #e7f7ef;
+            color: #07875f;
+        }
+        body:has(.hr-dashboard-shell) .hr-overview { background: #f8f0f0; }
+        body:has(.hr-dashboard-shell) .hr-metric-note { color: #07875f; }
+        body:has(.hr-dashboard-shell) .hr-action-primary,
+        body:has(.hr-dashboard-shell) .hr-dashboard-section:not([data-dashboard-section="overview"]) .page-item.active .page-link {
+            background: #07875f;
+            border-color: #07875f;
+            color: #fff;
+        }
+        body:has(.hr-dashboard-shell) .hr-action-primary:hover,
+        body:has(.hr-dashboard-shell) .hr-action-primary:focus {
+            background: #056e4d;
+            border-color: #056e4d;
+            color: #fff;
         }
         .card {
             box-shadow: 0 4px 6px rgba(0,0,0,0.1); /* Soft shadow for cards */
@@ -506,9 +896,13 @@
 <body>
 
     <!-- Navigation Bar -->
-    <nav class="navbar navbar-expand-lg navbar-dark navbar-appraisal mb-4 border-bottom">
+    <nav class="navbar navbar-expand-lg navbar-light navbar-appraisal mb-4 border-bottom">
         <div class="container">
-            <a class="navbar-brand" href="{% url 'home' %}">Appraisal System</a>
+            <a class="navbar-brand" href="{% url 'home' %}">
+                <img class="navbar-brand-mark" src="{% static 'images/mathias-catholic-hospital-logo.png' %}" alt="">
+                <span class="navbar-brand-copy">Performance Management System
+<small>Staff performance & development</small></span>
+            </a>
             
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
@@ -519,24 +913,28 @@
                     {% if user.is_authenticated %}
                         <li class="nav-item dropdown navbar-notifications">
                             <button
-                                class="navbar-notifications-toggle dropdown-toggle"
+                                class="navbar-notifications-toggle{% if unread_notification_count %} has-unread{% endif %}"
                                 type="button"
                                 data-bs-toggle="dropdown"
+                                data-notification-status-url="{% url 'notification_status' %}"
+                                data-unread-count="{{ unread_notification_count }}"
                                 aria-expanded="false"
                                 aria-label="Notifications{% if unread_notification_count %}, {{ unread_notification_count }} unread{% endif %}"
                             >
-                                <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none">
-                                    <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                                {% if unread_notification_count %}
-                                    <span class="navbar-notification-count">{{ unread_notification_count }}</span>
-                                {% endif %}
+                                <span class="navbar-notifications-icon-wrap" aria-hidden="true">
+                                    <svg class="navbar-notifications-icon" width="23" height="23" viewBox="0 0 24 24" fill="none">
+                                        <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                    {% if unread_notification_count %}
+                                        <span class="navbar-notification-count">{{ unread_notification_count }}</span>
+                                    {% endif %}
+                                </span>
                             </button>
                             <div class="dropdown-menu dropdown-menu-end navbar-notifications-menu">
                                 <div class="navbar-notifications-heading">
                                     <span>Recent notifications</span>
                                     {% if unread_notification_count %}
-                                        <span class="small text-muted">{{ unread_notification_count }} unread</span>
+                                        <span class="navbar-notification-unread-count">{{ unread_notification_count }} unread</span>
                                     {% endif %}
                                 </div>
                                 {% for notification in navbar_notifications %}
@@ -552,9 +950,14 @@
                                         </button>
                                     </form>
                                 {% empty %}
-                                    <p class="small text-muted mb-0 p-3">You have no notifications yet.</p>
+                                    <p class="navbar-notifications-empty">You have no notifications yet.</p>
                                 {% endfor %}
-                                <a class="navbar-notification-all" href="{% url 'notifications' %}">View all notifications</a>
+                                <a class="navbar-notification-all" href="{% url 'notifications' %}">
+                                    <span>View all notifications</span>
+                                    <svg aria-hidden="true" viewBox="0 0 20 20" fill="none">
+                                        <path d="M4 10h11m-4-4 4 4-4 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                </a>
                             </div>
                         </li>
                         <li class="nav-item dropdown navbar-account">
@@ -565,29 +968,62 @@
                                 aria-expanded="false"
                                 aria-label="Account menu for {{ user.username }}"
                             >
-                                <svg class="navbar-account-icon" aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none">
-                                    <circle cx="12" cy="12" r="10.5" stroke="currentColor" stroke-width="1.5"/>
-                                    <circle cx="12" cy="8.5" r="3" stroke="currentColor" stroke-width="1.5"/>
-                                    <path d="M5.8 19c.9-3 3.1-4.5 6.2-4.5s5.3 1.5 6.2 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                                </svg>
-                                <span>{{ user.get_short_name|default:user.username }}</span>
+                                <span class="navbar-account-avatar" aria-hidden="true">
+                                    {% if user.profile.profile_photo %}
+                                        <img src="{% url 'profile_photo_file' %}" alt="">
+                                    {% else %}
+                                        {{ user.first_name|default:user.username|first|upper }}{% if user.last_name %}{{ user.last_name|first|upper }}{% endif %}
+                                    {% endif %}
+                                </span>
+                                <span class="navbar-account-copy">
+                                    <strong>{{ user.get_short_name|default:user.username }}</strong>
+                                    <small>{{ user.profile.get_role_display|default:user.profile.role }}</small>
+                                </span>
                                 <svg class="navbar-account-chevron" aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="none">
                                     <path d="m3 6 5 5 5-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
                                 </svg>
                             </button>
                             <div class="dropdown-menu dropdown-menu-end navbar-account-menu">
                                 <div class="navbar-account-details">
-                                    <span>Staff ID</span>
-                                    <strong>{{ user.username }}</strong>
+                                    <span class="navbar-account-avatar" aria-hidden="true">
+                                        {% if user.profile.profile_photo %}
+                                            <img src="{% url 'profile_photo_file' %}" alt="">
+                                        {% else %}
+                                            {{ user.first_name|default:user.username|first|upper }}{% if user.last_name %}{{ user.last_name|first|upper }}{% endif %}
+                                        {% endif %}
+                                    </span>
+                                    <span class="navbar-account-details-copy">
+                                        <strong>{{ user.get_full_name|default:user.username }}</strong>
+                                        <span>{{ user.profile.get_role_display|default:user.profile.role }}</span>
+                                    </span>
                                 </div>
                                 {% if user.is_superuser %}
                                     <a class="dropdown-item" href="{% url 'backup_dashboard' %}">Backups</a>
                                     <a class="dropdown-item" href="{% url 'manage_staff_ids' %}">Staff registration</a>
                                 {% endif %}
-                                <a class="dropdown-item" href="{% url 'profile' %}">My Profile</a>
+                                <!-- <a class="dropdown-item" href="{% url 'profile' %}">My Profile</a> -->
+                                <a class="dropdown-item" href="{% url 'profile' %}">
+                                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                        <circle cx="12" cy="8" r="3.2" stroke="currentColor" stroke-width="1.7"/>
+                                        <path d="M5.5 20c.7-3.1 2.9-4.7 6.5-4.7s5.8 1.6 6.5 4.7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                                    </svg>
+                                    View profile
+                                </a> 
+                                <a class="dropdown-item" href="{% url 'password_change' %}">
+                                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                        <rect x="5" y="10" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.7"/>
+                                        <path d="M8 10V7a4 4 0 1 1 8 0v3M12 14v2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                                    </svg>
+                                    Change password
+                                </a>
                                 <form class="navbar-account-logout" action="{% url 'logout' %}" method="post">
                                     {% csrf_token %}
-                                    <button class="dropdown-item" type="submit">Log out</button>
+                                    <button class="dropdown-item" type="submit">
+                                        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                            <path d="M10 5H5v14h5M14 8l4 4-4 4M8 12h10" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                        Sign out
+                                    </button>
                                 </form>
                             </div>
                         </li>
@@ -791,6 +1227,99 @@
         });
     </script>
     <script>
+        (() => {
+            const toggle = document.querySelector(
+                '.navbar-notifications-toggle[data-notification-status-url]',
+            );
+            const iconWrap = toggle?.querySelector('.navbar-notifications-icon-wrap');
+            const heading = document.querySelector('.navbar-notifications-heading');
+            if (!toggle || !iconWrap || !heading) return;
+
+            let unreadCount = Number(toggle.dataset.unreadCount);
+            let animationTimeout;
+
+            function renderUnreadCount(count, animate) {
+                let badge = toggle.querySelector('.navbar-notification-count');
+                if (count > 0) {
+                    if (!badge) {
+                        badge = document.createElement('span');
+                        badge.className = 'navbar-notification-count';
+                        iconWrap.append(badge);
+                    }
+                    badge.textContent = String(count);
+                } else {
+                    badge?.remove();
+                }
+
+                toggle.classList.toggle('has-unread', count > 0);
+                toggle.setAttribute(
+                    'aria-label',
+                    count > 0 ? `Notifications, ${count} unread` : 'Notifications',
+                );
+                if (count === 0) {
+                    window.clearTimeout(animationTimeout);
+                    toggle.classList.remove('is-arriving');
+                }
+
+                let headingCount = heading.querySelector('.navbar-notification-unread-count');
+                if (count > 0) {
+                    if (!headingCount) {
+                        headingCount = document.createElement('span');
+                        headingCount.className = 'navbar-notification-unread-count';
+                        heading.append(headingCount);
+                    }
+                    headingCount.textContent = `${count} unread`;
+                } else {
+                    headingCount?.remove();
+                }
+
+                if (animate) {
+                    toggle.classList.remove('is-arriving');
+                    void toggle.offsetWidth;
+                    toggle.classList.add('is-arriving');
+                    window.clearTimeout(animationTimeout);
+                    animationTimeout = window.setTimeout(
+                        () => toggle.classList.remove('is-arriving'),
+                        1900,
+                    );
+                }
+            }
+
+            async function refreshUnreadCount() {
+                if (document.hidden) return;
+
+                try {
+                    const response = await fetch(toggle.dataset.notificationStatusUrl, {
+                        cache: 'no-store',
+                        credentials: 'same-origin',
+                        headers: { Accept: 'application/json' },
+                    });
+                    if (!response.ok) {
+                        throw new Error(`Notification status request failed (${response.status}).`);
+                    }
+
+                    const payload = await response.json();
+                    const nextCount = Number(payload.unread_count);
+                    if (!Number.isSafeInteger(nextCount) || nextCount < 0) {
+                        throw new Error('Notification status returned an invalid unread count.');
+                    }
+
+                    const receivedNewNotification = nextCount > unreadCount;
+                    unreadCount = nextCount;
+                    toggle.dataset.unreadCount = String(nextCount);
+                    renderUnreadCount(nextCount, receivedNewNotification);
+                } catch (error) {
+                    console.error('Unable to refresh notification count.', error);
+                }
+            }
+
+            window.setInterval(refreshUnreadCount, 30000);
+            document.addEventListener('visibilitychange', () => {
+                if (!document.hidden) refreshUnreadCount();
+            });
+        })();
+    </script>
+    <script>
         document.querySelectorAll('.role-dashboard-shell').forEach((shell) => {
             const sidebar = shell.querySelector('.role-dashboard-sidebar');
             const toggle = shell.querySelector('.role-sidebar-toggle');
@@ -804,12 +1333,13 @@
             function syncNavigationState() {
                 const mobile = window.matchMedia('(max-width: 767.98px)').matches;
                 const expanded = mobile && sidebar.classList.contains('is-expanded');
+                const navigationHidden = mobile && !expanded && !shell.classList.contains('employee-page');
                 if (toggle) toggle.setAttribute('aria-expanded', String(expanded));
                 if (toggle) toggle.setAttribute('aria-label', expanded ? 'Close menu' : 'Open menu');
                 if (backdrop) backdrop.hidden = !expanded;
                 if (navigation) {
-                    navigation.inert = mobile && !expanded;
-                    navigation.setAttribute('aria-hidden', String(mobile && !expanded));
+                    navigation.inert = navigationHidden;
+                    navigation.setAttribute('aria-hidden', String(navigationHidden));
                 }
             }
 

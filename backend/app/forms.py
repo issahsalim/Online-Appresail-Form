@@ -255,6 +255,7 @@ class PreviousAppraisalUploadForm(forms.ModelForm):
             }),
             'appraisal_file': forms.ClearableFileInput(attrs={
                 'class': 'form-control',
+                'accept': '.pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document',
             }),
         }
 
@@ -374,6 +375,27 @@ class UserProfileForm(forms.ModelForm):
                 'appointment_to_present_grade_date',
             ])
         return user
+
+
+class ProfilePhotoForm(forms.ModelForm):
+    profile_photo = forms.ImageField(
+        label='Profile photo',
+        required=True,
+        widget=forms.ClearableFileInput(attrs={
+            'accept': 'image/*',
+            'class': 'profile-photo-input',
+        }),
+    )
+
+    class Meta:
+        model = EmployeeProfile
+        fields = ['profile_photo']
+
+    def clean_profile_photo(self):
+        photo = self.cleaned_data['profile_photo']
+        if photo.size > 5 * 1024 * 1024:
+            raise ValidationError('Profile photos must be 5 MB or smaller.')
+        return photo
 
 
 class AppraisalEmployeeInfoForm(forms.ModelForm):

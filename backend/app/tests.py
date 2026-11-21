@@ -1,12 +1,17 @@
 from datetime import datetime
+<<<<<<< Updated upstream
 import io
 import json
 from pathlib import Path
+=======
+from io import BytesIO
+>>>>>>> Stashed changes
 import tempfile
 from unittest.mock import MagicMock, patch
 
 import pyzipper
 
+from PIL import Image
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import SimpleTestCase, TestCase
 from django.test import override_settings
@@ -627,6 +632,30 @@ class EmployeeAppraisalVisibilityTests(TestCase):
         self.assertEqual(response.context['incomplete_appraisal_count'], 2)
         self.assertEqual(response.context['submitted_appraisal_count'], 1)
 
+    def test_dashboard_trend_groups_scores_and_statuses_by_cycle_year(self):
+        returned_cycle = AppraisalCycle.objects.create(year=2023, is_active=False)
+        completed_cycle = AppraisalCycle.objects.create(year=2022, is_active=False)
+        Appraisal.objects.create(
+            employee=self.profile,
+            cycle=returned_cycle,
+            status='returned_employee',
+        )
+        Appraisal.objects.create(
+            employee=self.profile,
+            cycle=completed_cycle,
+            status='completed',
+            overall_percentage='82.50',
+        )
+
+        response = self.client.get(reverse('employee_dashboard'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['appraisal_trend'], [
+            {'year': 2022, 'score': 82.5, 'returned': 0, 'incomplete': 0},
+            {'year': 2023, 'score': None, 'returned': 1, 'incomplete': 0},
+            {'year': 2026, 'score': None, 'returned': 0, 'incomplete': 1},
+        ])
+
     def test_employee_can_view_review_scores_after_submission_without_editing(self):
         response = self.client.get(reverse('fill_targets'))
 
@@ -785,30 +814,20 @@ class EmployeeAppraisalVisibilityTests(TestCase):
             'body:has(.role-dashboard-shell, .hr-dashboard-shell) > .navbar-appraisal',
         )
 
-    def test_mobile_dashboard_navigation_has_vertical_animated_toggle(self):
+    def test_mobile_dashboard_navigation_stays_compact_and_interactive(self):
         response = self.client.get(reverse('employee_dashboard'))
 
         self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'id="employee-dashboard-navigation"')
+        self.assertContains(response, '@media (max-width: 767.98px)')
+        self.assertContains(response, 'min-height: 38px;')
+        self.assertContains(response, 'flex: 1 1 0;')
+        self.assertContains(response, '@media (max-width: 360px)')
         self.assertContains(
             response,
-            'aria-controls="employee-dashboard-navigation"',
+            "navigationHidden = mobile && !expanded && !shell.classList.contains('employee-page')",
         )
-        self.assertContains(
-            response,
-            '.role-sidebar-nav { display: grid; gap: .55rem; grid-template-columns: minmax(0, 1fr); }',
-        )
-        self.assertContains(response, '.role-dashboard-sidebar.is-expanded .role-sidebar-nav')
-        self.assertContains(response, 'grid-template-columns: minmax(0, 1fr)')
-        self.assertContains(response, 'transform: translateX(-105%)')
-        self.assertContains(response, 'role-sidebar-backdrop')
-        self.assertContains(response, '.role-sidebar-brand { display: none; }')
-        self.assertContains(response, 'role-sidebar-drawer-brand')
-        self.assertContains(response, 'Mathias Catholic Hospital<small>EMPLOYEE WORKSPACE</small>')
-        self.assertContains(response, 'data-sidebar-close')
-        self.assertContains(response, '.role-dashboard-content { padding: 4.75rem 1.1rem 1.1rem; }')
-        self.assertContains(response, 'top: 4.5rem;')
-        self.assertContains(response, "event.key === 'Escape'")
-        self.assertContains(response, 'navigation.inert = mobile && !expanded')
+        self.assertContains(response, 'navigation.inert = navigationHidden')
 
     def test_active_dashboard_shows_only_the_newest_active_cycle(self):
         newer_cycle = AppraisalCycle.objects.create(year=2027, is_active=True)
@@ -1150,11 +1169,13 @@ class LoginPageTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'navbar-account-toggle')
         self.assertContains(response, 'navbar-account-menu')
-        self.assertContains(response, 'Staff ID')
+        self.assertContains(response, 'navbar-account-details-copy')
         self.assertContains(response, 'navbar-user')
+        self.assertContains(response, 'Employee')
         self.assertContains(response, 'navbar-account-logout')
-        self.assertContains(response, 'My Profile')
-        self.assertContains(response, 'Log out')
+        self.assertContains(response, 'View profile')
+        self.assertContains(response, 'Change password')
+        self.assertContains(response, 'Sign out')
         self.assertContains(response, f'action="{reverse("logout")}"')
         self.assertContains(response, 'name="csrfmiddlewaretoken"')
 
@@ -1172,6 +1193,81 @@ class AccountProfileTests(TestCase):
         )
         self.profile = EmployeeProfile.objects.create(user=self.user)
         self.client.force_login(self.user)
+
+    def make_profile_photo(self, extra_bytes=b''):
+        image_buffer = BytesIO()
+        Image.new('RGB', (2, 2), color=(20, 160, 90)).save(
+            image_buffer,
+            format='PNG',
+        )
+        return SimpleUploadedFile(
+            'profile.png',
+            image_buffer.getvalue() + extra_bytes,
+            content_type='image/png',
+        )
+
+    def test_profile_shows_name_initials_when_no_photo_is_uploaded(self):
+        self.user.first_name = 'Jordan'
+        self.user.last_name = 'Smith'
+        self.user.save(update_fields=['first_name', 'last_name'])
+
+        response = self.client.get(reverse('profile'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '<span class="profile-avatar-initials"')
+        self.assertContains(response, 'JS')
+        self.assertNotContains(response, '<img class="profile-avatar-image"')
+        self.assertEqual(
+            self.client.get(reverse('profile_photo_file')).status_code,
+            404,
+        )
+
+    def test_employee_can_upload_a_profile_photo(self):
+        with tempfile.TemporaryDirectory() as media_root:
+            with override_settings(MEDIA_ROOT=media_root):
+                response = self.client.post(reverse('profile'), {
+                    'action': 'upload_profile_photo',
+                    'profile_photo': self.make_profile_photo(),
+                })
+
+                self.assertRedirects(response, reverse('profile'))
+                self.profile.refresh_from_db()
+                self.assertTrue(self.profile.profile_photo.name.startswith(
+                    'profile_photos/',
+                ))
+                self.assertTrue(self.profile.profile_photo.storage.exists(
+                    self.profile.profile_photo.name,
+                ))
+
+                response = self.client.get(reverse('profile'))
+
+                self.assertContains(response, '<img class="profile-avatar-image"')
+                self.assertNotContains(response, '<span class="profile-avatar-initials"')
+                photo_response = self.client.get(reverse('profile_photo_file'))
+                self.assertEqual(photo_response.status_code, 200)
+                self.assertEqual(photo_response['Content-Type'], 'image/png')
+                photo_response.close()
+
+    def test_profile_photo_upload_rejects_non_images_and_files_over_five_mb(self):
+        invalid_uploads = (
+            SimpleUploadedFile(
+                'not-an-image.png',
+                b'not an image',
+                content_type='image/png',
+            ),
+            self.make_profile_photo(extra_bytes=b'\0' * (5 * 1024 * 1024)),
+        )
+        for upload in invalid_uploads:
+            with self.subTest(filename=upload.name):
+                response = self.client.post(reverse('profile'), {
+                    'action': 'upload_profile_photo',
+                    'profile_photo': upload,
+                })
+
+                self.assertEqual(response.status_code, 200)
+                self.assertContains(response, '<p class="profile-photo-error">')
+                self.profile.refresh_from_db()
+                self.assertFalse(self.profile.profile_photo)
 
     def test_user_can_update_personal_profile_fields(self):
         response = self.client.post(reverse('profile'), {
@@ -1420,6 +1516,30 @@ class InAppNotificationTests(TestCase):
         self.assertContains(response, '1 unread')
         self.assertContains(response, 'Unread update')
         self.assertNotContains(response, 'Private update')
+
+    def test_notification_status_returns_only_signed_in_users_unread_count(self):
+        AppNotification.objects.create(
+            recipient=self.user,
+            title='Unread update',
+            message='New appraisal update.',
+        )
+        AppNotification.objects.create(
+            recipient=self.user,
+            title='Read update',
+            message='Already read.',
+            read_at=timezone.now(),
+        )
+        AppNotification.objects.create(
+            recipient=self.other_user,
+            title='Private update',
+            message='Only another user should see this.',
+        )
+
+        response = self.client.get(reverse('notification_status'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {'unread_count': 1})
+        self.assertEqual(response['Cache-Control'], 'no-store')
 
     def test_opening_notification_marks_only_own_notification_read(self):
         notification = AppNotification.objects.create(
@@ -4159,6 +4279,13 @@ class PreviousAppraisalWorkflowTests(TestCase):
         EmployeeProfile.objects.create(user=self.hr_user, role='HR')
         self.client.force_login(self.employee_user)
 
+    def test_employee_file_picker_advertises_supported_document_formats(self):
+        response = self.client.get(reverse('employee_dashboard'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'accept=".pdf,.doc,.docx,application/pdf')
+        self.assertContains(response, 'Accepted formats: PDF, DOC, or DOCX.')
+
     def upload_file(self, name='old-appraisal.pdf'):
         return SimpleUploadedFile(
             name,
@@ -4187,6 +4314,8 @@ class PreviousAppraisalWorkflowTests(TestCase):
 
         response = self.client.get(reverse('employee_dashboard'))
         self.assertContains(response, 'Pending review')
+        self.assertContains(response, 'accept=".pdf,.doc,.docx,application/pdf')
+        self.assertContains(response, 'Accepted formats: PDF, DOC, or DOCX.')
         self.assertNotContains(
             response,
             reverse('previous_appraisal_file', args=[appraisal.pk]),

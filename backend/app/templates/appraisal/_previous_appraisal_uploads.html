@@ -1,20 +1,34 @@
 <section class="previous-appraisal-panel">
     <div class="previous-appraisal-heading">
-        <h2>Upload a previous appraisal</h2>
-        <p>Submit an appraisal from before {{ current_year }}. HR must approve it before it is added to your records.</p>
+        <span class="previous-appraisal-heading-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+                <path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M5 14.5v3A2.5 2.5 0 0 0 7.5 20h9a2.5 2.5 0 0 0 2.5-2.5v-3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </span>
+        <div>
+            <h2>Upload a previous appraisal</h2>
+            <p>Submit an appraisal from before {{ current_year }}. HR will review it before it appears in your records.</p>
+        </div>
     </div>
     <form method="post" enctype="multipart/form-data" action="{% url 'upload_previous_appraisal' %}" class="previous-appraisal-form">
         {% csrf_token %}
-        <div>
+        <div class="previous-appraisal-field">
             <label for="{{ previous_appraisal_form.appraisal_cycle.id_for_label }}" class="form-label">{{ previous_appraisal_form.appraisal_cycle.label }}</label>
             {{ previous_appraisal_form.appraisal_cycle }}
             <div class="form-text">{{ previous_appraisal_form.appraisal_cycle.help_text }}</div>
+            {% for error in previous_appraisal_form.appraisal_cycle.errors %}
+                <div class="invalid-feedback d-block">{{ error }}</div>
+            {% endfor %}
         </div>
-        <div>
+        <div class="previous-appraisal-field previous-appraisal-file-field">
             <label for="{{ previous_appraisal_form.appraisal_file.id_for_label }}" class="form-label">{{ previous_appraisal_form.appraisal_file.label }}</label>
             {{ previous_appraisal_form.appraisal_file }}
+            <div class="previous-appraisal-file-hint">Accepted formats: PDF, DOC, or DOCX.</div>
+            {% for error in previous_appraisal_form.appraisal_file.errors %}
+                <div class="invalid-feedback d-block">{{ error }}</div>
+            {% endfor %}
         </div>
-        <button type="submit" class="previous-appraisal-button">Submit for approval</button>
+        <button type="submit" class="previous-appraisal-button">Submit for review</button>
     </form>
 
     <div class="previous-appraisal-list">
@@ -52,7 +66,7 @@
                 {% for item in previous_appraisals %}
                     {% if item.status != 'approved' %}
                         <span class="previous-appraisal-status{% if item.status == 'rejected' %} is-rejected{% endif %}">
-                            {{ item.appraisal_cycle }} · {{ item.get_status_display }}{% if item.status == 'rejected' %} · submit again above{% endif %}
+                            {{ item.appraisal_cycle }} &middot; {{ item.get_status_display }}{% if item.status == 'rejected' %} &middot; submit again above{% endif %}
                         </span>
                     {% endif %}
                 {% endfor %}

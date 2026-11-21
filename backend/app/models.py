@@ -62,6 +62,10 @@ class EmployeeProfile(models.Model):
         blank=True,
     )
     security_answer_hash = models.CharField(max_length=128, blank=True)
+    profile_photo = models.ImageField(
+        upload_to='profile_photos/%Y/%m/',
+        blank=True,
+    )
 
     def __str__(self):
         dept = self.department.name if self.department else 'No Dept'

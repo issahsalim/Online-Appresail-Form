@@ -141,64 +141,193 @@
         }
         .employee-appraisal-stat-value { color: #173747; display: block; font-size: 1.15rem; font-weight: 780; line-height: 1.2; }
         .employee-appraisal-stat-note { color: #72828b; display: block; font-size: .7rem; margin-top: .12rem; }
-        .employee-application-list {
+        .employee-performance-card {
             background: #fff;
             border: 1px solid #e0e8ec;
-            border-radius: 14px;
+            border-radius: 16px;
+            box-shadow: 0 8px 22px rgba(20, 45, 60, .045);
+            margin-bottom: 1rem;
             overflow: hidden;
         }
-        .employee-application-list-heading {
-            border-bottom: 1px solid #e8eef0;
-            padding: 1rem;
-        }
-        .employee-application-list-heading h2 { color: #173747; font-size: 1rem; font-weight: 760; margin: 0 0 .2rem; }
-        .employee-application-list-heading p { color: #72828b; font-size: .8rem; margin: 0; }
-        .employee-application-card {
-            align-items: center;
-            border-bottom: 1px solid #edf2f5;
-            display: grid;
-            gap: 1rem;
-            grid-template-columns: auto minmax(0, 1fr) minmax(120px, 155px) auto;
-            padding: 1.15rem;
-        }
-        .employee-application-card:last-child { border-bottom: 0; }
-        .employee-application-icon {
-            align-items: center;
-            background: #173f50;
-            border-radius: 10px;
-            color: #fff;
+        .employee-performance-heading {
+            align-items: flex-start;
+            border-bottom: 1px solid #edf1f3;
             display: flex;
+            flex-wrap: wrap;
+            gap: .4rem 1rem;
+            justify-content: space-between;
+            padding: 1.1rem 1.25rem .9rem;
+        }
+        .employee-performance-heading h2 {
+            color: #173747;
+            font-size: 1rem;
+            font-weight: 760;
+            margin: 0 0 .25rem;
+        }
+        .employee-performance-heading p { color: #72828b; font-size: .78rem; margin: 0; }
+        .employee-performance-chart-wrap {
+            height: clamp(250px, 32vw, 350px);
+            padding: .8rem 1rem 1rem;
+            position: relative;
+        }
+        .employee-application-list {
+            background: transparent;
+        }
+        .employee-application-list-heading {
+            align-items: center;
+            display: flex;
+            flex-wrap: wrap;
+            gap: .75rem 1rem;
+            justify-content: space-between;
+            padding: 0 0 .85rem;
+        }
+        .employee-application-list-heading-copy {
+            align-items: center;
+            display: flex;
+            gap: .8rem;
+        }
+        .employee-application-heading-icon {
+            align-items: center;
+            background: #e2f5e9;
+            border: 1px solid #d5eddf;
+            border-radius: 12px;
+            color: #07875f;
+            display: inline-flex;
             flex: 0 0 42px;
-            font-size: .75rem;
-            font-weight: 800;
             height: 42px;
             justify-content: center;
             width: 42px;
         }
-        .employee-application-main { min-width: 0; }
+        .employee-application-heading-icon svg { height: 21px; width: 21px; }
+        .employee-application-list-heading-copy h2 {
+            color: #173747;
+            font-size: 1.03rem;
+            font-weight: 780;
+            letter-spacing: -.02em;
+            margin: 0 0 .2rem;
+        }
+        .employee-application-list-heading-copy p { color: #72828b; font-size: .79rem; margin: 0; }
+        .employee-application-cycle-count {
+            background: #f0faf4;
+            border: 1px solid #dcebe1;
+            border-radius: 999px;
+            color: #07875f;
+            font-size: .72rem;
+            font-weight: 750;
+            padding: .42rem .7rem;
+            white-space: nowrap;
+        }
+        #employee-active-appraisals { display: grid; gap: .85rem; }
+        .employee-application-card {
+            background: #fff;
+            border: 1px solid #dfeae3;
+            border-radius: 16px;
+            box-shadow: 0 8px 22px rgba(32, 63, 48, .06);
+            display: grid;
+            gap: 1rem 1.25rem;
+            grid-template-areas:
+                "top meta"
+                "progress progress"
+                "return return"
+                "actions actions";
+            grid-template-columns: minmax(0, 1fr) minmax(140px, 180px);
+            padding: 1.25rem 1.35rem;
+            position: relative;
+            transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+        }
+        .employee-application-card::before {
+            background: linear-gradient(180deg, #0aa66a, #63c99a);
+            border-radius: 16px 0 0 16px;
+            content: "";
+            inset: 0 auto 0 0;
+            position: absolute;
+            width: 4px;
+        }
+        .employee-application-card:hover {
+            border-color: #c9e3d3;
+            box-shadow: 0 12px 28px rgba(32, 63, 48, .1);
+            transform: translateY(-2px);
+        }
+        .employee-application-top {
+            align-items: flex-start;
+            display: flex;
+            gap: .9rem;
+            grid-area: top;
+            min-width: 0;
+        }
+        .employee-application-icon {
+            align-items: center;
+            background: #e7f7ef;
+            border: 1px solid #d7eee0;
+            border-radius: 12px;
+            color: #07875f;
+            display: flex;
+            flex: 0 0 44px;
+            height: 44px;
+            justify-content: center;
+            width: 44px;
+        }
+        .employee-application-icon svg { height: 21px; width: 21px; }
+        .employee-application-main { min-width: 0; padding-top: .1rem; }
         .employee-application-title-row {
             align-items: center;
             display: flex;
             flex-wrap: wrap;
-            gap: .35rem .65rem;
-            margin-bottom: .2rem;
+            gap: .35rem .7rem;
+            margin-bottom: .35rem;
         }
-        .employee-application-title-row h3 { color: #173747; font-size: .95rem; font-weight: 750; margin: 0; }
+        .employee-application-title-row h3 {
+            color: #173747;
+            font-size: 1rem;
+            font-weight: 760;
+            letter-spacing: -.015em;
+            margin: 0;
+        }
         .employee-application-main p { color: #72828b; font-size: .78rem; margin: 0; }
-        .employee-application-progress { margin-top: .75rem; max-width: 420px; }
+        .employee-application-progress {
+            border-top: 1px solid #edf2ef;
+            grid-area: progress;
+            margin: 0;
+            max-width: none;
+            padding-top: .85rem;
+        }
+        .employee-application-progress-summary {
+            align-items: center;
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: .45rem;
+        }
+        .employee-application-progress-summary span:first-child {
+            color: #72828b;
+            font-size: .72rem;
+            font-weight: 700;
+        }
+        .employee-application-progress-label {
+            color: #07875f;
+            font-size: .74rem;
+            font-weight: 750;
+            margin: 0;
+        }
         .employee-application-progress-track {
             background: #e4eaed;
             border-radius: 999px;
-            height: 5px;
+            height: 7px;
             overflow: hidden;
         }
         .employee-application-progress-fill {
-            background: #34596a;
+            background: linear-gradient(90deg, #07875f, #63c99a);
             border-radius: inherit;
             height: 100%;
         }
-        .employee-application-progress-label { color: #72828b; display: block; font-size: .68rem; margin-top: .2rem; text-align: center; }
-        .employee-application-meta { min-width: 0; }
+        .employee-application-meta {
+            align-self: center;
+            background: #f7faf8;
+            border: 1px solid #e8efea;
+            border-radius: 12px;
+            grid-area: meta;
+            min-width: 0;
+            padding: .7rem .8rem;
+        }
         .employee-application-meta-label {
             color: #839198;
             display: block;
@@ -208,7 +337,12 @@
             text-transform: uppercase;
         }
         .employee-application-meta-value { color: #294653; display: block; font-size: .78rem; font-weight: 700; margin-top: .15rem; }
-        .employee-application-card .employee-actions { justify-content: flex-end; }
+        .employee-application-card .employee-actions {
+            border-top: 1px solid #edf2ef;
+            grid-area: actions;
+            justify-content: flex-end;
+            padding-top: .9rem;
+        }
         .employee-application-card .employee-action,
         .employee-application-card .employee-action-secondary { min-height: 38px; padding: .5rem .75rem; white-space: nowrap; }
         .employee-return-note {
@@ -217,7 +351,8 @@
             border-left: 4px solid #547181;
             border-radius: 12px;
             color: #425d69;
-            margin-bottom: 1.3rem;
+            grid-area: return;
+            margin: 0;
             padding: 1rem 1.1rem;
         }
         .employee-return-note strong { color: #173747; display: block; margin-bottom: .25rem; }
@@ -410,15 +545,302 @@
             margin-top: 1.5rem;
             overflow: hidden;
         }
+        .employee-history-card .employee-workspace-heading {
+            align-items: center;
+            background: linear-gradient(110deg, #f1faf5, #fff 78%);
+            border-bottom-color: #e5eee8;
+        }
+        .employee-history-heading-copy {
+            align-items: center;
+            display: flex;
+            gap: .9rem;
+        }
+        .employee-history-heading-icon,
+        .previous-appraisal-heading-icon {
+            align-items: center;
+            background: #e3f5e9;
+            border: 1px solid #d5eddf;
+            border-radius: 13px;
+            color: #07875f;
+            display: inline-flex;
+            flex: 0 0 44px;
+            height: 44px;
+            justify-content: center;
+            width: 44px;
+        }
+        .employee-history-heading-icon svg,
+        .previous-appraisal-heading-icon svg { height: 22px; width: 22px; }
+        .employee-history-heading-icon .bi,
+        .employee-history-empty-icon .bi,
+        .employee-history-note .bi,
+        .employee-application-heading-icon .bi,
+        .employee-application-icon .bi { font-size: 1.25rem; line-height: 1; }
+        .employee-appraisal-stat-icon .bi { font-size: 1.1rem; line-height: 1; }
+        .role-sidebar-toggle .bi { font-size: 1.25rem; line-height: 1; }
+        .employee-history-heading-copy h2 {
+            color: #173747;
+            font-size: clamp(1.15rem, 2vw, 1.35rem);
+            font-weight: 780;
+            letter-spacing: -.025em;
+            margin: 0 0 .22rem;
+        }
+        .employee-history-heading-copy p { color: #72828b; font-size: .82rem; margin: 0; }
+        .employee-history-card .employee-body { padding: 1.2rem clamp(1rem, 2.2vw, 1.5rem); }
         .employee-history-count {
-            background: #edf2f5;
-            border: 1px solid #dbe4e8;
+            background: #e8f7ef;
+            border: 1px solid #d3eddd;
             border-radius: 999px;
-            color: #23495b;
+            color: #07875f;
             display: inline-flex;
             font-size: .75rem;
             font-weight: 750;
             padding: .35rem .75rem;
+        }
+        .employee-page .previous-appraisal-panel {
+            background: #f8fbf9;
+            border: 1px solid #e1ece5;
+            border-radius: 16px;
+            margin-bottom: 1.25rem;
+            padding: clamp(1rem, 2vw, 1.35rem);
+        }
+        .employee-page .previous-appraisal-heading {
+            align-items: center;
+            display: flex;
+            gap: .85rem;
+            margin-bottom: 1rem;
+        }
+        .employee-page .previous-appraisal-heading h2 {
+            color: #173747;
+            font-size: 1rem;
+            font-weight: 760;
+            margin: 0 0 .25rem;
+        }
+        .employee-page .previous-appraisal-heading p {
+            color: #72828b;
+            font-size: .78rem;
+            line-height: 1.5;
+            margin: 0;
+        }
+        .employee-page .previous-appraisal-form {
+            align-items: end;
+            gap: .85rem;
+            grid-template-columns: minmax(130px, .75fr) minmax(220px, 1.4fr) auto;
+        }
+        .employee-page .previous-appraisal-form > div { min-width: 0; }
+        .employee-page .previous-appraisal-form .form-label {
+            color: #365461;
+            font-size: .76rem;
+            font-weight: 750;
+            margin-bottom: .4rem;
+        }
+        .employee-page .previous-appraisal-form .form-control {
+            background-color: #fff;
+            border-color: #d7e5dc;
+            border-radius: 10px;
+            font-size: .82rem;
+            min-height: 44px;
+        }
+        .employee-page .previous-appraisal-form .form-control:focus {
+            border-color: #5bb686;
+            box-shadow: 0 0 0 .2rem rgba(7, 135, 95, .12);
+        }
+        .employee-page .previous-appraisal-form input[type="file"]::file-selector-button {
+            background: #e8f7ef;
+            border: 0;
+            border-radius: 7px;
+            color: #07875f;
+            font-weight: 700;
+            margin: -.35rem .7rem -.35rem -.35rem;
+            padding: .48rem .7rem;
+        }
+        .employee-page .previous-appraisal-file-hint {
+            color: #72828b;
+            font-size: .72rem;
+            margin-top: .42rem;
+        }
+        .employee-page .previous-appraisal-button {
+            background: #07875f;
+            border-color: #07875f;
+            border-radius: 10px;
+            min-height: 44px;
+            padding-inline: 1rem;
+            transition: background .18s ease, box-shadow .18s ease, transform .18s ease;
+        }
+        .employee-page .previous-appraisal-button:hover {
+            background: #056e4d;
+            border-color: #056e4d;
+            box-shadow: 0 6px 14px rgba(7, 135, 95, .18);
+            transform: translateY(-1px);
+        }
+        .employee-page .previous-appraisal-button-secondary {
+            background: #edf8f1;
+            border-color: #d2e9da;
+            color: #07875f;
+        }
+        .employee-page .previous-appraisal-list {
+            background: #fff;
+            border: 1px solid #e6eee9;
+            border-radius: 12px;
+            margin-top: 1rem;
+            padding: 1rem;
+        }
+        .employee-page .previous-appraisal-list h3 {
+            color: #173747;
+            font-size: .85rem;
+            font-weight: 750;
+            margin: 0 0 .7rem;
+        }
+        .employee-page .previous-appraisal-list .table { font-size: .8rem; }
+        .employee-page .previous-appraisal-list .table th {
+            background: #f7faf8;
+            border-bottom-color: #e7efea;
+            color: #58716a;
+            font-size: .68rem;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+        }
+        .employee-page .previous-appraisal-list .table td { color: #365461; }
+        .employee-history-search .form-label {
+            color: #365461;
+            font-size: .78rem;
+            font-weight: 750;
+        }
+        .employee-history-search .form-control {
+            border-color: #dce8e0;
+            border-radius: 10px;
+            max-width: 520px;
+            min-height: 42px;
+        }
+        .employee-history-card .table-responsive {
+            border: 1px solid #e5ece8;
+            border-radius: 13px;
+            margin-top: .8rem;
+            overflow-x: auto;
+        }
+        .employee-history-card .employee-table th { background: #f7faf8; }
+        .employee-history-card .employee-table td { font-size: .8rem; }
+        .employee-history-card .employee-table .btn {
+            border-radius: 8px;
+            font-weight: 650;
+        }
+        .employee-history-card .employee-table .btn-outline-primary {
+            border-color: #b7ddc5;
+            color: #07875f;
+        }
+        .employee-history-card .employee-table .btn-outline-primary:hover {
+            background: #07875f;
+            border-color: #07875f;
+            color: #fff;
+        }
+        .employee-history-empty {
+            align-items: center;
+            background: #f8fbf9;
+            border: 1px dashed #d6e5dc;
+            border-radius: 14px;
+            color: #365461;
+            display: flex;
+            flex-direction: column;
+            margin-top: 1rem;
+            padding: 2rem 1rem;
+            text-align: center;
+        }
+        .employee-history-empty-icon {
+            align-items: center;
+            background: #e8f7ef;
+            border-radius: 50%;
+            color: #07875f;
+            display: inline-flex;
+            font-size: 1.4rem;
+            height: 42px;
+            justify-content: center;
+            margin-bottom: .65rem;
+            width: 42px;
+        }
+        .employee-history-empty p { color: #72828b; font-size: .8rem; margin: .25rem 0 0; }
+        /* Appraisal history workspace */
+        .employee-page .employee-history-card {
+            background: #fff;
+            border: 1px solid #e2ebe6;
+            border-radius: 16px;
+            box-shadow: 0 12px 30px rgba(20, 45, 60, .06);
+            margin-top: 1rem;
+        }
+        .employee-page .employee-history-card .employee-workspace-heading {
+            background: linear-gradient(110deg, #f1faf5, #fff 78%);
+            border-bottom: 1px solid #e5eee8;
+            min-height: 76px;
+            padding: 1rem 1.3rem;
+        }
+        .employee-page .employee-history-heading-icon { display: inline-flex; }
+        .employee-page .employee-history-heading-copy h2 {
+            color: #18344b;
+            font-size: clamp(1.1rem, 2vw, 1.3rem);
+            font-weight: 760;
+            letter-spacing: -.02em;
+            margin: 0 0 .2rem;
+        }
+        .employee-page .employee-history-heading-copy p { display: block; }
+        .employee-page .employee-history-count { display: inline-flex; }
+        .employee-page .employee-history-card .employee-body {
+            padding: clamp(1rem, 2.2vw, 1.5rem);
+        }
+        .employee-history-note {
+            align-items: center;
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 10px;
+            color: #1d4ed8;
+            display: flex;
+            gap: .65rem;
+            line-height: 1.5;
+            margin: 1rem 0 1.2rem;
+            padding: .85rem 1rem;
+        }
+        .employee-history-note svg { flex: 0 0 20px; height: 20px; }
+        .employee-history-search { margin: 1.2rem 0; }
+        .employee-history-search .form-label { display: block; margin-bottom: .45rem; }
+        .employee-history-search .form-control {
+            background: #fff;
+            border-color: #d9e5de;
+            border-radius: 10px;
+            max-width: 560px;
+            min-height: 46px;
+            padding-inline: .9rem;
+        }
+        .employee-history-search .form-control:focus {
+            border-color: #54ae7c;
+            box-shadow: 0 0 0 .2rem rgba(7, 135, 95, .12);
+        }
+        .employee-page .employee-history-card .table-responsive {
+            border: 1px solid #e5ece8;
+            border-radius: 12px;
+            margin-top: 1.1rem;
+        }
+        .employee-history-card .employee-table th { white-space: nowrap; }
+        .employee-history-card .employee-table td { vertical-align: middle; }
+        .employee-history-empty {
+            background: linear-gradient(180deg, #fff, #fbfdfb);
+            border: 1px solid #e5ece8;
+            border-radius: 14px;
+            justify-content: center;
+            margin-top: 1.2rem;
+            min-height: 320px;
+            padding: 3rem 1rem;
+        }
+        .employee-history-empty-icon {
+            background: #fff7ed;
+            border: 1px solid #ffedd5;
+            color: #f97316;
+            height: 84px;
+            margin-bottom: 1rem;
+            width: 84px;
+        }
+        .employee-history-empty strong { color: #18344b; font-size: 1.15rem; }
+        .employee-history-empty p { font-size: .95rem; line-height: 1.65; max-width: 460px; }
+        @media (max-width: 700px) {
+            .employee-page .employee-history-card .employee-workspace-heading { align-items: flex-start; }
+            .employee-history-note { align-items: flex-start; font-size: .85rem; }
+            .employee-history-empty { min-height: 260px; }
         }
         .employee-table {
             border-collapse: separate;
@@ -456,8 +878,282 @@
             margin-top: .7rem;
             padding: .45rem .85rem;
         }
+        body:has(.employee-page) { background: #f4f7f7; }
+        .employee-page.role-dashboard-shell {
+            background: #f4f7f7;
+        }
+        .employee-page .role-dashboard-sidebar {
+            background: linear-gradient(180deg, #f9fffc 0%, #eef8f3 100%);
+            border-right: 1px solid #dfeae5;
+            color: #315d4d;
+        }
+        .employee-page .role-sidebar-brand {
+            border-bottom-color: #dfeae5;
+            color: #07875f;
+        }
+        .employee-page .role-sidebar-label {
+            color: #7c968b;
+        }
+        .employee-page .role-sidebar-link {
+            color: #668076;
+        }
+        .employee-page .role-sidebar-link:hover,
+        .employee-page .role-sidebar-link.active {
+            background: #e1f3e9;
+            color: #07875f;
+        }
+        .employee-page .role-sidebar-link.active {
+            background: linear-gradient(110deg, #ddfff0, #eefbd7);
+            box-shadow: inset 3px 0 #07875f;
+        }
+        .employee-page .role-sidebar-icon {
+            background: #edf8f1;
+            border-color: #d9ecdf;
+            color: #07875f;
+        }
+        .employee-page .role-sidebar-link-note,
+        .employee-page .role-sidebar-link.active .role-sidebar-link-note,
+        .employee-page .text-white-50 {
+            color: #7c968b !important;
+        }
+        .employee-page .role-sidebar-count {
+            background: #e1f3e9;
+            border-color: #cde8d7;
+            color: #07875f;
+        }
+        .employee-page > .role-dashboard-content {
+            background: #f4f7f7;
+            padding: clamp(1.25rem, 2.5vw, 2rem);
+        }
+        .employee-dashboard-content > header {
+            background: #fff;
+            border: 1px solid #e2eae7;
+            border-radius: 16px;
+            box-shadow: 0 10px 28px rgba(32, 63, 48, .07);
+            margin: 0 0 1.2rem;
+            padding: 1.25rem 1.35rem;
+        }
+        .employee-dashboard-content > header h2 {
+            color: #173747;
+            font-size: clamp(1.25rem, 2vw, 1.55rem);
+            font-weight: 780;
+            letter-spacing: -.03em;
+            margin: 0 0 .25rem;
+        }
+        .employee-dashboard-content > header p {
+            color: #72828b;
+            margin: 0;
+        }
+        .employee-appraisal-stat,
+        .employee-application-list,
+        .employee-history-card {
+            border-color: #e2eae7;
+            box-shadow: 0 8px 24px rgba(32, 63, 48, .06);
+        }
+        .employee-appraisal-stat {
+            border-radius: 14px;
+        }
+        .employee-appraisal-stat-icon {
+            background: #e7f7ef;
+            color: #07875f;
+        }
+        .employee-appraisal-stat:nth-child(2) .employee-appraisal-stat-icon {
+            background: #fff7df;
+            color: #b47a18;
+        }
+        .employee-appraisal-stat:nth-child(3) .employee-appraisal-stat-icon {
+            background: #edf4ff;
+            color: #4b72bd;
+        }
+        .employee-application-progress-fill,
+        .employee-progress-fill { background: linear-gradient(90deg, #07875f, #63c99a); }
+        .employee-action {
+            background: #07875f;
+            border-color: #07875f;
+        }
+        .employee-action:hover {
+            background: #056e4d;
+            border-color: #056e4d;
+        }
+        .employee-action-secondary {
+            background: #edf8f1;
+            border-color: #cfe7d8;
+            color: #07875f;
+        }
+        .employee-action-secondary:hover {
+            background: #e1f3e9;
+            color: #056e4d;
+        }
+        .employee-application-icon {
+            background: #e7f7ef;
+            border-color: #d7eee0;
+            color: #07875f;
+        }
+        .employee-status.is-complete,
+        .employee-history-count,
+        .employee-status.is-submitted {
+            background: #e7f7ef;
+            border-color: #cfe8da;
+            color: #07875f;
+        }
+        .employee-table th {
+            background: #f7faf8;
+        }
+        .employee-table tr:hover td {
+            background: #fbfdfc;
+        }
+        .employee-page .role-sidebar-toggle {
+            background: #07875f;
+            border-color: #07875f;
+        }
+        .employee-page .role-sidebar-nav {
+            background: linear-gradient(180deg, #f9fffc 0%, #eef8f3 100%);
+        }
+        .employee-page .role-sidebar-drawer-brand {
+            border-bottom-color: #dfeae5;
+            color: #07875f;
+        }
+        .employee-page .role-sidebar-drawer-copy small {
+            color: #7c968b;
+        }
+        .employee-page .role-sidebar-close {
+            background: #edf8f1;
+            border-color: #d9ecdf;
+            color: #07875f;
+        }
+        body:has(.employee-page) > .navbar-appraisal {
+            background: linear-gradient(110deg, #ddfff0 0%, #fff8cc 100%);
+            border: 0 !important;
+            border-bottom: 2px solid #07875f !important;
+            box-shadow: 0 3px 14px rgba(32, 63, 48, .08);
+        }
+        body:has(.employee-page) > .navbar-appraisal .navbar-brand {
+            color: #07875f;
+        }
+        body:has(.employee-page) > .navbar-appraisal .navbar-account-toggle {
+            background: rgba(255, 255, 255, .88);
+            border-color: #d5e5d9;
+            color: #315d4d;
+        }
+        body:has(.employee-page) > .navbar-appraisal .navbar-account-toggle:hover,
+        body:has(.employee-page) > .navbar-appraisal .navbar-account-toggle:focus-visible,
+        body:has(.employee-page) > .navbar-appraisal .navbar-account-toggle[aria-expanded="true"] {
+            background: #fff;
+            border-color: #07875f;
+            color: #07875f;
+        }
+        body:has(.employee-page) > .navbar-appraisal .navbar-notifications-toggle {
+            color: #07875f;
+        }
+        body:has(.employee-page) > .navbar-appraisal .navbar-notifications-toggle:hover,
+        body:has(.employee-page) > .navbar-appraisal .navbar-notifications-toggle:focus-visible {
+            background: rgba(255, 255, 255, .75);
+            border-color: #cde8d7;
+            color: #056e4d;
+        }
+        .employee-page.role-dashboard-shell {
+            display: block;
+        }
+        .employee-page .role-dashboard-sidebar {
+            background: linear-gradient(90deg, #00ad78 0%, #009e83 100%);
+            border: 0;
+            border-bottom: 1px solid #057253;
+            box-shadow: 0 5px 16px rgba(7, 135, 95, .12);
+            min-height: 0;
+            padding: .35rem clamp(.75rem, 2vw, 1.5rem);
+            position: relative;
+            width: 100%;
+        }
+        .employee-page .role-sidebar-brand,
+        .employee-page .role-sidebar-label,
+        .employee-page .role-dashboard-sidebar > .text-white-50 {
+            display: none;
+        }
+        .employee-page .role-sidebar-toggle,
+        .employee-page .role-sidebar-backdrop,
+        .employee-page .role-sidebar-drawer-brand {
+            display: none;
+        }
+        .employee-page .role-sidebar-nav {
+            align-content: center;
+            background: transparent;
+            bottom: auto;
+            box-shadow: none;
+            display: flex;
+            flex-wrap: nowrap;
+            gap: .25rem;
+            grid-template-columns: none;
+            left: auto;
+            margin: 0;
+            max-width: none;
+            overflow-x: auto;
+            overflow-y: visible;
+            padding: 0;
+            position: static;
+            transform: none;
+            visibility: visible;
+            width: 100%;
+            z-index: auto;
+        }
+        .employee-page .role-sidebar-link {
+            border-radius: 8px;
+            color: rgba(255, 255, 255, .82);
+            flex: 0 0 auto;
+            gap: .45rem;
+            grid-template-columns: none;
+            min-height: 46px;
+            padding: .45rem .65rem;
+            width: auto;
+        }
+        .employee-page .role-sidebar-link:hover,
+        .employee-page .role-sidebar-link.active {
+            background: rgba(255, 255, 255, .15);
+            color: #fff;
+        }
+        .employee-page .role-sidebar-link.active {
+            box-shadow: inset 0 -3px #fff;
+        }
+        .employee-page .role-sidebar-icon {
+            background: transparent;
+            border: 0;
+            color: #fff;
+            flex-basis: 24px;
+            height: 24px;
+        }
+        .employee-page .role-sidebar-link-copy {
+            display: block;
+        }
+        .employee-page .role-sidebar-link-title {
+            color: inherit;
+            font-size: .82rem;
+        }
+        .employee-page .role-sidebar-link-note {
+            display: none;
+        }
+        .employee-page .role-sidebar-count {
+            background: rgba(255, 255, 255, .18);
+            border-color: rgba(255, 255, 255, .28);
+            color: #fff;
+        }
+        .employee-page > .role-dashboard-content {
+            padding: clamp(1.25rem, 2.5vw, 2rem);
+        }
         @media (max-width: 767.98px) {
             .employee-progress-stages{display:block;overflow-x:auto;padding:.25rem 0 .4rem;}
+            .employee-history-card .employee-workspace-heading { align-items: flex-start; flex-direction: column; }
+            .employee-history-heading-copy { align-items: flex-start; }
+            .employee-page .previous-appraisal-heading { align-items: flex-start; }
+            .employee-page .previous-appraisal-form { grid-template-columns: 1fr; }
+            .employee-page .previous-appraisal-form .previous-appraisal-button { width: 100%; }
+            .employee-page .role-dashboard-sidebar { padding: .1rem .45rem; }
+            .employee-page .role-sidebar-nav { gap: .1rem; }
+            .employee-page .role-sidebar-link {
+                flex: 1 1 0;
+                min-height: 38px;
+                padding: .3rem .45rem;
+                justify-content: center;
+            }
+            .employee-page .role-sidebar-link-title { font-size: .76rem; }
             .employee-page { display: block; }
             .employee-dashboard-content { padding: 1rem; }
             .employee-hero { align-items: flex-start; border-radius: 18px; flex-direction: column; }
@@ -473,11 +1169,21 @@
             .employee-action,
             .employee-action-secondary { width: 100%; }
             .employee-appraisal-stats { grid-template-columns: 1fr; }
-            .employee-application-card { align-items: start; grid-template-columns: auto minmax(0, 1fr); }
-            .employee-application-main { grid-column: 2; }
-            .employee-application-meta { grid-column: 2; }
-            .employee-application-card .employee-actions { grid-column: 1 / -1; }
+            .employee-performance-heading { padding: .95rem 1rem .75rem; }
+            .employee-performance-chart-wrap { height: 280px; padding: .75rem .5rem; }
+            .employee-application-card {
+                gap: .8rem;
+                grid-template-areas: "top" "meta" "progress" "return" "actions";
+                grid-template-columns: minmax(0, 1fr);
+                padding: 1rem;
+            }
+            .employee-application-meta { align-self: stretch; }
+            .employee-application-card .employee-actions { flex-direction: column; }
             .employee-table th, .employee-table td { padding: .65rem .75rem; font-size: .78rem; }
+        }
+        @media (max-width: 360px) {
+            .employee-page .role-dashboard-sidebar { padding-inline: .25rem; }
+            .employee-page .role-sidebar-link { padding-inline: .25rem; }
         }
         @media (prefers-reduced-motion: reduce) {
             .employee-page *,
@@ -488,11 +1194,11 @@
 
     <aside class="role-dashboard-sidebar" aria-label="Employee dashboard navigation">
         <button class="role-sidebar-toggle" type="button" aria-controls="employee-dashboard-navigation" aria-expanded="false" aria-label="Open menu">
-            <span aria-hidden="true">☰</span>
+            <i class="bi bi-list" aria-hidden="true"></i>
         </button>
         <div class="role-sidebar-brand">
             <img class="role-sidebar-mark" src="{% static 'images/mathias-catholic-hospital-logo.png' %}" alt="Mathias Catholic Hospital">
-            <span>Staff Appraisal<br><small class="fw-normal opacity-75">EMPLOYEE WORKSPACE</small></span>
+            <span>Staff Appraisal <br><small class="fw-normal opacity-75">EMPLOYEE WORKSPACE</small></span>
         </div>
 
         <div class="role-sidebar-label">Workspace</div>
@@ -501,22 +1207,20 @@
             <div class="role-sidebar-drawer-brand">
                 <img class="role-sidebar-mark" src="{% static 'images/mathias-catholic-hospital-logo.png' %}" alt="">
                 <span class="role-sidebar-drawer-copy">Mathias Catholic Hospital<small>EMPLOYEE WORKSPACE</small></span>
-                <button class="role-sidebar-close" type="button" aria-label="Close menu" data-sidebar-close>×</button>
+                <button class="role-sidebar-close" type="button" aria-label="Close menu" data-sidebar-close><i class="bi bi-x-lg" aria-hidden="true"></i></button>
             </div>
             <button class="role-sidebar-link active" type="button" data-role-section-target="active">
-                <span class="role-sidebar-icon" aria-hidden="true">◷</span>
+                
                 <span class="role-sidebar-link-copy">
                     <span class="role-sidebar-link-title">Dashboard</span>
-                    <span class="role-sidebar-link-note">Current cycle progress</span>
+                    <!-- <span class="role-sidebar-link-note">Current cycle progress</span> -->
                 </span>
             </button>
             <button class="role-sidebar-link" type="button" data-role-section-target="history">
-                <span class="role-sidebar-icon" aria-hidden="true">▤</span>
                 <span class="role-sidebar-link-copy">
-                    <span class="role-sidebar-link-title">My appraisal </span>
-                    <span class="role-sidebar-link-note">Past cycles and results</span>
+                    <span class="role-sidebar-link-title">Appraisal </span>
+                    
                 </span>
-                <span class="role-sidebar-count">{{ all_appraisals|length }}</span>
             </button>
         </nav>
         <div class="role-sidebar-label">Signed in as </div>
@@ -524,21 +1228,7 @@
     </aside>
 
     <main class="role-dashboard-content employee-dashboard-content">
-    <header class="mt-5">
-        <div class="employee-hero-copy">
-            <!-- <div class="employee-eyebrow">Employee workspace</div> -->
-            <h2>Welcome back, {{ request.user.first_name|default:request.user.username }}</h2>
-            <p>Manage your applications and keep track of important updates.
-
-</p>
-        </div>
-        <!-- {% if active_cycles %}
-            <div class="employee-cycle">
-                Active cycle{{ active_cycles|length|pluralize }} · {% for c in active_cycles %}{{ c.year }}{% if not forloop.last %}, {% endif %}{% endfor %}
-            </div>
-        {% endif %} -->
-    </header>
-
+    
     <section class="role-dashboard-section" data-role-section="active" aria-label="Active appraisals">
     {% if active_appraisal_cards %}
         <!-- <div class="employee-history-search mb-3">
@@ -557,7 +1247,7 @@
         </div> -->
         <div class="employee-appraisal-stats" aria-label="Appraisal summary">
             <article class="employee-appraisal-stat">
-                <span class="employee-appraisal-stat-icon" aria-hidden="true">▤</span>
+                <span class="employee-appraisal-stat-icon" aria-hidden="true"><i class="bi bi-files"></i></span>
                 <div>
                     <span class="employee-appraisal-stat-label">Total appraisals</span>
                     <strong class="employee-appraisal-stat-value">{{ active_appraisal_count }}</strong>
@@ -565,7 +1255,7 @@
                 </div>
             </article>
             <article class="employee-appraisal-stat">
-                <span class="employee-appraisal-stat-icon" aria-hidden="true">◷</span>
+                <span class="employee-appraisal-stat-icon" aria-hidden="true"><i class="bi bi-hourglass-split"></i></span>
                 <div>
                     <span class="employee-appraisal-stat-label">Incomplete</span>
                     <strong class="employee-appraisal-stat-value">{{ incomplete_appraisal_count }}</strong>
@@ -573,7 +1263,7 @@
                 </div>
             </article>
             <article class="employee-appraisal-stat">
-                <span class="employee-appraisal-stat-icon" aria-hidden="true">✓</span>
+                <span class="employee-appraisal-stat-icon" aria-hidden="true"><i class="bi bi-check2-circle"></i></span>
                 <div>
                     <span class="employee-appraisal-stat-label">Submitted</span>
                     <strong class="employee-appraisal-stat-value">{{ submitted_appraisal_count }}</strong>
@@ -581,54 +1271,76 @@
                 </div>
             </article>
         </div>
+    {% else %}
+        <section class="employee-no-cycle">
+            <h2>No active appraisal cycle</h2>
+            <p>Please contact HR for information about the next appraisal cycle.</p>
+        </section>
+    {% endif %}
+        {% if appraisal_trend %}
+            <section class="employee-performance-card" aria-labelledby="employee-performance-heading">
+                <header class="employee-performance-heading">
+                    <div>
+                        <h2 id="employee-performance-heading">Appraisal performance by year</h2>
+                        <p>Final score, returned appraisals, and incomplete work by cycle.</p>
+                    </div>
+                </header>
+                <div class="employee-performance-chart-wrap">
+                    <canvas
+                        id="employee-performance-chart"
+                        role="img"
+                        aria-label="Line chart showing appraisal score, returned appraisals, and incomplete appraisals by year"
+                    ></canvas>
+                    <p class="visually-hidden">
+                        {% for point in appraisal_trend %}
+                            {{ point.year }}:
+                            {% if point.score != None %}score {{ point.score }} percent{% else %}no completed score{% endif %},
+                            {{ point.returned }} returned,
+                            {{ point.incomplete }} incomplete.
+                        {% endfor %}
+                    </p>
+                </div>
+            </section>
+            {{ appraisal_trend|json_script:"employee-appraisal-trend-data" }}
+        {% endif %}
+    {% if active_appraisal_cards %}
         <section class="employee-application-list" aria-labelledby="employee-applications-heading">
             <header class="employee-application-list-heading">
-                <h2 id="employee-applications-heading">My appraisals</h2>
-                <p>Continue a draft or view the progress of a submitted appraisal.</p>
+                <div class="employee-application-list-heading-copy">
+                    <span class="employee-application-heading-icon" aria-hidden="true"><i class="bi bi-clipboard2-check"></i></span>
+                    <div>
+                        <h2 id="employee-applications-heading">My appraisals</h2>
+                        <p>Continue a draft or follow the progress of an appraisal.</p>
+                    </div>
+                </div>
+                <span class="employee-application-cycle-count">
+                    {{ active_appraisal_cards|length }} active cycle{{ active_appraisal_cards|length|pluralize }}
+                </span>
             </header>
         <div id="employee-active-appraisals">
         {% for card in active_appraisal_cards %}
             <article class="employee-application-card" data-search-item>
-                <span class="employee-application-icon" aria-hidden="true">APP</span>
-                <div class="employee-application-main">
-                    <div class="employee-application-title-row">
-                        <span class="employee-status{% if card.appraisal.status == 'returned_employee' or card.appraisal.status == 'returned_supervisor' or card.appraisal.status == 'returned_hod' %} is-returned{% elif card.is_completed %} is-complete{% elif card.appraisal.employee_signed_at %} is-submitted{% else %} is-draft{% endif %}" style="padding:1px 5px">
-                            {{ card.appraisal.status|title }}
-                        </span> 
-                    </div>
-                    <h3> {{ card.cycle.year }} Appraisal</h3>
-                    <p>
-                        {% if card.appraisal.status == 'returned_employee' %}
-                            This appraisal was returned to you for updates.
-                        {% elif card.is_completed %}
-                            Your appraisal review is complete and locked.
-                        {% elif card.appraisal.employee_signed_at %}
-                            Your appraisal is moving through the review process.
-                        {% else %}
-                            Continue a saved application or view its progress.
-                        {% endif %}
-                    </p>
-                    <div class="employee-application-progress">
-                        <div
-                            class="employee-application-progress-track"
-                            role="progressbar"
-                            aria-label="Cycle {{ card.cycle.year }} appraisal progress"
-                            aria-valuemin="0"
-                            aria-valuemax="100"
-                            aria-valuenow="{{ card.progress_percent }}"
-                        >
-                            <div class="employee-application-progress-fill" style="width: {{ card.progress_percent }}%"></div>
+                <div class="employee-application-top">
+                    <span class="employee-application-icon" aria-hidden="true"><i class="bi bi-file-earmark-text"></i></span>
+                    <div class="employee-application-main">
+                        <div class="employee-application-title-row">
+                            <h3>{{ card.cycle.year }} Appraisal</h3>
+                            <span class="employee-status{% if card.appraisal.status == 'returned_employee' or card.appraisal.status == 'returned_supervisor' or card.appraisal.status == 'returned_hod' %} is-returned{% elif card.is_completed %} is-complete{% elif card.appraisal.employee_signed_at %} is-submitted{% elif card.appraisal.status == 'pending_manager' or card.appraisal.status == 'pending_hod' or card.appraisal.status == 'pending_hr' %} is-under-review{% else %} is-draft{% endif %}">
+                                {{ card.appraisal.get_status_display }}
+                            </span>
                         </div>
-                        <span class="employee-application-progress-label">{{ card.progress_percent }}% complete</span>
+                        <p>
+                            {% if card.appraisal.status == 'returned_employee' %}
+                                This appraisal was returned to you for updates.
+                            {% elif card.is_completed %}
+                                Your appraisal review is complete and locked.
+                            {% elif card.appraisal.employee_signed_at %}
+                                Your appraisal is moving through the review process.
+                            {% else %}
+                                Continue a saved application or view its progress.
+                            {% endif %}
+                        </p>
                     </div>
-                    {% if card.appraisal.status == 'returned_employee' and card.latest_return %}
-                        <div class="employee-return-note" role="status">
-                            <strong>Returned by {{ card.latest_return.reviewer_name }} · {{ card.latest_return.get_stage_display }}</strong>
-                            <p>{{ card.latest_return.comment }}</p>
-                            <div class="employee-return-instruction">Update your appraisal, then save and submit it again to your supervisor.</div>
-                        </div>
-                    {% endif %}
-                    
                 </div>
                 <div class="employee-application-meta">
                     <span class="employee-application-meta-label">{% if card.appraisal.employee_signed_at %}Submitted{% else %}Submission status{% endif %}</span>
@@ -640,6 +1352,29 @@
                         {% endif %}
                     </strong>
                 </div>
+                <div class="employee-application-progress">
+                    <div class="employee-application-progress-summary">
+                        <span>Review progress</span>
+                        <span class="employee-application-progress-label">{{ card.progress_percent }}% complete</span>
+                    </div>
+                    <div
+                        class="employee-application-progress-track"
+                        role="progressbar"
+                        aria-label="Cycle {{ card.cycle.year }} appraisal progress"
+                        aria-valuemin="0"
+                        aria-valuemax="100"
+                        aria-valuenow="{{ card.progress_percent }}"
+                    >
+                        <div class="employee-application-progress-fill" style="width: {{ card.progress_percent }}%"></div>
+                    </div>
+                </div>
+                {% if card.appraisal.status == 'returned_employee' and card.latest_return %}
+                    <div class="employee-return-note" role="status">
+                        <strong>Returned by {{ card.latest_return.reviewer_name }} &middot; {{ card.latest_return.get_stage_display }}</strong>
+                        <p>{{ card.latest_return.comment }}</p>
+                        <div class="employee-return-instruction">Update your appraisal, then save and submit it again to your supervisor.</div>
+                    </div>
+                {% endif %}
                 <div class="employee-actions">
                         {% if card.is_editable %}
                             <a href="{% url 'fill_targets_year' card.cycle.year %}" class="employee-action">View {{ card.cycle.year }} Appraisal</a>
@@ -670,26 +1405,28 @@
         {% endfor %}
         </div>
         </section>
-    {% else %}
-        <section class="employee-no-cycle">
-            <h2>No active appraisal cycle</h2>
-            <p>Please contact HR for information about the next appraisal cycle.</p>
-        </section>
     {% endif %}
     </section>
 
     <section class="role-dashboard-section employee-history-card" data-role-section="history" aria-label="Appraisal history" hidden>
         <div class="employee-workspace-heading">
-            <div>
-                <h2>My Appraisal History</h2>
-                <p>Edit drafts or returned appraisals from any cycle, and track submitted and completed records.</p>
+            <div class="employee-history-heading-copy">
+                <span class="employee-history-heading-icon" aria-hidden="true"><i class="bi bi-clock-history"></i></span>
+                <div>
+                    <h2>My Appraisal History</h2>
+                    <p>Review past cycles, scores, and returned work. Upload older appraisals below.</p>
+                </div>
             </div>
             <span class="employee-history-count">{{ all_appraisals|length }} record{{ all_appraisals|length|pluralize }}</span>
         </div>
-        <div class="employee-body" style="padding: 0;">
+        <div class="employee-body">
             {% include 'appraisal/_previous_appraisal_uploads.html' %}
+            <div class="employee-history-note" role="note">
+                <i class="bi bi-info-circle-fill" aria-hidden="true"></i>
+                <span><strong>Note:</strong> Completed appraisals will appear here after the review cycle is approved. Older appraisal documents can be added using the upload form above.</span>
+            </div>
             {% if all_appraisals %}
-                <div class="employee-history-search px-3 pt-3">
+                <div class="employee-history-search">
                     <label for="employee-history-search" class="form-label fw-semibold">Search appraisal history</label>
                     <input
                         id="employee-history-search"
@@ -743,7 +1480,7 @@
                                         {% elif item.status == 'completed' %}
                                             <span style="color: #647b85;">Completed</span>
                                         {% else %}
-                                            <span style="color: #8b9ea7;">—</span>
+                                            <span style="color: #8b9ea7;">&mdash;</span>
                                         {% endif %}
                                     </td>
                                     <td>
@@ -771,12 +1508,132 @@
                     </table>
                 </div>
             {% else %}
-                <div style="padding: 2rem 1.5rem; text-align: center; color: #72828b;">
-                    <p style="margin: 0;">No appraisal records found.</p>
+                <div class="employee-history-empty">
+                    <span class="employee-history-empty-icon" aria-hidden="true"><i class="bi bi-file-earmark-text"></i></span>
+                    <strong>No Appraisals Yet</strong>
+                    <p>Your appraisal records will appear here once a review cycle is available or an older appraisal is uploaded.</p>
                 </div>
             {% endif %}
         </div>
     </section>
     </main>
 </div>
+{% if appraisal_trend %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <script>
+        (() => {
+            const canvas = document.getElementById('employee-performance-chart');
+            const dataNode = document.getElementById('employee-appraisal-trend-data');
+            if (!canvas || !dataNode) return;
+
+            const trend = JSON.parse(dataNode.textContent);
+            if (typeof Chart === 'undefined') {
+                const notice = document.createElement('p');
+                notice.className = 'text-center text-muted small mb-0 py-5';
+                notice.setAttribute('role', 'status');
+                notice.textContent = 'The performance chart could not load. Check your connection and refresh the page.';
+                canvas.replaceWith(notice);
+                return;
+            }
+
+            new Chart(canvas, {
+                type: 'line',
+                data: {
+                    labels: trend.map((point) => point.year),
+                    datasets: [
+                        {
+                            label: 'Score',
+                            data: trend.map((point) => point.score),
+                            yAxisID: 'score',
+                            borderColor: '#07875f',
+                            backgroundColor: 'rgba(7, 135, 95, .1)',
+                            borderWidth: 3,
+                            pointRadius: 4,
+                            pointHoverRadius: 6,
+                            pointBackgroundColor: '#fff',
+                            pointBorderWidth: 2,
+                            tension: .35,
+                            spanGaps: false,
+                        },
+                        {
+                            label: 'Returned',
+                            data: trend.map((point) => point.returned),
+                            yAxisID: 'count',
+                            borderColor: '#c94b55',
+                            backgroundColor: '#c94b55',
+                            borderWidth: 2,
+                            pointRadius: 3,
+                            pointHoverRadius: 5,
+                            tension: .3,
+                        },
+                        {
+                            label: 'Incomplete',
+                            data: trend.map((point) => point.incomplete),
+                            yAxisID: 'count',
+                            borderColor: '#d59a28',
+                            backgroundColor: '#d59a28',
+                            borderWidth: 2,
+                            borderDash: [6, 4],
+                            pointRadius: 3,
+                            pointHoverRadius: 5,
+                            tension: .3,
+                        },
+                    ],
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    responsive: true,
+                    interaction: { intersect: false, mode: 'index' },
+                    animation: { duration: 650, easing: 'easeOutQuart' },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            align: 'end',
+                            labels: {
+                                color: '#526b76',
+                                boxWidth: 8,
+                                padding: 16,
+                                usePointStyle: true,
+                            },
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label(context) {
+                                    const value = context.parsed.y;
+                                    if (value === null) return `${context.dataset.label}: no score`;
+                                    return context.dataset.yAxisID === 'score'
+                                        ? `${context.dataset.label}: ${value.toFixed(1)}%`
+                                        : `${context.dataset.label}: ${value}`;
+                                },
+                            },
+                        },
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#72828b', maxRotation: 0 },
+                        },
+                        score: {
+                            type: 'linear',
+                            position: 'left',
+                            min: 0,
+                            max: 100,
+                            title: { display: true, text: 'Score (%)', color: '#72828b' },
+                            ticks: { color: '#72828b', callback: (value) => `${value}%` },
+                            grid: { color: '#edf2f5' },
+                        },
+                        count: {
+                            type: 'linear',
+                            position: 'right',
+                            beginAtZero: true,
+                            title: { display: true, text: 'Appraisals', color: '#72828b' },
+                            ticks: { color: '#72828b', precision: 0, stepSize: 1 },
+                            grid: { drawOnChartArea: false },
+                        },
+                    },
+                },
+            });
+        })();
+    </script>
+{% endif %}
 {% endblock %}

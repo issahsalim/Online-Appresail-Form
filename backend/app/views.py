@@ -14,6 +14,9 @@ from django.conf import settings
 from django.core.paginator import Paginator
 from django.db import IntegrityError, transaction
 from django.db.models import Case, CharField, Count, F, Q, Value, When
+from PIL import Image
+from django.db import transaction
+from django.db.models import Avg, Case, CharField, Count, F, Q, Value, When
 from django.urls import reverse
 from django.http import FileResponse, Http404, HttpResponseForbidden, JsonResponse
 from django.utils import timezone
@@ -57,6 +60,7 @@ from .forms import (
     HRCommentForm,
     HRDepartmentHodAssignmentForm,
     HRSupervisorAssignmentForm,
+    ProfilePhotoForm,
     SupervisorReportingForm,
     SupervisorCompetencyFormSet,
     SupervisorCompetencyStatementFormSet,
@@ -1090,6 +1094,28 @@ def employee_dashboard(request):
         incomplete=Count('pk', filter=~Q(status='completed')),
         submitted=Count('pk', filter=Q(status='completed')),
     )
+    returned_statuses = (
+        'returned_employee',
+        'returned_supervisor',
+        'returned_hod',
+    )
+    appraisal_trend = list(
+        all_appraisals.order_by()
+        .values('cycle__year')
+        .annotate(
+            score=Avg('overall_percentage', filter=Q(status='completed')),
+            returned=Count('pk', filter=Q(status__in=returned_statuses)),
+            incomplete=Count(
+                'pk',
+                filter=~Q(status='completed') & ~Q(status__in=returned_statuses),
+            ),
+        )
+        .order_by('cycle__year')
+    )
+    for year_data in appraisal_trend:
+        year_data['year'] = year_data.pop('cycle__year')
+        if year_data['score'] is not None:
+            year_data['score'] = round(float(year_data['score']), 2)
 
     return render(request, 'employee/dashboard.html', {
         'active_cycles': active_cycles,
@@ -1097,6 +1123,7 @@ def employee_dashboard(request):
         'active_appraisal_count': appraisal_counts['total'],
         'incomplete_appraisal_count': appraisal_counts['incomplete'],
         'submitted_appraisal_count': appraisal_counts['submitted'],
+        'appraisal_trend': appraisal_trend,
         'assigned_supervisor': assigned_supervisor,
         'all_appraisals': all_appraisals,
         **_previous_appraisal_context(profile),
@@ -1588,20 +1615,54 @@ def fill_targets(request, year=None):
 @login_required
 def profile(request):
     employee_profile = request.user.profile
+    photo_form = ProfilePhotoForm(instance=employee_profile)
     if request.method == 'POST':
-        form = UserProfileForm(
-            request.POST,
-            instance=request.user,
-            profile=employee_profile,
-        )
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Your profile has been updated.")
-            return redirect('profile')
+        if request.POST.get('action') == 'upload_profile_photo':
+            photo_form = ProfilePhotoForm(
+                request.POST,
+                request.FILES,
+                instance=employee_profile,
+            )
+            if photo_form.is_valid():
+                photo_form.save()
+                messages.success(request, "Your profile photo has been updated.")
+                return redirect('profile')
+            form = UserProfileForm(
+                instance=request.user,
+                profile=employee_profile,
+            )
+        else:
+            form = UserProfileForm(
+                request.POST,
+                instance=request.user,
+                profile=employee_profile,
+            )
+            if form.is_valid():
+                form.save()
+                messages.success(request, "Your profile has been updated.")
+                return redirect('profile')
     else:
         form = UserProfileForm(instance=request.user, profile=employee_profile)
 
-    return render(request, 'account/profile.html', {'form': form})
+    return render(request, 'account/profile.html', {
+        'form': form,
+        'photo_form': photo_form,
+    })
+
+
+@login_required
+def profile_photo_file(request):
+    photo = request.user.profile.profile_photo
+    if not photo:
+        raise Http404
+
+    with photo.open('rb') as photo_file:
+        with Image.open(photo_file) as image:
+            content_type = Image.MIME.get(image.format)
+    if content_type is None:
+        raise Http404
+
+    return FileResponse(photo.open('rb'), content_type=content_type)
 
 
 @login_required
@@ -1614,6 +1675,20 @@ def notifications(request):
             read_at__isnull=True,
         ).count(),
     })
+
+
+@login_required
+def notification_status(request):
+    if request.method != 'GET':
+        return JsonResponse({'error': 'Invalid request method.'}, status=405)
+
+    unread_count = AppNotification.objects.filter(
+        recipient=request.user,
+        read_at__isnull=True,
+    ).count()
+    response = JsonResponse({'unread_count': unread_count})
+    response['Cache-Control'] = 'no-store'
+    return response
 
 
 @login_required
