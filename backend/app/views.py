@@ -18,7 +18,7 @@ from PIL import Image
 from django.db import transaction
 from django.db.models import Avg, Case, CharField, Count, F, Q, Value, When
 from django.urls import reverse
-from django.http import FileResponse, Http404, HttpResponseForbidden, JsonResponse
+from django.http import FileResponse, Http404, HttpResponse, HttpResponseForbidden, JsonResponse
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.contrib import messages
@@ -514,10 +514,65 @@ def _save_staff_id_rows(staff_rows):
     return added, updated
 
 
+def _staff_ids_csv_response(staff_ids, filename):
+    response = HttpResponse(content_type='text/csv; charset=utf-8')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    response.write('\ufeff')
+    writer = csv.writer(response)
+    writer.writerow(['staff_id', 'email', 'account_status', 'registered_username'])
+    for staff in staff_ids:
+        values = (
+            staff.name,
+            staff.email,
+            'Registered' if staff.registered_user_id else 'Not registered',
+            staff.registered_user.username if staff.registered_user_id else '',
+        )
+        writer.writerow([
+            f"'{value}" if str(value).lstrip()[:1] in {'=', '+', '-', '@'} else value
+            for value in values
+        ])
+    return response
+
+
+def _staff_id_upload_template_response():
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill
+
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.title = 'Staff IDs'
+    worksheet.append(['staff_id', 'email'])
+    worksheet.freeze_panes = 'A2'
+    worksheet.column_dimensions['A'].width = 24
+    worksheet.column_dimensions['B'].width = 38
+    for cell in worksheet[1]:
+        cell.font = Font(bold=True, color='FFFFFF')
+        cell.fill = PatternFill(fill_type='solid', fgColor='16845D')
+
+    output = io.BytesIO()
+    workbook.save(output)
+    response = HttpResponse(
+        output.getvalue(),
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    )
+    response['Content-Disposition'] = 'attachment; filename="staff_id_upload_template.xlsx"'
+    return response
+
+
 @login_required
 def manage_staff_ids(request):
     if not _can_manage_staff_ids(request.user):
         return HttpResponseForbidden('Only HR and superusers can manage staff IDs.')
+
+    staff_queryset = StaffId.objects.select_related('registered_user').order_by('name')
+    if request.GET.get('download') == 'template':
+        return _staff_id_upload_template_response()
+    if request.GET.get('download') == 'all':
+        return _staff_ids_csv_response(staff_queryset, 'approved_staff_ids.csv')
+    download_id = request.GET.get('download_id')
+    if download_id:
+        staff = get_object_or_404(staff_queryset, pk=download_id)
+        return _staff_ids_csv_response([staff], f'staff_id_{staff.pk}.csv')
 
     entry_form = StaffIdEntryForm()
     upload_form = StaffIdUploadForm()
@@ -547,10 +602,16 @@ def manage_staff_ids(request):
                 )
                 return redirect('manage_staff_ids')
 
+    staff_ids = list(staff_queryset[:200])
+    staff_total = staff_queryset.count()
+    registered_total = staff_queryset.filter(registered_user__isnull=False).count()
     return render(request, 'app/manage_staff_ids.html', {
         'entry_form': entry_form,
         'upload_form': upload_form,
-        'staff_ids': StaffId.objects.select_related('registered_user').order_by('name')[:200],
+        'staff_ids': staff_ids,
+        'staff_total': staff_total,
+        'registered_total': registered_total,
+        'unregistered_total': staff_total - registered_total,
     })
 
 
