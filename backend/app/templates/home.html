@@ -88,8 +88,7 @@
         }
         .hero {
             align-items: center;
-            background: linear-gradient(105deg, rgba(9,43,43,.9) 0%, rgba(11,58,51,.74) 48%, rgba(12,48,42,.28) 100%),
-                url("{% static 'images/heroImage1.webp' %}") center 42% / cover;
+            background: #0b302b;
             color: white;
             display: flex;
             min-height: clamp(620px, calc(100vh - 78px), 760px);
@@ -97,6 +96,41 @@
             padding: 100px 0 118px;
             position: relative;
         }
+        .hero-slides { inset: 0; overflow: hidden; position: absolute; z-index: 0; }
+        .hero-slide {
+            background-position: center 42%;
+            background-size: cover;
+            inset: 0;
+            opacity: 0;
+            position: absolute;
+            transform: scale(1.015);
+            transition: opacity 1.1s ease;
+        }
+        .hero-slide.is-active { animation: hero-image-drift 7s ease-out both; opacity: 1; }
+        .hero::before {
+            background: linear-gradient(105deg, rgba(9,43,43,.9) 0%, rgba(11,58,51,.74) 48%, rgba(12,48,42,.34) 100%);
+            content: "";
+            inset: 0;
+            pointer-events: none;
+            position: absolute;
+            z-index: 1;
+        }
+        .hero > .container { align-self: stretch; display: flex; flex-direction: column; justify-content: center; position: relative; width: 100%; z-index: 2; }
+        .hero-carousel-controls { align-items: center; bottom: 3.2rem; display: flex; gap: .45rem; position: absolute; right: 12px; z-index: 3; }
+        .hero-slide-picker, .hero-slide-toggle {
+            align-items: center;
+            background: rgba(255,255,255,.14);
+            border: 1px solid rgba(255,255,255,.55);
+            color: #fff;
+            display: inline-flex;
+            justify-content: center;
+            transition: background .2s ease, transform .2s ease;
+        }
+        .hero-slide-picker { border-radius: 999px; height: 10px; padding: 0; width: 10px; }
+        .hero-slide-picker[aria-pressed="true"] { background: #bdebd9; border-color: #bdebd9; width: 25px; }
+        .hero-slide-toggle { border-radius: 999px; font-size: .8rem; height: 34px; margin-left: .25rem; width: 34px; }
+        .hero-slide-picker:hover, .hero-slide-toggle:hover { background: #16845d; transform: translateY(-1px); }
+        @keyframes hero-image-drift { from { transform: scale(1.015); } to { transform: scale(1.075); } }
         .hero::after {
             background: #fff;
             border-radius: 50% 50% 0 0 / 42% 42% 0 0;
@@ -107,6 +141,7 @@
             position: absolute;
             transform: rotate(-1deg);
             width: 110%;
+            z-index: 4;
         }
         .eyebrow {
             color: #bdebd9;
@@ -527,6 +562,7 @@
             .hero h1 { font-size: clamp(2.35rem, 11vw, 3.2rem); }
             .hero-copy { font-size: 1rem; }
             .photo-caption { bottom: 12px; left: 12px; }
+            .hero-carousel-controls { bottom: 3rem; right: 18px; }
         }
         @media (prefers-reduced-motion: reduce) {
             html { scroll-behavior: auto; }
@@ -567,7 +603,12 @@ Performance Appraisal System<br><small class="fw-normal opacity-75">Staff perfor
     </nav>
 
     <main>
-        <section class="hero">
+        <section class="hero" aria-roledescription="carousel" aria-label="Hospital team highlights" data-hero-carousel>
+            <div class="hero-slides" aria-hidden="true">
+                <div class="hero-slide is-active" data-hero-slide style="background-image: url('{% static 'images/heroImage1.webp' %}')"></div>
+                <div class="hero-slide" data-hero-slide style="background-image: url('{% static 'images/heroImage2.webp' %}')"></div>
+                <div class="hero-slide" data-hero-slide style="background-image: url('{% static 'images/loginimg.webp' %}')"></div>
+            </div>
             <div class="container position-relative">
                 <div class="row">
                     <div class="col-lg-9 col-xl-8 reveal">
@@ -580,6 +621,12 @@ Performance Appraisal System<br><small class="fw-normal opacity-75">Staff perfor
                         <a class="btn btn-teal btn-lg mt-3" href="{% url 'login' %}">Access your Account <span aria-hidden="true">→</span></a>
                         <p class="hero-note">A secure space for staff, supervisors, department heads and HR.</p>
                     </div>
+                </div>
+                <div class="hero-carousel-controls" role="group" aria-label="Hero slideshow controls">
+                    <button class="hero-slide-picker" type="button" data-hero-slide-picker="0" aria-label="Show slide 1" aria-pressed="true"></button>
+                    <button class="hero-slide-picker" type="button" data-hero-slide-picker="1" aria-label="Show slide 2" aria-pressed="false"></button>
+                    <button class="hero-slide-picker" type="button" data-hero-slide-picker="2" aria-label="Show slide 3" aria-pressed="false"></button>
+                    <button class="hero-slide-toggle" type="button" data-hero-slide-toggle aria-label="Pause automatic slideshow" aria-pressed="false"><i class="bi bi-pause-fill" aria-hidden="true"></i></button>
                 </div>
             </div>
         </section>
@@ -870,6 +917,50 @@ Performance Appraisal System<br><small class="fw-normal opacity-75">Staff perfor
                 });
             }, { threshold: 0.12 });
             items.forEach((item) => observer.observe(item));
+        })();
+
+        (() => {
+            const carousel = document.querySelector('[data-hero-carousel]');
+            if (!carousel) return;
+            const slides = [...carousel.querySelectorAll('[data-hero-slide]')];
+            const pickers = [...carousel.querySelectorAll('[data-hero-slide-picker]')];
+            const toggle = carousel.querySelector('[data-hero-slide-toggle]');
+            const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            let currentIndex = 0;
+            let paused = reducedMotion;
+            let rotationTimer;
+
+            function showSlide(index) {
+                currentIndex = (index + slides.length) % slides.length;
+                slides.forEach((slide, slideIndex) => slide.classList.toggle('is-active', slideIndex === currentIndex));
+                pickers.forEach((picker, pickerIndex) => picker.setAttribute('aria-pressed', String(pickerIndex === currentIndex)));
+            }
+
+            function updateToggle() {
+                toggle.setAttribute('aria-pressed', String(paused));
+                toggle.setAttribute('aria-label', paused ? 'Play automatic slideshow' : 'Pause automatic slideshow');
+                toggle.innerHTML = `<i class="bi ${paused ? 'bi-play-fill' : 'bi-pause-fill'}" aria-hidden="true"></i>`;
+            }
+
+            function startRotation() {
+                window.clearInterval(rotationTimer);
+                if (!paused && !document.hidden) {
+                    rotationTimer = window.setInterval(() => showSlide(currentIndex + 1), 6500);
+                }
+            }
+
+            pickers.forEach((picker) => picker.addEventListener('click', () => {
+                showSlide(Number(picker.dataset.heroSlidePicker));
+                startRotation();
+            }));
+            toggle.addEventListener('click', () => {
+                paused = !paused;
+                updateToggle();
+                startRotation();
+            });
+            document.addEventListener('visibilitychange', startRotation);
+            updateToggle();
+            startRotation();
         })();
 
         const videoModal = document.getElementById('hospitalVideoModal');
