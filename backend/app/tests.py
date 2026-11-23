@@ -1,11 +1,8 @@
 from datetime import datetime
-<<<<<<< Updated upstream
 import io
 import json
 from pathlib import Path
-=======
 from io import BytesIO
->>>>>>> Stashed changes
 import tempfile
 from unittest.mock import MagicMock, patch
 
