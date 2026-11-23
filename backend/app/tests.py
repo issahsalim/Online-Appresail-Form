@@ -1,10 +1,23 @@
 from datetime import datetime
+<<<<<<< Updated upstream
+import io
+import json
+from pathlib import Path
+=======
+from io import BytesIO
+>>>>>>> Stashed changes
 import tempfile
+from unittest.mock import MagicMock, patch
 
+import pyzipper
+
+from PIL import Image
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
 from django.test import override_settings
 from django.contrib.auth.models import User
+from django.contrib.auth.hashers import check_password, make_password
+from django.core import mail
 from django.contrib import admin
 from django.core.exceptions import ValidationError
 from django.test.client import RequestFactory
@@ -22,6 +35,7 @@ from .models import (
     AppraisalCompetencyStatementScore,
     AppNotification,
     AuditLog,
+    BackupRun,
     AppraisalReturn,
     AppraisalTarget,
     AppraisalTraining,
@@ -30,9 +44,489 @@ from .models import (
     Competency,
     Department,
     EmployeeProfile,
+    PasswordResetCode,
     PreviousAppraisal,
+    RegistrationCode,
+    StaffId,
     SupervisorReporting,
 )
+from .backup_service import BackupCreationError, create_encrypted_backup
+from .views import _parse_staff_id_upload
+from .tasks import send_password_reset_code, send_registration_code
+
+
+class BackupArchiveTests(SimpleTestCase):
+    def test_backup_contains_encrypted_database_dump_and_uploaded_files(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            media_root = root / 'media'
+            backup_root = root / 'backups'
+            archive_path = backup_root / 'backup.zip'
+            uploaded_file = media_root / 'appraisals' / 'signed-form.pdf'
+            uploaded_file.parent.mkdir(parents=True)
+            uploaded_file.write_bytes(b'uploaded document')
+            backup_root.mkdir()
+
+            database_settings = {
+                'default': {
+                    'NAME': 'test_database',
+                    'USER': 'test_user',
+                    'PASSWORD': 'test_password',
+                    'HOST': 'localhost',
+                    'PORT': '5432',
+                },
+            }
+
+            fake_process = MagicMock()
+            fake_process.stdout = io.BytesIO(b'fake PostgreSQL dump')
+            fake_process.wait.return_value = 0
+            fake_process.__enter__.return_value = fake_process
+
+            with override_settings(
+                BACKUP_ENCRYPTION_PASSWORD='test-backup-password',
+                BACKUP_ROOT=backup_root,
+                BACKUP_PG_DUMP='pg_dump',
+                DATABASES=database_settings,
+                MEDIA_ROOT=media_root,
+            ), patch('app.backup_service.subprocess.Popen', return_value=fake_process):
+                size, checksum = create_encrypted_backup(archive_path)
+
+            self.assertEqual(size, archive_path.stat().st_size)
+            self.assertEqual(len(checksum), 64)
+            with pyzipper.AESZipFile(archive_path) as archive:
+                archive.setpassword(b'test-backup-password')
+                self.assertEqual(archive.read('database.dump'), b'fake PostgreSQL dump')
+                self.assertEqual(
+                    archive.read('media/appraisals/signed-form.pdf'),
+                    b'uploaded document',
+                )
+                manifest = json.loads(archive.read('manifest.json'))
+                self.assertEqual(manifest['database_name'], 'test_database')
+                self.assertEqual(manifest['media_files'], 1)
+
+    def test_backup_requires_an_encryption_password(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            with override_settings(BACKUP_ENCRYPTION_PASSWORD=''):
+                with self.assertRaisesMessage(
+                    BackupCreationError,
+                    'BACKUP_ENCRYPTION_PASSWORD is not configured.',
+                ):
+                    create_encrypted_backup(Path(temporary_directory) / 'backup.zip')
+
+
+class BackupAccessTests(TestCase):
+    def setUp(self):
+        self.employee_user = User.objects.create_user(
+            username='backup-employee',
+            password='test-password',
+        )
+        EmployeeProfile.objects.create(user=self.employee_user, role='Employee')
+        self.hr_user = User.objects.create_user(
+            username='backup-hr',
+            password='test-password',
+        )
+        EmployeeProfile.objects.create(user=self.hr_user, role='HR')
+
+    def test_only_hr_and_superusers_can_view_backups(self):
+        self.client.force_login(self.employee_user)
+        self.assertEqual(self.client.get(reverse('backup_dashboard')).status_code, 403)
+
+        self.client.force_login(self.hr_user)
+        self.assertEqual(self.client.get(reverse('backup_dashboard')).status_code, 200)
+
+        superuser = User.objects.create_superuser(
+            username='backup-admin',
+            email='admin@example.com',
+            password='test-password',
+        )
+        self.client.force_login(superuser)
+        self.assertEqual(self.client.get(reverse('backup_dashboard')).status_code, 200)
+
+    def test_hr_can_queue_backup_and_start_is_post_only(self):
+        self.client.force_login(self.hr_user)
+        self.assertEqual(self.client.get(reverse('start_backup')).status_code, 405)
+
+        with patch('app.views.create_backup.delay') as queue_backup:
+            response = self.client.post(reverse('start_backup'))
+
+        self.assertRedirects(response, reverse('backup_dashboard'))
+        backup_run = BackupRun.objects.get()
+        self.assertEqual(backup_run.status, 'queued')
+        self.assertEqual(backup_run.requested_by, self.hr_user)
+        queue_backup.assert_called_once_with(backup_run.pk)
+        self.assertTrue(AuditLog.objects.filter(
+            actor=self.hr_user,
+            action='backup_started',
+            object_id=str(backup_run.pk),
+        ).exists())
+
+
+class StaffRegistrationTests(TestCase):
+    def setUp(self):
+        self.hr_user = User.objects.create_user(
+            username='registration-hr',
+            password='test-password',
+        )
+        EmployeeProfile.objects.create(user=self.hr_user, role='HR')
+
+    def test_staff_id_management_is_limited_to_hr_and_superusers(self):
+        employee = User.objects.create_user(
+            username='registration-employee',
+            password='test-password',
+        )
+        EmployeeProfile.objects.create(user=employee, role='Employee')
+        self.client.force_login(employee)
+        self.assertEqual(self.client.get(reverse('manage_staff_ids')).status_code, 403)
+
+        superuser = User.objects.create_superuser(
+            username='registration-admin',
+            password='test-password',
+        )
+        self.client.force_login(superuser)
+        self.assertEqual(self.client.get(reverse('manage_staff_ids')).status_code, 200)
+
+    def test_staff_id_not_added_by_hr_is_rejected_before_email_code(self):
+        with patch('app.views.send_registration_code.delay') as send_code:
+            response = self.client.post(reverse('employee_registration'), {
+                'staff_id': 'NOT-APPROVED',
+            })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'has not been added by HR')
+        self.assertFalse(RegistrationCode.objects.exists())
+        self.assertNotIn('registration_code_id', self.client.session)
+        send_code.assert_not_called()
+
+    def test_already_registered_staff_id_cannot_request_another_account(self):
+        user = User.objects.create_user(
+            username='EMP-ALREADY-REGISTERED',
+            password='test-password',
+        )
+        staff_id = StaffId.objects.create(
+            name=user.username,
+            email='employee@example.org',
+            registered_user=user,
+        )
+
+        with patch('app.views.send_registration_code.delay') as send_code:
+            response = self.client.post(reverse('employee_registration'), {
+                'staff_id': staff_id.name,
+            })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'An account already exists')
+        self.assertFalse(RegistrationCode.objects.filter(staff_id=staff_id).exists())
+        self.assertNotIn('registration_code_id', self.client.session)
+        send_code.assert_not_called()
+
+    def test_staff_id_without_hr_work_email_is_rejected_before_email_code(self):
+        staff_id = StaffId.objects.create(name='EMP-NO-EMAIL')
+
+        with patch('app.views.send_registration_code.delay') as send_code:
+            response = self.client.post(reverse('employee_registration'), {
+                'staff_id': staff_id.name,
+            })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'has not added a work email')
+        self.assertFalse(RegistrationCode.objects.filter(staff_id=staff_id).exists())
+        send_code.assert_not_called()
+
+    @override_settings(MAILERS={
+        'default': {'BACKEND': 'django.core.mail.backends.locmem.EmailBackend'},
+    })
+    def test_verification_email_uses_the_hr_approved_address(self):
+        staff_id = StaffId.objects.create(
+            name='EMP-2004',
+            email='approved@example.org',
+        )
+        registration_code = RegistrationCode.objects.create(
+            staff_id=staff_id,
+            code_hash='unused-in-this-test',
+            expires_at=timezone.now() + timezone.timedelta(minutes=10),
+        )
+
+        result = send_registration_code.run(registration_code.pk, '123456')
+
+        self.assertEqual(result, 'sent')
+        self.assertEqual(mail.outbox[-1].to, ['approved@example.org'])
+        self.assertIn('123456', mail.outbox[-1].body)
+
+    @override_settings(MAILERS={
+        'default': {'BACKEND': 'django.core.mail.backends.locmem.EmailBackend'},
+    })
+    def test_password_reset_email_task_uses_approved_work_email(self):
+        user = User.objects.create_user(
+            username='EMP-RESET-TASK',
+            email='personal@example.org',
+            first_name='Amina',
+            password='old-password',
+        )
+        staff_id = StaffId.objects.create(
+            name=user.username,
+            email='approved@example.org',
+            registered_user=user,
+        )
+        reset_code = PasswordResetCode.objects.create(
+            staff_id=staff_id,
+            code_hash=make_password('123456'),
+            expires_at=timezone.now() + timezone.timedelta(minutes=10),
+        )
+
+        result = send_password_reset_code.run(reset_code.pk, '123456')
+
+        self.assertEqual(result, 'sent')
+        self.assertEqual(mail.outbox[-1].to, ['approved@example.org'])
+        self.assertIn('123456', mail.outbox[-1].body)
+        self.assertIn('Hello Amina', mail.outbox[-1].body)
+        self.assertEqual(len(mail.outbox[-1].alternatives), 1)
+        html_body, content_type = mail.outbox[-1].alternatives[0]
+        self.assertEqual(content_type, 'text/html')
+        self.assertIn('Hello Amina', html_body)
+        self.assertIn('123456', html_body)
+        self.assertIn('cid:password-reset-logo', html_body)
+        logo = next(
+            attachment
+            for attachment in mail.outbox[-1].attachments
+            if hasattr(attachment, 'get')
+            and attachment.get('Content-ID') == '<password-reset-logo>'
+        )
+        self.assertEqual(logo.get_content_type(), 'image/png')
+
+    def test_hr_can_import_staff_id_and_work_email_from_csv(self):
+        self.client.force_login(self.hr_user)
+        upload = SimpleUploadedFile(
+            'staff.csv',
+            b'staff_id,email\nEMP-2001,employee@example.org\n',
+            content_type='text/csv',
+        )
+
+        response = self.client.post(reverse('manage_staff_ids'), {
+            'action': 'upload',
+            'file': upload,
+        })
+
+        self.assertRedirects(response, reverse('manage_staff_ids'))
+        self.assertTrue(StaffId.objects.filter(
+            name='EMP-2001',
+            email='employee@example.org',
+        ).exists())
+
+    def test_hr_can_import_staff_id_and_work_email_from_xlsx(self):
+        from openpyxl import Workbook
+
+        workbook = Workbook()
+        sheet = workbook.active
+        sheet.append(['staff_id', 'email'])
+        sheet.append(['EMP-2002', 'employee2@example.org'])
+        uploaded_content = io.BytesIO()
+        workbook.save(uploaded_content)
+        workbook.close()
+        uploaded_content.seek(0)
+        upload = SimpleUploadedFile(
+            'staff.xlsx',
+            uploaded_content.read(),
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+
+        rows = _parse_staff_id_upload(upload)
+
+        self.assertEqual(rows, [('EMP-2002', 'employee2@example.org')])
+
+    def test_password_reset_uses_staff_id_question_and_email_code(self):
+        user = User.objects.create_user(
+            username='emp-reset-valid',
+            email='valid@example.org',
+            first_name='Amina',
+            password='old-password',
+        )
+        EmployeeProfile.objects.create(
+            user=user,
+            role='Employee',
+            security_question='first_school',
+            security_answer_hash=make_password('marymount'),
+        )
+        staff_id = StaffId.objects.create(
+            name=user.username,
+            email='approved@example.org',
+            registered_user=user,
+        )
+
+        response = self.client.post(reverse('password_reset_request'), {'staff_id': user.username})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Welcome, Amina')
+        self.assertContains(response, 'What was the name of your first school?')
+
+        with patch('app.views.send_password_reset_code.delay') as queue_reset_email, patch(
+            'app.views.secrets.randbelow',
+            return_value=123456,
+        ):
+            response = self.client.post(reverse('password_reset_request'), {
+                'security_answer': 'marymount',
+            })
+        self.assertRedirects(response, reverse('password_reset_request'))
+        queue_reset_email.assert_called_once()
+        reset_code = PasswordResetCode.objects.get(staff_id=staff_id)
+        queue_reset_email.assert_called_once_with(reset_code.pk, '123456')
+        self.assertTrue(check_password('123456', reset_code.code_hash))
+
+        response = self.client.post(reverse('password_reset_request'), {'code': '123456'})
+        self.assertRedirects(response, reverse('password_reset_confirm'))
+        response = self.client.get(reverse('password_reset_confirm'))
+        self.assertTemplateUsed(
+            response,
+            'registration/password_reset_set_password.html',
+        )
+        response = self.client.post(reverse('password_reset_confirm'), {
+            'new_password1': 'New-strong-password-123!',
+            'new_password2': 'New-strong-password-123!',
+        })
+        self.assertRedirects(response, reverse('login'))
+        user.refresh_from_db()
+        self.assertTrue(user.check_password('New-strong-password-123!'))
+        self.assertFalse(PasswordResetCode.objects.filter(staff_id=staff_id).exists())
+
+    def test_password_reset_code_uses_six_pin_slots_and_can_be_resent(self):
+        user = User.objects.create_user(
+            username='emp-reset-resend',
+            first_name='Jordan',
+            password='old-password',
+        )
+        EmployeeProfile.objects.create(
+            user=user,
+            role='Employee',
+            security_question='first_school',
+            security_answer_hash=make_password('marymount'),
+        )
+        staff_id = StaffId.objects.create(
+            name=user.username,
+            email='approved@example.org',
+            registered_user=user,
+        )
+        self.client.post(reverse('password_reset_request'), {'staff_id': user.username})
+
+        with patch('app.views.send_password_reset_code.delay') as queue_reset_email, patch(
+            'app.views.secrets.randbelow',
+            side_effect=[111111, 222222],
+        ):
+            self.client.post(reverse('password_reset_request'), {
+                'security_answer': 'marymount',
+            })
+            original_code = PasswordResetCode.objects.get(staff_id=staff_id)
+            page = self.client.get(reverse('password_reset_request'))
+
+            self.assertContains(page, 'class="password-reset-code-slot"', count=6)
+            self.assertContains(page, 'data-code-pin-input=""')
+            self.assertContains(page, reverse('password_reset_resend_code'))
+
+            response = self.client.post(reverse('password_reset_resend_code'))
+
+            self.assertRedirects(response, reverse('password_reset_request'))
+            original_code.refresh_from_db()
+            self.assertLessEqual(original_code.expires_at, timezone.now())
+            replacement_code = PasswordResetCode.objects.exclude(
+                pk=original_code.pk,
+            ).get(staff_id=staff_id)
+            self.assertEqual(
+                self.client.session['password_reset_code_id'],
+                replacement_code.pk,
+            )
+            queue_reset_email.assert_any_call(original_code.pk, '111111')
+            queue_reset_email.assert_any_call(replacement_code.pk, '222222')
+
+        response = self.client.post(reverse('password_reset_request'), {'code': '111111'})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'That code is incorrect.')
+
+        response = self.client.post(reverse('password_reset_request'), {'code': '222222'})
+        self.assertRedirects(response, reverse('password_reset_confirm'))
+
+    def test_password_reset_does_not_send_code_for_wrong_security_answer(self):
+        user = User.objects.create_user(
+            username='emp-reset-wrong',
+            email='employee@example.org',
+            password='old-password',
+        )
+        EmployeeProfile.objects.create(
+            user=user,
+            role='Employee',
+            security_question='first_school',
+            security_answer_hash=make_password('marymount'),
+        )
+        StaffId.objects.create(
+            name=user.username,
+            email='employee@example.org',
+            registered_user=user,
+        )
+
+        self.client.post(reverse('password_reset_request'), {'staff_id': user.username})
+        response = self.client.post(reverse('password_reset_request'), {
+            'security_answer': 'wrong-answer',
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(PasswordResetCode.objects.exists())
+
+    def test_employee_verifies_work_email_before_account_creation(self):
+        staff_id = StaffId.objects.create(
+            name='EMP-2003',
+            email='approved@example.org',
+        )
+        with patch('app.views.secrets.randbelow', return_value=123456), patch(
+            'app.views.send_registration_code.delay',
+        ) as send_code:
+            response = self.client.post(reverse('employee_registration'), {
+                'staff_id': staff_id.name,
+            })
+
+        self.assertRedirects(response, reverse('verify_registration_code'))
+        registration_code = RegistrationCode.objects.get(staff_id=staff_id)
+        send_code.assert_called_once_with(registration_code.pk, '123456')
+
+        response = self.client.post(reverse('verify_registration_code'), {'code': '123456'})
+        self.assertRedirects(response, reverse('complete_employee_registration'))
+
+        response = self.client.post(reverse('complete_employee_registration'), {
+            'first_name': 'Jordan',
+            'last_name': 'Staff',
+            'security_question': 'first_school',
+            'security_answer': 'River Primary',
+            'password': 'XyZ!very-unique-passphrase-4820',
+            'password_confirm': 'XyZ!very-unique-passphrase-4820',
+        })
+
+        self.assertRedirects(response, reverse('login'))
+        user = User.objects.get(username='EMP-2003')
+        profile = EmployeeProfile.objects.get(user=user)
+        staff_id.refresh_from_db()
+        self.assertEqual(user.email, 'approved@example.org')
+        self.assertEqual(profile.role, 'Employee')
+        self.assertEqual(staff_id.registered_user, user)
+
+    def test_registration_code_can_be_resent_with_a_new_six_digit_code(self):
+        staff_id = StaffId.objects.create(
+            name='EMP-2005',
+            email='approved@example.org',
+        )
+        with patch('app.views.secrets.randbelow', side_effect=[111111, 222222]), patch(
+            'app.views.send_registration_code.delay',
+        ) as send_code:
+            self.client.post(reverse('employee_registration'), {'staff_id': staff_id.name})
+            previous_code = RegistrationCode.objects.get(staff_id=staff_id)
+
+            page = self.client.get(reverse('verify_registration_code'))
+            self.assertContains(page, 'class="staff-registration-code-slot"', count=6)
+            self.assertContains(page, 'autocomplete="one-time-code"')
+            self.assertContains(page, 'name="code"')
+
+            response = self.client.post(reverse('resend_registration_code'))
+
+        self.assertRedirects(response, reverse('verify_registration_code'))
+        previous_code.refresh_from_db()
+        self.assertLessEqual(previous_code.expires_at, timezone.now())
+        replacement_code = RegistrationCode.objects.exclude(pk=previous_code.pk).get(staff_id=staff_id)
+        self.assertEqual(self.client.session['registration_code_id'], replacement_code.pk)
+        send_code.assert_any_call(replacement_code.pk, '222222')
 
 
 class EmployeeAppraisalVisibilityTests(TestCase):
@@ -137,6 +631,30 @@ class EmployeeAppraisalVisibilityTests(TestCase):
         self.assertEqual(response.context['active_appraisal_count'], 3)
         self.assertEqual(response.context['incomplete_appraisal_count'], 2)
         self.assertEqual(response.context['submitted_appraisal_count'], 1)
+
+    def test_dashboard_trend_groups_scores_and_statuses_by_cycle_year(self):
+        returned_cycle = AppraisalCycle.objects.create(year=2023, is_active=False)
+        completed_cycle = AppraisalCycle.objects.create(year=2022, is_active=False)
+        Appraisal.objects.create(
+            employee=self.profile,
+            cycle=returned_cycle,
+            status='returned_employee',
+        )
+        Appraisal.objects.create(
+            employee=self.profile,
+            cycle=completed_cycle,
+            status='completed',
+            overall_percentage='82.50',
+        )
+
+        response = self.client.get(reverse('employee_dashboard'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['appraisal_trend'], [
+            {'year': 2022, 'score': 82.5, 'returned': 0, 'incomplete': 0},
+            {'year': 2023, 'score': None, 'returned': 1, 'incomplete': 0},
+            {'year': 2026, 'score': None, 'returned': 0, 'incomplete': 1},
+        ])
 
     def test_employee_can_view_review_scores_after_submission_without_editing(self):
         response = self.client.get(reverse('fill_targets'))
@@ -296,30 +814,20 @@ class EmployeeAppraisalVisibilityTests(TestCase):
             'body:has(.role-dashboard-shell, .hr-dashboard-shell) > .navbar-appraisal',
         )
 
-    def test_mobile_dashboard_navigation_has_vertical_animated_toggle(self):
+    def test_mobile_dashboard_navigation_stays_compact_and_interactive(self):
         response = self.client.get(reverse('employee_dashboard'))
 
         self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'id="employee-dashboard-navigation"')
+        self.assertContains(response, '@media (max-width: 767.98px)')
+        self.assertContains(response, 'min-height: 38px;')
+        self.assertContains(response, 'flex: 1 1 0;')
+        self.assertContains(response, '@media (max-width: 360px)')
         self.assertContains(
             response,
-            'aria-controls="employee-dashboard-navigation"',
+            "navigationHidden = mobile && !expanded && !shell.classList.contains('employee-page')",
         )
-        self.assertContains(
-            response,
-            '.role-sidebar-nav { display: grid; gap: .55rem; grid-template-columns: minmax(0, 1fr); }',
-        )
-        self.assertContains(response, '.role-dashboard-sidebar.is-expanded .role-sidebar-nav')
-        self.assertContains(response, 'grid-template-columns: minmax(0, 1fr)')
-        self.assertContains(response, 'transform: translateX(-105%)')
-        self.assertContains(response, 'role-sidebar-backdrop')
-        self.assertContains(response, '.role-sidebar-brand { display: none; }')
-        self.assertContains(response, 'role-sidebar-drawer-brand')
-        self.assertContains(response, 'Mathias Catholic Hospital<small>EMPLOYEE WORKSPACE</small>')
-        self.assertContains(response, 'data-sidebar-close')
-        self.assertContains(response, '.role-dashboard-content { padding: 4.75rem 1.1rem 1.1rem; }')
-        self.assertContains(response, 'top: 4.5rem;')
-        self.assertContains(response, "event.key === 'Escape'")
-        self.assertContains(response, 'navigation.inert = mobile && !expanded')
+        self.assertContains(response, 'navigation.inert = navigationHidden')
 
     def test_active_dashboard_shows_only_the_newest_active_cycle(self):
         newer_cycle = AppraisalCycle.objects.create(year=2027, is_active=True)
@@ -632,7 +1140,9 @@ class LoginPageTests(TestCase):
         self.assertContains(response, 'Welcome back')
         self.assertContains(response, 'Staff ID')
         self.assertContains(response, 'name="username"')
+        self.assertContains(response, 'placeholder="Enter your Staff ID"')
         self.assertContains(response, 'name="password"')
+        self.assertContains(response, 'placeholder="Enter your password"')
         self.assertContains(response, 'aria-label="Show password"')
         self.assertContains(response, 'aria-pressed="false"')
         self.assertContains(response, 'name="csrfmiddlewaretoken"')
@@ -659,11 +1169,13 @@ class LoginPageTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'navbar-account-toggle')
         self.assertContains(response, 'navbar-account-menu')
-        self.assertContains(response, 'Staff ID')
+        self.assertContains(response, 'navbar-account-details-copy')
         self.assertContains(response, 'navbar-user')
+        self.assertContains(response, 'Employee')
         self.assertContains(response, 'navbar-account-logout')
-        self.assertContains(response, 'My Profile')
-        self.assertContains(response, 'Log out')
+        self.assertContains(response, 'View profile')
+        self.assertContains(response, 'Change password')
+        self.assertContains(response, 'Sign out')
         self.assertContains(response, f'action="{reverse("logout")}"')
         self.assertContains(response, 'name="csrfmiddlewaretoken"')
 
@@ -681,6 +1193,81 @@ class AccountProfileTests(TestCase):
         )
         self.profile = EmployeeProfile.objects.create(user=self.user)
         self.client.force_login(self.user)
+
+    def make_profile_photo(self, extra_bytes=b''):
+        image_buffer = BytesIO()
+        Image.new('RGB', (2, 2), color=(20, 160, 90)).save(
+            image_buffer,
+            format='PNG',
+        )
+        return SimpleUploadedFile(
+            'profile.png',
+            image_buffer.getvalue() + extra_bytes,
+            content_type='image/png',
+        )
+
+    def test_profile_shows_name_initials_when_no_photo_is_uploaded(self):
+        self.user.first_name = 'Jordan'
+        self.user.last_name = 'Smith'
+        self.user.save(update_fields=['first_name', 'last_name'])
+
+        response = self.client.get(reverse('profile'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '<span class="profile-avatar-initials"')
+        self.assertContains(response, 'JS')
+        self.assertNotContains(response, '<img class="profile-avatar-image"')
+        self.assertEqual(
+            self.client.get(reverse('profile_photo_file')).status_code,
+            404,
+        )
+
+    def test_employee_can_upload_a_profile_photo(self):
+        with tempfile.TemporaryDirectory() as media_root:
+            with override_settings(MEDIA_ROOT=media_root):
+                response = self.client.post(reverse('profile'), {
+                    'action': 'upload_profile_photo',
+                    'profile_photo': self.make_profile_photo(),
+                })
+
+                self.assertRedirects(response, reverse('profile'))
+                self.profile.refresh_from_db()
+                self.assertTrue(self.profile.profile_photo.name.startswith(
+                    'profile_photos/',
+                ))
+                self.assertTrue(self.profile.profile_photo.storage.exists(
+                    self.profile.profile_photo.name,
+                ))
+
+                response = self.client.get(reverse('profile'))
+
+                self.assertContains(response, '<img class="profile-avatar-image"')
+                self.assertNotContains(response, '<span class="profile-avatar-initials"')
+                photo_response = self.client.get(reverse('profile_photo_file'))
+                self.assertEqual(photo_response.status_code, 200)
+                self.assertEqual(photo_response['Content-Type'], 'image/png')
+                photo_response.close()
+
+    def test_profile_photo_upload_rejects_non_images_and_files_over_five_mb(self):
+        invalid_uploads = (
+            SimpleUploadedFile(
+                'not-an-image.png',
+                b'not an image',
+                content_type='image/png',
+            ),
+            self.make_profile_photo(extra_bytes=b'\0' * (5 * 1024 * 1024)),
+        )
+        for upload in invalid_uploads:
+            with self.subTest(filename=upload.name):
+                response = self.client.post(reverse('profile'), {
+                    'action': 'upload_profile_photo',
+                    'profile_photo': upload,
+                })
+
+                self.assertEqual(response.status_code, 200)
+                self.assertContains(response, '<p class="profile-photo-error">')
+                self.profile.refresh_from_db()
+                self.assertFalse(self.profile.profile_photo)
 
     def test_user_can_update_personal_profile_fields(self):
         response = self.client.post(reverse('profile'), {
@@ -929,6 +1516,30 @@ class InAppNotificationTests(TestCase):
         self.assertContains(response, '1 unread')
         self.assertContains(response, 'Unread update')
         self.assertNotContains(response, 'Private update')
+
+    def test_notification_status_returns_only_signed_in_users_unread_count(self):
+        AppNotification.objects.create(
+            recipient=self.user,
+            title='Unread update',
+            message='New appraisal update.',
+        )
+        AppNotification.objects.create(
+            recipient=self.user,
+            title='Read update',
+            message='Already read.',
+            read_at=timezone.now(),
+        )
+        AppNotification.objects.create(
+            recipient=self.other_user,
+            title='Private update',
+            message='Only another user should see this.',
+        )
+
+        response = self.client.get(reverse('notification_status'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {'unread_count': 1})
+        self.assertEqual(response['Cache-Control'], 'no-store')
 
     def test_opening_notification_marks_only_own_notification_read(self):
         notification = AppNotification.objects.create(
@@ -3668,6 +4279,13 @@ class PreviousAppraisalWorkflowTests(TestCase):
         EmployeeProfile.objects.create(user=self.hr_user, role='HR')
         self.client.force_login(self.employee_user)
 
+    def test_employee_file_picker_advertises_supported_document_formats(self):
+        response = self.client.get(reverse('employee_dashboard'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'accept=".pdf,.doc,.docx,application/pdf')
+        self.assertContains(response, 'Accepted formats: PDF, DOC, or DOCX.')
+
     def upload_file(self, name='old-appraisal.pdf'):
         return SimpleUploadedFile(
             name,
@@ -3696,6 +4314,8 @@ class PreviousAppraisalWorkflowTests(TestCase):
 
         response = self.client.get(reverse('employee_dashboard'))
         self.assertContains(response, 'Pending review')
+        self.assertContains(response, 'accept=".pdf,.doc,.docx,application/pdf')
+        self.assertContains(response, 'Accepted formats: PDF, DOC, or DOCX.')
         self.assertNotContains(
             response,
             reverse('previous_appraisal_file', args=[appraisal.pk]),

@@ -10,140 +10,93 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         :root {
-            --ink: #102b3c;
-            --navy: #092b46;
-            --teal: #16b8a6;
-            --mint: #e9f8f5;
-            --muted: #647784;
+            --ink: #183330;
+            --navy: #103b37;
+            --teal: #148968;
+            --mint: #edf6f0;
+            --muted: #667873;
+            --accent: #bd3f4d;
         }
 
-        html { overflow-x: clip; scroll-behavior: smooth; }
+        html { scroll-behavior: smooth; }
         body {
             color: var(--ink);
             font-family: Inter, "Segoe UI", Arial, sans-serif;
             margin: 0;
             background: #fff;
-            overflow-x: clip;
         }
         a { text-decoration: none; }
         .site-nav {
-            background: rgba(8, 35, 56, .94);
+            background: rgba(255,255,255,.97);
             backdrop-filter: blur(14px);
+            border-bottom: 1px solid #e7eee9;
+            box-shadow: 0 5px 22px rgba(20, 54, 43, .06);
             left: 0;
-            position: absolute;
+            position: sticky;
             right: 0;
             top: 0;
-            z-index: 5;
+            z-index: 20;
         }
         .brand-mark {
             align-items: center;
-            color: white;
+            color: #174b3e;
             display: inline-flex;
-            flex: 0 1 auto;
             font-size: .88rem;
             font-weight: 750;
             gap: .75rem;
             letter-spacing: .02em;
-            min-width: 0;
         }
-        .brand-copy { display: block; font-size: clamp(.76rem, 1.35vw, 1.12rem); line-height: 1.2; min-width: 0; }
-        .brand-copy small { display: inline-block; font-size: clamp(.62rem, 1vw, .78rem); line-height: 1.25; }
         .brand-symbol {
             align-items: center;
+            background: #e3f2e8;
+            border-radius: 12px;
+            color: #16845d;
             display: inline-flex;
+            font-size: 1.2rem;
             height: 42px;
             justify-content: center;
-            object-fit: contain;
             width: 42px;
         }
         .nav-link-custom {
-            color: rgba(255,255,255,.78);
-            font-size: .9rem;
+            color: #435b51;
+            font-size: .78rem;
             font-weight: 600;
+            letter-spacing: .075em;
             margin: 0 .65rem;
+            text-transform: uppercase;
+            transition: color .18s ease;
         }
-        .nav-link-custom:hover { color: white; }
+        .nav-link-custom:hover { color: #148968; }
+        .site-nav .navbar-toggler { color: #174b3e; }
+        .site-nav .navbar-toggler-icon {
+            filter: brightness(0) saturate(100%) invert(27%) sepia(22%) saturate(934%) hue-rotate(103deg) brightness(93%) contrast(89%);
+        }
         .btn-teal {
-            background: var(--teal);
+            background: var(--accent);
             border: 0;
-            border-radius: 999px;
-            color: #062d3a;
+            border-radius: 8px;
+            color: #fff;
             font-weight: 750;
             padding: .8rem 1.35rem;
             transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
         }
         .btn-teal:hover {
-            background: #35d2bf;
-            box-shadow: 0 12px 28px rgba(22,184,166,.24);
-            color: #062d3a;
+            background: #9f3040;
+            box-shadow: 0 12px 28px rgba(189,63,77,.22);
+            color: #fff;
             transform: translateY(-2px);
         }
         .hero {
             align-items: center;
-<<<<<<< Updated upstream
-            background: linear-gradient(110deg, rgba(5,31,54,.95) 0%, rgba(7,45,70,.83) 49%, rgba(7,43,62,.35) 100%),
+            background: linear-gradient(105deg, rgba(9,43,43,.9) 0%, rgba(11,58,51,.74) 48%, rgba(12,48,42,.28) 100%),
                 url("{% static 'images/heroImage1.webp' %}") center 42% / cover;
             color: white;
             display: flex;
-            min-height: 690px;
-=======
-            background: #0b302b;
-            color: white;
-            display: flex;
-            isolation: isolate;
             min-height: clamp(620px, calc(100vh - 78px), 760px);
->>>>>>> Stashed changes
             overflow: hidden;
-            padding: 135px 0 100px;
+            padding: 100px 0 118px;
             position: relative;
         }
-        .hero::before {
-            background: linear-gradient(105deg, rgba(9,43,43,.9) 0%, rgba(11,58,51,.74) 48%, rgba(12,48,42,.28) 100%);
-            content: "";
-            inset: 0;
-            pointer-events: none;
-            position: absolute;
-            z-index: 1;
-        }
-        .hero-slides { inset: 0; position: absolute; z-index: 0; }
-        .hero-slide {
-            background-position: center 42%;
-            background-size: cover;
-            inset: 0;
-            opacity: 0;
-            position: absolute;
-            transition: opacity 1.25s ease-in-out;
-        }
-        .hero-slide.is-active { opacity: 1; }
-        .hero > .container { position: relative; z-index: 2; }
-        .hero-carousel-controls { align-items: center; display: flex; gap: .55rem; margin-top: 1.35rem; }
-        .hero-carousel-dot {
-            background: rgba(255,255,255,.58);
-            border: 0;
-            border-radius: 999px;
-            height: 8px;
-            padding: 0;
-            transition: background .2s ease, width .2s ease;
-            width: 8px;
-        }
-        .hero-carousel-dot[aria-pressed="true"] { background: #fff; width: 26px; }
-        .hero-carousel-toggle {
-            background: rgba(255,255,255,.12);
-            border: 1px solid rgba(255,255,255,.38);
-            border-radius: 999px;
-            color: #fff;
-            font-size: .72rem;
-            font-weight: 650;
-            margin-left: .3rem;
-            min-height: 34px;
-            padding: .35rem .75rem;
-            transition: background .18s ease;
-        }
-        .hero-carousel-toggle:hover { background: rgba(255,255,255,.22); }
-        .hero-carousel-controls button:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
-        .hero-slide:nth-child(1) { background-image: url("{% static 'images/heroImage1.webp' %}"); }
-        .hero-slide:nth-child(2) { background-image: url("{% static 'images/heroImage2.webp' %}"); }
-        .hero-slide:nth-child(3) { background-image: url("{% static 'images/staff-colla1.webp' %}"); }
         .hero::after {
             background: #fff;
             border-radius: 50% 50% 0 0 / 42% 42% 0 0;
@@ -154,10 +107,9 @@
             position: absolute;
             transform: rotate(-1deg);
             width: 110%;
-            z-index: 3;
         }
         .eyebrow {
-            color: #77ead9;
+            color: #bdebd9;
             font-size: .78rem;
             font-weight: 800;
             letter-spacing: .18em;
@@ -182,9 +134,9 @@
             font-size: .88rem;
             margin-top: 1.15rem;
         }
-        .section-pad { padding: 100px 0; }
+        .section-pad { padding: clamp(72px, 8vw, 112px) 0; }
         .section-kicker {
-            color: #139b8e;
+            color: #16845d;
             font-size: .76rem;
             font-weight: 800;
             letter-spacing: .16em;
@@ -199,23 +151,58 @@
         }
         .section-copy { color: var(--muted); line-height: 1.8; }
         .photo-frame {
-            border-radius: 28px;
-            box-shadow: 0 24px 70px rgba(12,48,68,.16);
+            border: 1px solid #e5eee8;
+            border-radius: 18px;
+            box-shadow: 0 22px 58px rgba(20, 54, 43, .13);
             overflow: hidden;
             position: relative;
         }
         .photo-frame img {
             display: block;
-            height: clamp(270px, 38vw, 440px);
+            height: 440px;
             object-fit: cover;
             width: 100%;
         }
+        .photo-video-trigger {
+            align-items: center;
+            background: var(--accent);
+            border: 0;
+            border-radius: 50%;
+            box-shadow: 0 12px 30px rgba(37, 31, 31, .3);
+            display: flex;
+            height: 76px;
+            justify-content: center;
+            left: 50%;
+            padding: 0;
+            position: absolute;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            transition: background .2s ease, box-shadow .2s ease, transform .2s ease;
+            width: 76px;
+            z-index: 1;
+        }
+        .photo-video-trigger::before {
+            border-bottom: 12px solid transparent;
+            border-left: 18px solid #fff;
+            border-top: 12px solid transparent;
+            content: "";
+            margin-left: 5px;
+        }
+        .photo-video-trigger:hover {
+            background: #9f3040;
+            box-shadow: 0 16px 36px rgba(37, 31, 31, .38);
+            transform: translate(-50%, -50%) scale(1.06);
+        }
+        .photo-video-trigger:focus-visible {
+            outline: 3px solid #fff;
+            outline-offset: 4px;
+        }
         .photo-caption {
             background: white;
-            border: 1px solid rgba(10,47,68,.08);
-            border-radius: 16px;
+            border: 1px solid #e6eee8;
+            border-radius: 12px;
             bottom: 20px;
-            box-shadow: 0 12px 32px rgba(10,47,68,.12);
+            box-shadow: 0 12px 32px rgba(20, 54, 43, .12);
             left: 20px;
             max-width: calc(100% - 40px);
             padding: 1rem 1.15rem;
@@ -223,7 +210,123 @@
         }
         .photo-caption strong { color: var(--navy); display: block; }
         .photo-caption span { color: var(--muted); font-size: .86rem; }
-        .how-section { background: #f2faf9; }
+        .video-modal .modal-content {
+            background: #0c302e;
+            border: 0;
+            border-radius: 18px;
+            color: #fff;
+            overflow: hidden;
+        }
+        .video-modal .modal-header { padding: 1.25rem 1.5rem 0; }
+        .video-modal .modal-body { padding: 1rem 1.5rem 1.5rem; }
+        .video-modal .btn-close { filter: invert(1); opacity: .8; }
+        .video-player-ratio {
+            aspect-ratio: 16 / 9;
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .video-player-ratio iframe {
+            border: 0;
+            height: 100%;
+            width: 100%;
+        }
+        #purpose, #features, #process, #team, #stats, #insights {
+            scroll-margin-top: 88px;
+        }
+        .feature-section, .role-section { background: #fff; }
+        .feature-card, .role-card, .insight-card {
+            background: #fff;
+            border: 1px solid #e5eee8;
+            border-radius: 16px;
+            height: 100%;
+            padding: 1.6rem;
+            transition: box-shadow .25s ease, transform .25s ease;
+        }
+        .feature-card, .role-card {
+            box-shadow: 0 10px 28px rgba(20, 54, 43, .06);
+        }
+        .feature-card:hover, .role-card:hover, .insight-card:hover {
+            box-shadow: 0 18px 38px rgba(20, 54, 43, .12);
+            transform: translateY(-5px);
+        }
+        .feature-index, .role-mark {
+            align-items: center;
+            background: #e3f2e8;
+            border-radius: 12px;
+            color: #16845d;
+            display: inline-flex;
+            font-size: .82rem;
+            font-weight: 800;
+            height: 48px;
+            justify-content: center;
+            margin-bottom: 1.2rem;
+            width: 48px;
+        }
+        .feature-card h3, .role-card h3, .insight-card h3 {
+            color: var(--navy);
+            font-size: 1.15rem;
+            font-weight: 750;
+            margin-bottom: .7rem;
+        }
+        .feature-card p, .role-card p, .insight-card p {
+            color: var(--muted);
+            line-height: 1.7;
+            margin-bottom: 0;
+        }
+        .role-section { background: #f2f8f4; }
+        .role-card { border-color: #e4eee7; }
+        .role-mark {
+            background: var(--navy);
+            border-radius: 50%;
+            color: #bdebd9;
+        }
+        .stats-section {
+            background: radial-gradient(circle at 85% 15%, rgba(20,137,104,.2), transparent 28%), var(--navy);
+            color: #fff;
+            overflow: hidden;
+            padding: clamp(72px, 8vw, 104px) 0;
+        }
+        .stats-section .section-title { color: #fff; }
+        .stats-intro {
+            color: rgba(255,255,255,.72);
+            line-height: 1.7;
+            margin: 0 auto;
+            max-width: 650px;
+        }
+        .stat-item {
+            padding: .8rem 1.5rem;
+            text-align: center;
+        }
+        .stat-item + .stat-item { border-left: 1px solid rgba(255,255,255,.16); }
+        .stat-value {
+            color: #bdebd9;
+            display: block;
+            font-size: clamp(2.8rem, 5vw, 4rem);
+            font-weight: 800;
+            letter-spacing: -.05em;
+            line-height: 1;
+            margin-bottom: .75rem;
+        }
+        .stat-label { font-weight: 750; margin-bottom: .35rem; }
+        .stat-note { color: rgba(255,255,255,.68); font-size: .9rem; margin: 0; }
+        .insights-section { background: #f2f8f4; }
+        .insight-card {
+            box-shadow: 0 10px 28px rgba(20, 54, 43, .05);
+            padding: 1.7rem;
+        }
+        .insight-label {
+            color: #16845d;
+            display: block;
+            font-size: .7rem;
+            font-weight: 800;
+            letter-spacing: .14em;
+            margin-bottom: .9rem;
+            text-transform: uppercase;
+        }
+        .insights-link { color: #147c5e; font-weight: 750; }
+        .insights-link:hover { color: #0e5f47; }
+        .how-section { background: #f2f8f4; }
         .appraisal-timeline {
             height: 390px;
             margin: 1rem auto 0;
@@ -239,7 +342,7 @@
         }
         .timeline-curve path {
             fill: none;
-            stroke: #19b9a7;
+            stroke: #148968;
             stroke-linecap: round;
             stroke-width: 5;
         }
@@ -260,10 +363,10 @@
         .timeline-marker {
             align-items: center;
             background: #fff;
-            border: 5px solid #bcece5;
+            border: 5px solid #cfe9d9;
             border-radius: 50%;
-            box-shadow: 0 8px 24px rgba(9, 43, 70, .12);
-            color: #087b74;
+            box-shadow: 0 8px 24px rgba(16, 59, 55, .12);
+            color: #148968;
             display: flex;
             font-size: .87rem;
             font-weight: 800;
@@ -284,7 +387,7 @@
         .timeline-stage:nth-child(odd) .timeline-copy { bottom: calc(100% + 17px); }
         .timeline-stage:nth-child(even) .timeline-copy { top: calc(100% + 17px); }
         .timeline-role {
-            color: #128f83;
+            color: #16845d;
             display: block;
             font-size: .72rem;
             font-weight: 800;
@@ -305,7 +408,7 @@
             margin: 0;
         }
         .closing {
-            background: radial-gradient(circle at 85% 20%, rgba(22,184,166,.22), transparent 28%), var(--navy);
+            background: radial-gradient(circle at 85% 20%, rgba(20,137,104,.2), transparent 28%), var(--navy);
             color: white;
             overflow: hidden;
             padding: 116px 0 76px;
@@ -320,14 +423,14 @@
         }
         .closing p { color: rgba(255,255,255,.76); line-height: 1.75; max-width: 600px; }
         footer {
-            background: #061e32;
+            background: #0a2e2c;
             color: rgba(255,255,255,.68);
-            overflow-x: clip;
+            overflow: hidden;
             padding: 72px 0 28px;
             position: relative;
         }
         footer::before {
-            background: #061e32;
+            background: #0a2e2c;
             border-radius: 50% 50% 0 0 / 100% 100% 0 0;
             content: "";
             height: 72px;
@@ -340,64 +443,20 @@
         footer strong { color: white; }
         .reveal { opacity: 0; transform: translateY(22px); transition: opacity .7s ease, transform .7s ease; }
         .reveal.is-visible { opacity: 1; transform: translateY(0); }
-
-        @media (min-width: 768px) and (max-width: 991.98px) {
-            .appraisal-timeline { height: auto; margin: 2rem 0 0; }
-            .timeline-curve { display: none; }
-            .timeline-stages { height: auto; padding-left: 76px; }
-            .timeline-stages::before {
-                background: linear-gradient(#148968, #cfe9d9);
-                border-radius: 4px;
-                bottom: 30px;
-                content: "";
-                left: 27px;
-                position: absolute;
-                top: 28px;
-                width: 4px;
-            }
-            .timeline-stage {
-                left: auto;
-                margin-bottom: 2.1rem;
-                min-height: 66px;
-                position: relative;
-                top: auto;
-                transform: none;
-                width: auto;
-            }
-            .timeline-stage:last-child { margin-bottom: 0; }
-            .timeline-marker { height: 54px; left: -76px; margin: 0; position: absolute; top: 0; width: 54px; }
-            .timeline-copy,
-            .timeline-stage:nth-child(odd) .timeline-copy,
-            .timeline-stage:nth-child(even) .timeline-copy {
-                left: auto;
-                position: static;
-                text-align: left;
-                transform: none;
-                width: auto;
-            }
-        }
+        .feature-card.reveal.is-visible:hover,
+        .role-card.reveal.is-visible:hover,
+        .insight-card.reveal.is-visible:hover { transform: translateY(-5px); }
+        .reveal-delay-1 { transition-delay: .08s; }
+        .reveal-delay-2 { transition-delay: .16s; }
+        .reveal-delay-3 { transition-delay: .24s; }
 
         @media (max-width: 767.98px) {
-<<<<<<< Updated upstream
-            .site-nav { position: absolute; }
-            .hero { min-height: 650px; padding-top: 130px; }
+            .site-nav { position: sticky; }
+            .hero { min-height: 650px; padding: 82px 0 100px; }
             .hero h1 { max-width: 560px; }
             .section-pad { padding: 72px 0; }
-            .section-pad .row.g-5 { --bs-gutter-x: 1.5rem; }
-            .photo-frame img { height: 330px; }
-=======
-            .site-nav { position: sticky; }
-            .site-nav .container { gap: .35rem; }
-            .brand-mark { gap: .5rem; max-width: calc(100% - 52px); }
-            .brand-symbol { flex: 0 0 38px; height: 38px; width: 38px; }
-            .brand-copy { font-size: clamp(.7rem, 3.2vw, .95rem); letter-spacing: 0; overflow-wrap: anywhere; }
-            .brand-copy small { font-size: clamp(.56rem, 2.45vw, .68rem); }
-            .site-nav .navbar-toggler { flex: 0 0 auto; padding: .3rem; }
-            .hero { min-height: max(520px, calc(100svh - 64px)); padding: 72px 0 92px; }
-            .hero h1 { max-width: 560px; }
-            .section-pad { padding: clamp(48px, 12vw, 72px) 0; }
             #purpose .row { --bs-gutter-x: 1.5rem; }
-            .photo-frame img { height: clamp(235px, 72vw, 330px); }
+            .photo-frame img { height: 330px; }
             .photo-video-trigger { height: 64px; width: 64px; }
             .video-modal .modal-header { padding: 1rem 1rem 0; }
             .video-modal .modal-body { padding: .75rem 1rem 1rem; }
@@ -406,9 +465,7 @@
                 border-left: 0;
                 border-top: 1px solid rgba(255,255,255,.16);
             }
->>>>>>> Stashed changes
             .nav-link-custom { margin: .45rem 0; }
-            .btn-teal { max-width: 100%; white-space: normal; }
             .appraisal-timeline { height: auto; margin: 2rem 0 0; }
             .timeline-curve { display: none; }
             .timeline-stages {
@@ -416,7 +473,7 @@
                 padding-left: 76px;
             }
             .timeline-stages::before {
-                background: linear-gradient(#19b9a7, #bcece5);
+                background: linear-gradient(#148968, #cfe9d9);
                 border-radius: 4px;
                 bottom: 30px;
                 content: "";
@@ -457,8 +514,6 @@
             footer { padding-top: 60px; }
             footer::before { height: 58px; top: -28px; }
         }
-<<<<<<< Updated upstream
-=======
         @media (min-width: 992px) {
             #purpose .row > .col-lg-6:first-child { order: 2; }
             #purpose .row > .col-lg-6:last-child {
@@ -468,55 +523,32 @@
             }
         }
         @media (max-width: 480px) {
-            .hero { min-height: max(500px, calc(100svh - 62px)); padding: 64px 0 84px; }
-            .hero h1 { font-size: clamp(2.1rem, 10.5vw, 3.2rem); }
+            .hero { min-height: 620px; padding: 72px 0 92px; }
+            .hero h1 { font-size: clamp(2.35rem, 11vw, 3.2rem); }
             .hero-copy { font-size: 1rem; }
-            .photo-caption { bottom: 12px; left: 12px; max-width: calc(100% - 24px); padding: .75rem .85rem; }
-            .feature-card, .role-card, .insight-card { padding: 1.2rem; }
-            .closing { padding-bottom: 60px; }
-            footer .container { overflow-wrap: anywhere; }
+            .photo-caption { bottom: 12px; left: 12px; }
         }
-        @media (max-width: 360px) {
-            .brand-mark { gap: .4rem; }
-            .brand-symbol { flex-basis: 32px; height: 32px; width: 32px; }
-            .brand-copy { font-size: .67rem; }
-            .brand-copy small { font-size: .54rem; }
-            .hero h1 { font-size: clamp(1.95rem, 10vw, 2.35rem); }
-            .timeline-stages { padding-left: 64px; }
-            .timeline-stages::before { left: 22px; }
-            .timeline-marker { height: 46px; left: -64px; width: 46px; }
-        }
->>>>>>> Stashed changes
         @media (prefers-reduced-motion: reduce) {
             html { scroll-behavior: auto; }
             *, *::before, *::after {
                 animation-duration: .01ms !important;
                 animation-iteration-count: 1 !important;
                 scroll-behavior: auto !important;
+                transition-delay: 0s !important;
                 transition-duration: .01ms !important;
             }
             .reveal { opacity: 1; transform: none; }
         }
     </style>
-    <link rel="stylesheet" href="{% static 'css/site-footer.css' %}">
 </head>
 <body>
-<<<<<<< Updated upstream
+
     <nav class="navbar navbar-expand-lg site-nav">
         <div class="container py-2">
             <a class="brand-mark" href="{% url 'home' %}" aria-label="Mathias Catholic Hospital Yeji appraisal home">
-                <img class="brand-symbol" src="{% static 'images/mathias-catholic-hospital-logo.png' %}" alt="">
-                <span>Mathias Catholic Hospital<br><small class="fw-normal opacity-75">YEJI · STAFF APPRAISAL</small></span>
-=======
-
-    <nav class="navbar navbar-expand-lg site-nav" id="page-top">
-        <div class="container py-2">
-            <a class="brand-mark" href="{% url 'home' %}" aria-label="Mathias Catholic Hospital Yeji appraisal home">
-                <img class="navbar-brand-mark brand-symbol" src="{% static 'images/ghana-coat-of-arms.png' %}" alt="Ghana coat of arms">
-                <!-- <img class="navbar-brand-mark brand-symbol" src="{% static 'images/mathias-catholic-hospital-logo.png' %}" alt="logo" cla> -->
-
-                <span class="brand-copy">Performance Management System<br><small class="fw-normal opacity-75">Mathias Cath. Hospital - Staff Appraisal</small></span>
->>>>>>> Stashed changes
+                <span class="brand-symbol" aria-hidden="true">✚</span>
+                <span>
+Performance Appraisal System<br><small class="fw-normal opacity-75">Staff performance & development</small></span>
             </a>
             <button class="navbar-toggler border-0 text-white" type="button" data-bs-toggle="collapse" data-bs-target="#homeNav" aria-controls="homeNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
@@ -524,7 +556,10 @@
             <div class="collapse navbar-collapse" id="homeNav">
                 <div class="navbar-nav ms-auto align-items-lg-center py-3 py-lg-0">
                     <a class="nav-link-custom" href="#purpose">Purpose</a>
+                    <a class="nav-link-custom" href="#features">Features</a>
                     <a class="nav-link-custom" href="#process">How it works</a>
+                    <a class="nav-link-custom" href="#team">Our people</a>
+                    <a class="nav-link-custom" href="#insights">Guides</a>
                     <a class="btn btn-teal ms-lg-3 mt-2 mt-lg-0" href="{% url 'login' %}">Staff sign in <span aria-hidden="true">→</span></a>
                 </div>
             </div>
@@ -533,28 +568,17 @@
 
     <main>
         <section class="hero">
-            <div class="hero-slides" aria-hidden="true">
-                <div class="hero-slide is-active"></div>
-                <div class="hero-slide"></div>
-                <div class="hero-slide"></div>
-            </div>
             <div class="container position-relative">
                 <div class="row">
                     <div class="col-lg-9 col-xl-8 reveal">
-                        <div class="eyebrow">People growing. Better care together.</div>
-                        <h1>Recognising the people behind every act of care.</h1>
+                        <div class="eyebrow">Welcome to</div>
+                        <h1>Mathias Catholic Hospital Appraisal System</h1>
                         <p class="hero-copy">
                             A clear, supportive appraisal process for the dedicated staff of
                             Mathias Catholic Hospital, Yeji.
                         </p>
-                        <a class="btn btn-teal btn-lg mt-3" href="{% url 'login' %}">Access your appraisal <span aria-hidden="true">→</span></a>
+                        <a class="btn btn-teal btn-lg mt-3" href="{% url 'login' %}">Access your Account <span aria-hidden="true">→</span></a>
                         <p class="hero-note">A secure space for staff, supervisors, department heads and HR.</p>
-                        <div class="hero-carousel-controls" role="group" aria-label="Hero image slideshow controls">
-                            <button class="hero-carousel-dot" type="button" data-hero-slide="0" aria-label="Show image 1 of 3" aria-pressed="true"></button>
-                            <button class="hero-carousel-dot" type="button" data-hero-slide="1" aria-label="Show image 2 of 3" aria-pressed="false"></button>
-                            <button class="hero-carousel-dot" type="button" data-hero-slide="2" aria-label="Show image 3 of 3" aria-pressed="false"></button>
-                            <button class="hero-carousel-toggle" type="button" data-hero-toggle aria-pressed="false">Pause slideshow</button>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -566,6 +590,7 @@
                     <div class="col-lg-6 reveal">
                         <div class="photo-frame">
                             <img src="{% static 'images/staff-colla1.webp' %}" alt="Colleagues working together around a laptop" loading="lazy">
+                            <button class="photo-video-trigger" type="button" data-bs-toggle="modal" data-bs-target="#hospitalVideoModal" aria-label="Play the hospital video"></button>
                             <div class="photo-caption">
                                 <strong>Growth through teamwork</strong>
                                 <span>Clear goals. Helpful feedback. Better care.</span>
@@ -586,6 +611,48 @@
                             service for our community.
                         </p>
                     </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section-pad feature-section" id="features" aria-labelledby="features-title">
+            <div class="container">
+                <div class="row justify-content-center text-center mb-5 reveal">
+                    <div class="col-lg-8">
+                        <div class="section-kicker mb-3">What the system supports</div>
+                        <h2 class="section-title mb-3" id="features-title">Appraisal essentials, all in one place.</h2>
+                        <p class="section-copy mb-0">Simple tools help staff prepare, reflect and move through each review stage with clarity.</p>
+                    </div>
+                </div>
+                <div class="row g-4">
+                    <article class="col-md-6 col-xl-3">
+                        <div class="feature-card reveal">
+                            <span class="feature-index" aria-hidden="true">01</span>
+                            <h3>Set meaningful goals</h3>
+                            <p>Agree on clear targets and competencies that support each employee’s work and development.</p>
+                        </div>
+                    </article>
+                    <article class="col-md-6 col-xl-3">
+                        <div class="feature-card reveal reveal-delay-1">
+                            <span class="feature-index" aria-hidden="true">02</span>
+                            <h3>Record growth</h3>
+                            <p>Keep training, progress and key achievements connected to the appraisal period.</p>
+                        </div>
+                    </article>
+                    <article class="col-md-6 col-xl-3">
+                        <div class="feature-card reveal reveal-delay-2">
+                            <span class="feature-index" aria-hidden="true">03</span>
+                            <h3>Get guided feedback</h3>
+                            <p>Support constructive reviews with clear responsibilities for employees and reviewers.</p>
+                        </div>
+                    </article>
+                    <article class="col-md-6 col-xl-3">
+                        <div class="feature-card reveal reveal-delay-3">
+                            <span class="feature-index" aria-hidden="true">04</span>
+                            <h3>Review completed appraisals</h3>
+                            <p>Return to previous appraisal records and follow progress over time.</p>
+                        </div>
+                    </article>
                 </div>
             </div>
         </section>
@@ -641,6 +708,113 @@
             </div>
         </section>
 
+        <section class="section-pad role-section" id="team" aria-labelledby="team-title">
+            <div class="container">
+                <div class="row justify-content-center text-center mb-5 reveal">
+                    <div class="col-lg-8">
+                        <div class="section-kicker mb-3">A team effort</div>
+                        <h2 class="section-title mb-3" id="team-title">Everyone has a role in the review.</h2>
+                        <p class="section-copy mb-0">Employees and reviewers work together to make each appraisal thoughtful, clear and useful.</p>
+                    </div>
+                </div>
+                <div class="row g-4">
+                    <article class="col-sm-6 col-xl-3">
+                        <div class="role-card reveal">
+                            <span class="role-mark" aria-hidden="true">01</span>
+                            <h3>Employee</h3>
+                            <p>Set goals, record training and reflect on progress and development needs.</p>
+                        </div>
+                    </article>
+                    <article class="col-sm-6 col-xl-3">
+                        <div class="role-card reveal reveal-delay-1">
+                            <span class="role-mark" aria-hidden="true">02</span>
+                            <h3>Supervisor</h3>
+                            <p>Review work, provide constructive feedback and support agreed next steps.</p>
+                        </div>
+                    </article>
+                    <article class="col-sm-6 col-xl-3">
+                        <div class="role-card reveal reveal-delay-2">
+                            <span class="role-mark" aria-hidden="true">03</span>
+                            <h3>Head of Department</h3>
+                            <p>Add a departmental perspective and help support a fair review.</p>
+                        </div>
+                    </article>
+                    <article class="col-sm-6 col-xl-3">
+                        <div class="role-card reveal reveal-delay-3">
+                            <span class="role-mark" aria-hidden="true">04</span>
+                            <h3>Human Resources</h3>
+                            <p>Complete the final review and confirm the appraisal outcome.</p>
+                        </div>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section class="stats-section" id="stats" aria-labelledby="stats-title">
+            <div class="container">
+                <div class="text-center mb-5 reveal">
+                    <div class="eyebrow mb-3">Appraisal at a glance</div>
+                    <h2 class="section-title mb-3" id="stats-title">One process. Shared progress.</h2>
+                    <p class="stats-intro">A clear workflow brings the people involved in each review together around growth and quality care.</p>
+                </div>
+                <div class="row justify-content-center">
+                    <div class="col-md-4 stat-item reveal">
+                        <span class="stat-value">4</span>
+                        <p class="stat-label">Review stages</p>
+                        <p class="stat-note">From employee goals to final HR review.</p>
+                    </div>
+                    <div class="col-md-4 stat-item reveal reveal-delay-1">
+                        <span class="stat-value">4</span>
+                        <p class="stat-label">Participating roles</p>
+                        <p class="stat-note">Employee, supervisor, department head and HR.</p>
+                    </div>
+                    <div class="col-md-4 stat-item reveal reveal-delay-2">
+                        <span class="stat-value">1</span>
+                        <p class="stat-label">Shared purpose</p>
+                        <p class="stat-note">Support staff growth and quality service.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section-pad insights-section" id="insights" aria-labelledby="insights-title">
+            <div class="container">
+                <div class="row justify-content-center text-center mb-5 reveal">
+                    <div class="col-lg-8">
+                        <div class="section-kicker mb-3">Latest articles</div>
+                        <h2 class="section-title mb-3" id="insights-title">Practical guidance for every review.</h2>
+                        <p class="section-copy mb-0">A few useful reminders to help make your appraisal more focused and constructive.</p>
+                    </div>
+                </div>
+                <div class="row g-4">
+                    <article class="col-md-4">
+                        <div class="insight-card reveal">
+                            <span class="insight-label">Before your review</span>
+                            <h3>Prepare with examples</h3>
+                            <p>Reflect on your work, achievements and challenges so your review starts with a clear picture of the year.</p>
+                        </div>
+                    </article>
+                    <article class="col-md-4">
+                        <div class="insight-card reveal reveal-delay-1">
+                            <span class="insight-label">Goal setting</span>
+                            <h3>Make goals specific</h3>
+                            <p>Choose practical targets that connect to your responsibilities and can be revisited during the review period.</p>
+                        </div>
+                    </article>
+                    <article class="col-md-4">
+                        <div class="insight-card reveal reveal-delay-2">
+                            <span class="insight-label">Using feedback</span>
+                            <h3>Turn feedback into action</h3>
+                            <p>Agree on useful next steps and learning opportunities with your supervisor after each review conversation.</p>
+                        </div>
+                    </article>
+                </div>
+                <div class="text-center mt-4 reveal">
+                    <a class="insights-link" href="#process">Explore the appraisal process <span aria-hidden="true">→</span></a>
+                </div>
+            </div>
+        </section>
+
         <section class="closing">
             <div class="container">
                 <div class="row align-items-center g-4">
@@ -649,22 +823,14 @@
                         <h2 class="mb-3">Your contribution matters.</h2>
                         <p class="mb-0">Sign in to set your goals, continue a review or support a colleague through their appraisal.</p>
                     </div>
-                    <div class="col-lg-4 text-lg-end reveal">
+                    <!-- <div class="col-lg-4 text-lg-end reveal">
                         <a class="btn btn-teal btn-lg" href="{% url 'login' %}">Sign in to continue <span aria-hidden="true">→</span></a>
-                    </div>
+                    </div> -->
                 </div>
             </div>
         </section>
     </main>
 
-<<<<<<< Updated upstream
-    <footer>
-        <div class="container d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
-            <strong>Mathias Catholic Hospital, Yeji</strong>
-            <span>Staff Appraisal System · Supporting people who care for our community</span>
-        </div>
-    </footer>
-=======
     <div class="modal fade video-modal" id="hospitalVideoModal" tabindex="-1" aria-labelledby="hospitalVideoTitle" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-xl">
             <div class="modal-content">
@@ -681,66 +847,14 @@
         </div>
     </div>
 
-    {% include 'partials/site_footer.html' %}
->>>>>>> Stashed changes
+    <footer>
+        <div class="container d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
+            <strong>Mathias Catholic Hospital, Yeji</strong>
+            <span>Staff Appraisal System · Supporting people who care for our community</span>
+        </div>
+    </footer>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        (() => {
-            const slides = [...document.querySelectorAll('.hero-slide')];
-            const controls = document.querySelector('.hero-carousel-controls');
-            const indicators = [...document.querySelectorAll('[data-hero-slide]')];
-            const toggle = document.querySelector('[data-hero-toggle]');
-            if (!slides.length || !controls || !toggle) return;
-
-            const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-            let activeIndex = 0;
-            let paused = reducedMotion.matches;
-            let timer = null;
-
-            function showSlide(index) {
-                activeIndex = (index + slides.length) % slides.length;
-                slides.forEach((slide, slideIndex) => {
-                    slide.classList.toggle('is-active', slideIndex === activeIndex);
-                });
-                indicators.forEach((indicator, slideIndex) => {
-                    indicator.setAttribute('aria-pressed', String(slideIndex === activeIndex));
-                });
-            }
-
-            function updatePlayback() {
-                window.clearInterval(timer);
-                toggle.textContent = paused ? 'Play slideshow' : 'Pause slideshow';
-                toggle.setAttribute('aria-label', paused ? 'Play background slideshow' : 'Pause background slideshow');
-                toggle.setAttribute('aria-pressed', String(paused));
-                if (!paused && !document.hidden) {
-                    timer = window.setInterval(() => showSlide(activeIndex + 1), 6000);
-                }
-            }
-
-            indicators.forEach((indicator) => {
-                indicator.addEventListener('click', () => {
-                    showSlide(Number(indicator.dataset.heroSlide));
-                    updatePlayback();
-                });
-            });
-            toggle.addEventListener('click', () => {
-                paused = !paused;
-                updatePlayback();
-            });
-            controls.addEventListener('focusin', () => {
-                if (!paused) {
-                    paused = true;
-                    updatePlayback();
-                }
-            });
-            document.addEventListener('visibilitychange', updatePlayback);
-            reducedMotion.addEventListener('change', (event) => {
-                paused = event.matches;
-                updatePlayback();
-            });
-            updatePlayback();
-        })();
-
         (() => {
             const items = document.querySelectorAll('.reveal');
             if (!('IntersectionObserver' in window) || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -752,11 +866,20 @@
                     if (entry.isIntersecting) {
                         entry.target.classList.add('is-visible');
                         currentObserver.unobserve(entry.target);
-                    }
+                    } 
                 });
             }, { threshold: 0.12 });
             items.forEach((item) => observer.observe(item));
         })();
+
+        const videoModal = document.getElementById('hospitalVideoModal');
+        const videoFrame = document.getElementById('hospitalVideoFrame');
+        videoModal.addEventListener('show.bs.modal', () => {
+            videoFrame.src = videoFrame.dataset.videoSrc;
+        });
+        videoModal.addEventListener('hidden.bs.modal', () => {
+            videoFrame.src = 'about:blank';
+        });
     </script>
 </body>
 </html>

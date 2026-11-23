@@ -1,205 +1,65 @@
 {% extends 'base.html' %}
 {% block title %}Staff registration | Staff Appraisal System{% endblock %}
 {% block content %}
-<main class="staff-id-page" aria-labelledby="staff-id-title">
-    <header class="staff-id-header">
-        <div>
-            <span class="staff-id-eyebrow">Human resources · Staff directory</span>
-            <h1 id="staff-id-title">Staff registration</h1>
-            <p>Add staff IDs and work emails before employees create accounts.</p>
-        </div>
-        <a class="staff-download-all" href="?download=all"><i class="bi bi-download" aria-hidden="true"></i> Download all CSV</a>
-    </header>
+<main class="py-3">
+    <h1 class="h3 mb-1">Staff registration</h1>
+    <p class="text-muted mb-4">Add staff IDs and their work emails before employees create accounts.</p>
 
-    <section class="staff-id-summary" aria-label="Staff ID summary">
-        <article class="staff-summary-card staff-summary-total"><span>Total staff IDs</span><strong>{{ staff_total }}</strong><small>Approved for registration</small></article>
-        <article class="staff-summary-card staff-summary-registered"><span>Registered accounts</span><strong>{{ registered_total }}</strong><small>Account created</small></article>
-        <article class="staff-summary-card staff-summary-pending"><span>Not registered</span><strong>{{ unregistered_total }}</strong><small>Awaiting account setup</small></article>
-    </section>
-
-    <section class="staff-id-import-grid" aria-label="Add staff IDs">
-        <article class="staff-id-card">
-            <div class="staff-id-card-heading">
-                <span class="staff-id-card-icon"><i class="bi bi-person-plus" aria-hidden="true"></i></span>
-                <div><h2>Add one staff member</h2><p>Enter an approved staff ID and work email.</p></div>
-            </div>
-            <form method="post" class="staff-id-form">
-                {% csrf_token %}
-                <input type="hidden" name="action" value="add">
-                {% for field in entry_form %}
-                    <div class="staff-id-field">
-                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                        {{ field }}
-                        {% if field.help_text %}<small class="staff-id-help">{{ field.help_text }}</small>{% endif %}
-                        {% for error in field.errors %}<span class="staff-id-error" role="alert">{{ error }}</span>{% endfor %}
-                    </div>
-                {% endfor %}
-                <button class="staff-primary-button" type="submit"><i class="bi bi-plus-lg" aria-hidden="true"></i> Add staff ID</button>
-            </form>
-        </article>
-
-        <article class="staff-id-card staff-upload-card">
-            <div class="staff-id-card-heading">
-                <span class="staff-id-card-icon staff-id-card-icon-upload"><i class="bi bi-cloud-arrow-up" aria-hidden="true"></i></span>
-                <div><h2>Import a list</h2><p>Add multiple approved staff IDs at once.</p></div>
-            </div>
-            <div class="staff-upload-note"><i class="bi bi-info-circle" aria-hidden="true"></i><span>Use a CSV or Excel file with <code>staff_id</code> and <code>email</code> columns. Keep IDs as text to preserve leading zeroes.</span></div>
-            <form method="post" enctype="multipart/form-data" class="staff-id-form">
-                {% csrf_token %}
-                <input type="hidden" name="action" value="upload">
-                {% for field in upload_form %}
-                    <div class="staff-id-field">
-                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                        {{ field }}
-                        {% if field.help_text %}<small class="staff-id-help">{{ field.help_text }}</small>{% endif %}
-                        {% for error in field.errors %}<span class="staff-id-error" role="alert">{{ error }}</span>{% endfor %}
-                    </div>
-                {% endfor %}
-                <div class="staff-upload-actions">
-                    <button class="staff-secondary-button" type="submit"><i class="bi bi-upload" aria-hidden="true"></i> Upload list</button>
-                    <a class="staff-template-download" href="?download=template"><i class="bi bi-file-earmark-spreadsheet" aria-hidden="true"></i> Download Excel template</a>
-                </div>
-            </form>
-        </article>
-    </section>
-
-    <section class="staff-id-directory" aria-labelledby="staff-id-directory-title">
-        <header class="staff-directory-heading">
-            <div>
-                <span class="staff-id-eyebrow">Approved list</span>
-                <h2 id="staff-id-directory-title">Staff ID directory</h2>
-                <p>Showing {{ staff_ids|length }} of {{ staff_total }} staff IDs</p>
-            </div>
-            <div class="staff-directory-tools">
-                <label class="staff-directory-search">
-                    <i class="bi bi-search" aria-hidden="true"></i>
-                    <input type="search" id="staff-id-search" placeholder="Search staff IDs or emails" aria-label="Search staff IDs or emails" autocomplete="off">
-                </label>
-                <a class="staff-directory-download" href="?download=all"><i class="bi bi-download" aria-hidden="true"></i><span>Export CSV</span></a>
-            </div>
-        </header>
-        <div class="staff-table-scroll">
-            <table class="staff-id-table">
-                <thead><tr><th scope="col">Staff ID</th><th scope="col">Work email</th><th scope="col">Account</th><th class="staff-download-column" scope="col">Download</th></tr></thead>
-                <tbody id="staff-id-table-body">
-                    {% for staff in staff_ids %}
-                        <tr data-staff-row>
-                            <td><strong class="staff-id-name">{{ staff.name }}</strong></td>
-                            <td>{{ staff.email|default:'Email needed' }}</td>
-                            <td><span class="staff-account-status{% if staff.registered_user_id %} is-registered{% endif %}"><i class="bi {% if staff.registered_user_id %}bi-check-circle-fill{% else %}bi-clock{% endif %}" aria-hidden="true"></i>{% if staff.registered_user_id %}Registered{% else %}Not registered{% endif %}</span></td>
-                            <td class="staff-download-column"><a class="staff-row-download" href="?download_id={{ staff.pk }}" aria-label="Download CSV for staff ID {{ staff.name }}"><i class="bi bi-download" aria-hidden="true"></i><span>Download</span></a></td>
-                        </tr>
-                    {% empty %}
-                        <tr><td class="staff-id-empty" colspan="4">No staff IDs have been added yet.</td></tr>
+    <div class="row g-4 mb-4">
+        <section class="col-lg-5" aria-labelledby="add-staff-id-heading">
+            <div class="border rounded p-3 h-100">
+                <h2 class="h5" id="add-staff-id-heading">Add one staff member</h2>
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="add">
+                    {% for field in entry_form %}
+                        <div class="mb-3">
+                            <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {{ field }}
+                            {% for error in field.errors %}<div class="small text-danger">{{ error }}</div>{% endfor %}
+                        </div>
                     {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        <p class="staff-id-search-status" id="staff-id-search-status" role="status" aria-live="polite"></p>
-    </section>
+                    <button class="btn btn-primary" type="submit">Add staff ID</button>
+                </form>
+            </div>
+        </section>
+
+        <section class="col-lg-7" aria-labelledby="import-staff-ids-heading">
+            <div class="border rounded p-3 h-100">
+                <h2 class="h5" id="import-staff-ids-heading">Import a list</h2>
+                <p class="small text-muted">CSV or Excel (.xlsx), with columns named <code>staff_id</code> and <code>email</code>. Keep IDs as text to preserve leading zeroes.</p>
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="upload">
+                    {% for field in upload_form %}
+                        <div class="mb-3">
+                            <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {{ field }}
+                            {% for error in field.errors %}<div class="small text-danger">{{ error }}</div>{% endfor %}
+                        </div>
+                    {% endfor %}
+                    <button class="btn btn-outline-primary" type="submit">Upload list</button>
+                </form>
+            </div>
+        </section>
+    </div>
+
+    <h2 class="h5">Approved staff IDs</h2>
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead><tr><th>Staff ID</th><th>Work email</th><th>Account</th></tr></thead>
+            <tbody>
+                {% for staff in staff_ids %}
+                    <tr>
+                        <td>{{ staff.name }}</td>
+                        <td>{{ staff.email|default:'Email needed' }}</td>
+                        <td>{% if staff.registered_user_id %}Registered{% else %}Not registered{% endif %}</td>
+                    </tr>
+                {% empty %}
+                    <tr><td class="text-muted py-4" colspan="3">No staff IDs have been added.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </main>
-
-<style>
-    .staff-id-page { color: #173747; margin: 0 auto; max-width: 1440px; padding: .5rem 0 2rem; }
-    .staff-id-header { align-items: center; display: flex; flex-wrap: wrap; gap: 1rem; justify-content: space-between; margin-bottom: 1rem; }
-    .staff-id-eyebrow { color: #16845d; display: block; font-size: .66rem; font-weight: 800; letter-spacing: .12em; margin-bottom: .25rem; text-transform: uppercase; }
-    .staff-id-header h1 { color: #123d3b; font-size: clamp(1.55rem, 2.5vw, 2rem); font-weight: 780; letter-spacing: -.035em; margin: 0; }
-    .staff-id-header p, .staff-directory-heading p { color: #74837d; font-size: .8rem; margin: .25rem 0 0; }
-    .staff-download-all, .staff-directory-download { align-items: center; background: #16845d; border: 0; border-radius: 8px; color: #fff; display: inline-flex; font-size: .76rem; font-weight: 750; gap: .45rem; min-height: 39px; padding: .55rem .8rem; text-decoration: none; }
-    .staff-download-all:hover, .staff-directory-download:hover { background: #0e6d4d; color: #fff; }
-    .staff-id-summary { display: grid; gap: .7rem; grid-template-columns: repeat(3, minmax(0,1fr)); margin-bottom: 1rem; }
-    .staff-summary-card { background: #fff; border: 1px solid #e5ebe7; border-radius: 10px; display: grid; gap: .2rem; min-width: 0; padding: .75rem .9rem; }
-    .staff-summary-card span { color: #718179; font-size: .7rem; font-weight: 650; }
-    .staff-summary-card strong { color: #17483d; font-size: 1.4rem; line-height: 1.1; }
-    .staff-summary-card small { color: #92a098; font-size: .64rem; }
-    .staff-summary-total { border-top: 3px solid #55a87a; }
-    .staff-summary-registered { border-top: 3px solid #72b6a7; }
-    .staff-summary-pending { border-top: 3px solid #d8b65e; }
-    .staff-id-import-grid { display: grid; gap: .9rem; grid-template-columns: repeat(2,minmax(0,1fr)); margin-bottom: 1.1rem; }
-    .staff-id-card, .staff-id-directory { background: #fff; border: 1px solid #e3eae5; border-radius: 11px; box-shadow: 0 5px 16px rgba(26,59,44,.035); min-width: 0; }
-    .staff-id-card { padding: .95rem; }
-    .staff-id-card-heading { align-items: center; display: flex; gap: .65rem; margin-bottom: .85rem; }
-    .staff-id-card-icon { align-items: center; background: #e0f1e5; border-radius: 9px; color: #208058; display: inline-flex; flex: 0 0 38px; font-size: 1rem; height: 38px; justify-content: center; }
-    .staff-id-card-icon-upload { background: #e2eff0; color: #247879; }
-    .staff-id-card-heading h2 { color: #23483d; font-size: .9rem; font-weight: 750; margin: 0; }
-    .staff-id-card-heading p { color: #88958e; font-size: .68rem; margin: .15rem 0 0; }
-    .staff-id-form { display: grid; gap: .6rem; }
-    .staff-id-field { min-width: 0; }
-    .staff-id-field label { color: #536b60; display: block; font-size: .7rem; font-weight: 700; margin-bottom: .25rem; }
-    .staff-id-page .form-control, .staff-id-page .form-select { border-color: #d9e3dc; border-radius: 7px; font-size: .78rem; min-height: 39px; }
-    .staff-id-page .form-control:focus, .staff-id-page .form-select:focus { border-color: #64a98a; box-shadow: 0 0 0 .18rem rgba(22,132,93,.12); }
-    .staff-id-help { color: #839188; display: block; font-size: .64rem; margin-top: .25rem; }
-    .staff-id-error { color: #a14435; display: block; font-size: .68rem; margin-top: .2rem; }
-    .staff-primary-button, .staff-secondary-button { align-items: center; border: 0; border-radius: 7px; display: inline-flex; font-size: .74rem; font-weight: 750; gap: .4rem; justify-content: center; min-height: 37px; padding: .5rem .75rem; width: fit-content; }
-    .staff-primary-button { background: #16845d; color: #fff; }
-    .staff-primary-button:hover { background: #0e6d4d; }
-    .staff-secondary-button { background: #e5f2e9; color: #277250; }
-    .staff-secondary-button:hover { background: #d8ebde; color: #1d6847; }
-    .staff-upload-actions { align-items: center; display: flex; flex-wrap: wrap; gap: .65rem; }
-    .staff-template-download { align-items: center; color: #287554; display: inline-flex; font-size: .7rem; font-weight: 700; gap: .35rem; min-height: 37px; text-decoration: none; }
-    .staff-template-download:hover { color: #145c3d; text-decoration: underline; }
-    .staff-upload-note { align-items: flex-start; background: #f4f8f5; border: 1px solid #e7eee9; border-radius: 7px; color: #73847a; display: flex; font-size: .67rem; gap: .45rem; line-height: 1.5; margin-bottom: .7rem; padding: .55rem .65rem; }
-    .staff-upload-note > i { color: #41896a; margin-top: .08rem; }
-    .staff-upload-note code { color: #287554; font-size: .65rem; }
-    .staff-id-directory { overflow: hidden; }
-    .staff-directory-heading { align-items: center; border-bottom: 1px solid #e9eeea; display: flex; flex-wrap: wrap; gap: .8rem; justify-content: space-between; padding: .9rem 1rem; }
-    .staff-directory-heading h2 { color: #23483d; font-size: .95rem; font-weight: 750; margin: 0; }
-    .staff-directory-heading .staff-id-eyebrow { margin: 0 0 .15rem; }
-    .staff-directory-tools { align-items: center; display: flex; flex-wrap: wrap; gap: .5rem; }
-    .staff-directory-search { align-items: center; background: #f8faf8; border: 1px solid #e3eae5; border-radius: 7px; color: #85948b; display: flex; gap: .45rem; min-height: 36px; padding: 0 .65rem; }
-    .staff-directory-search input { background: transparent; border: 0; color: #36584c; font-size: .72rem; min-width: 190px; outline: 0; }
-    .staff-directory-download { min-height: 36px; padding: .45rem .65rem; }
-    .staff-table-scroll { max-width: 100%; overflow-x: auto; }
-    .staff-id-table { border-collapse: collapse; margin: 0; min-width: 620px; width: 100%; }
-    .staff-id-table th { background: #f7f9f7; border-bottom: 1px solid #e8eee9; color: #6d7e74; font-size: .65rem; font-weight: 750; letter-spacing: .055em; padding: .65rem .9rem; text-align: left; text-transform: uppercase; white-space: nowrap; }
-    .staff-id-table td { border-bottom: 1px solid #edf1ee; color: #52675c; font-size: .75rem; padding: .68rem .9rem; vertical-align: middle; }
-    .staff-id-table tbody tr:last-child td { border-bottom: 0; }
-    .staff-id-table tbody tr:hover { background: #fbfdfb; }
-    .staff-id-name { color: #315447; font-weight: 700; }
-    .staff-account-status { align-items: center; background: #f1f3ee; border-radius: 999px; color: #78826f; display: inline-flex; font-size: .66rem; gap: .35rem; padding: .27rem .5rem; white-space: nowrap; }
-    .staff-account-status.is-registered { background: #e6f4e9; color: #28764d; }
-    .staff-download-column { text-align: right !important; }
-    .staff-row-download { align-items: center; color: #43826a; display: inline-flex; font-size: .68rem; font-weight: 700; gap: .35rem; text-decoration: none; }
-    .staff-row-download:hover { color: #145c3d; text-decoration: underline; }
-    .staff-id-empty { color: #87948d !important; padding: 2rem !important; text-align: center; }
-    .staff-id-search-status { color: #7f8d85; font-size: .67rem; margin: 0; min-height: 0; padding: 0 1rem; }
-    .staff-id-search-status:not(:empty) { padding-bottom: .7rem; }
-    @media (max-width: 767.98px) {
-        .staff-id-page { padding-top: 0; }
-        .staff-id-import-grid { grid-template-columns: 1fr; }
-        .staff-id-summary { gap: .5rem; }
-        .staff-summary-card { padding: .65rem; }
-        .staff-directory-heading { align-items: stretch; flex-direction: column; }
-        .staff-directory-tools { width: 100%; }
-        .staff-directory-search { flex: 1 1 auto; min-width: 0; }
-        .staff-directory-search input { min-width: 0; width: 100%; }
-        .staff-directory-download { flex: 0 0 auto; }
-        .staff-upload-actions { align-items: flex-start; flex-direction: column; }
-    }
-    @media (max-width: 420px) {
-        .staff-id-summary { grid-template-columns: 1fr; }
-        .staff-directory-tools { align-items: stretch; flex-direction: column; }
-        .staff-directory-search { min-height: 40px; }
-        .staff-directory-download { justify-content: center; }
-    }
-</style>
-
-<script>
-    (() => {
-        const search = document.getElementById('staff-id-search');
-        const rows = [...document.querySelectorAll('[data-staff-row]')];
-        const status = document.getElementById('staff-id-search-status');
-        if (!search || !rows.length) return;
-        search.addEventListener('input', () => {
-            const query = search.value.trim().toLocaleLowerCase();
-            let visible = 0;
-            rows.forEach((row) => {
-                const matches = !query || row.textContent.toLocaleLowerCase().includes(query);
-                row.hidden = !matches;
-                if (matches) visible += 1;
-            });
-            status.textContent = query ? `Showing ${visible} matching staff ID${visible === 1 ? '' : 's'}.` : '';
-        });
-    })();
-</script>
 {% endblock %}

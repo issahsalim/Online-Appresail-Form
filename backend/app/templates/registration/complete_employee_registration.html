@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Create Staff Account | Staff Appraisal System{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/registration-flow.css' %}">
+<main class="staff-registration-page">
+    <section class="staff-registration-card" aria-labelledby="registration-title">
+        <div class="staff-registration-accent"></div>
+        <div class="staff-registration-content">
+            <div class="staff-registration-icon" aria-hidden="true">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+                    <circle cx="9" cy="8" r="3.2" stroke="currentColor" stroke-width="1.7"/>
+                    <path d="M3.5 19a5.5 5.5 0 0 1 11 0m3-9v7m-3.5-3.5h7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                </svg>
+            </div>
+            <div class="staff-registration-eyebrow">Almost there</div>
+            <h1 class="staff-registration-title" id="registration-title">Complete your account</h1>
+            <p class="staff-registration-intro">
+                Add your details and choose a strong password to finish setting up your staff access.
+            </p>
+
+            <ol class="staff-registration-steps" aria-label="Account setup progress">
+                <li class="staff-registration-step is-complete">
+                    <span class="staff-registration-step-number">1</span>
+                    <span class="staff-registration-step-label">Staff ID</span>
+                </li>
+                <li class="staff-registration-step is-complete">
+                    <span class="staff-registration-step-number">2</span>
+                    <span class="staff-registration-step-label">Verify email</span>
+                </li>
+                <li class="staff-registration-step is-active" aria-current="step">
+                    <span class="staff-registration-step-number">3</span>
+                    <span class="staff-registration-step-label">Your account</span>
+                </li>
+            </ol>
+
+            <div class="staff-registration-email">
+                <strong>Staff ID:</strong> {{ staff_id }}<br>
+                <strong>Verified work email:</strong> {{ email }}
+            </div>
+
+            <form method="post" class="staff-registration-form" novalidate>
+                {% csrf_token %}
+                {% if form.non_field_errors %}
+                    <div class="staff-registration-nonfield-error" role="alert">
+                        {% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}
+                    </div>
+                {% endif %}
+                <div class="staff-registration-form-grid">
+                    {% for field in form %}
+                        <div class="mb-3">
+                            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.help_text %}
+                                <div class="staff-registration-help">{{ field.help_text|safe }}</div>
+                            {% endif %}
+                            {% for error in field.errors %}
+                                <div class="staff-registration-field-error">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
+                </div>
+                <button class="staff-registration-submit" type="submit">Create account</button>
+            </form>
+
+            <a class="staff-registration-back" href="{% url 'login' %}">← Back to sign in</a>
+        </div>
+    </section>
+</main>
+{% endblock %}

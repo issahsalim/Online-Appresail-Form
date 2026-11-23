@@ -1,18 +1,34 @@
+import csv
+import io
+import logging
+from datetime import timedelta
+from pathlib import Path
+import secrets
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth import get_user_model, update_session_auth_hash
+from django.contrib.auth.hashers import check_password, make_password
+from django.contrib.auth.forms import SetPasswordForm
+from django.conf import settings
 from django.core.paginator import Paginator
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.db.models import Case, CharField, Count, F, Q, Value, When
+from PIL import Image
+from django.db import transaction
+from django.db.models import Avg, Case, CharField, Count, F, Q, Value, When
 from django.urls import reverse
 from django.http import FileResponse, Http404, HttpResponseForbidden, JsonResponse
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.contrib import messages
 from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
+from django.views.decorators.http import require_POST
 
 from .models import (
     Appraisal,
+    BackupRun,
     AppraisalCompetencyStatementScore,
     AppraisalCycle,
     AppNotification,
@@ -24,7 +40,10 @@ from .models import (
     Competency,
     Department,
     EmployeeProfile,
+    PasswordResetCode,
     PreviousAppraisal,
+    RegistrationCode,
+    StaffId,
     SupervisorReporting,
     get_assigned_supervisor,
 )
@@ -41,6 +60,7 @@ from .forms import (
     HRCommentForm,
     HRDepartmentHodAssignmentForm,
     HRSupervisorAssignmentForm,
+    ProfilePhotoForm,
     SupervisorReportingForm,
     SupervisorCompetencyFormSet,
     SupervisorCompetencyStatementFormSet,
@@ -49,9 +69,21 @@ from .forms import (
     UserProfileForm,
     AppraisalCycleForm,
     PreviousAppraisalUploadForm,
+    EmployeeRegistrationForm,
+    PasswordResetRequestForm,
+    PasswordResetAnswerForm,
+    PasswordResetCodeForm,
+    RegistrationCodeForm,
+    RegistrationStaffIdForm,
+    StaffIdEntryForm,
+    StaffIdUploadForm,
 )
 from .notifications import mark_as_read, notify_users
 from .audit import record_auth_event
+from .tasks import create_backup, send_password_reset_code, send_registration_code
+
+logger = logging.getLogger(__name__)
+User = get_user_model()
 
 
 def _process_hr_supervisor_assignment(request):
@@ -1067,6 +1099,28 @@ def employee_dashboard(request):
         incomplete=Count('pk', filter=~Q(status='completed')),
         submitted=Count('pk', filter=Q(status='completed')),
     )
+    returned_statuses = (
+        'returned_employee',
+        'returned_supervisor',
+        'returned_hod',
+    )
+    appraisal_trend = list(
+        all_appraisals.order_by()
+        .values('cycle__year')
+        .annotate(
+            score=Avg('overall_percentage', filter=Q(status='completed')),
+            returned=Count('pk', filter=Q(status__in=returned_statuses)),
+            incomplete=Count(
+                'pk',
+                filter=~Q(status='completed') & ~Q(status__in=returned_statuses),
+            ),
+        )
+        .order_by('cycle__year')
+    )
+    for year_data in appraisal_trend:
+        year_data['year'] = year_data.pop('cycle__year')
+        if year_data['score'] is not None:
+            year_data['score'] = round(float(year_data['score']), 2)
 
     return render(request, 'employee/dashboard.html', {
         'active_cycles': active_cycles,
@@ -1074,6 +1128,7 @@ def employee_dashboard(request):
         'active_appraisal_count': appraisal_counts['total'],
         'incomplete_appraisal_count': appraisal_counts['incomplete'],
         'submitted_appraisal_count': appraisal_counts['submitted'],
+        'appraisal_trend': appraisal_trend,
         'assigned_supervisor': assigned_supervisor,
         'all_appraisals': all_appraisals,
         **_previous_appraisal_context(profile),
@@ -1588,20 +1643,54 @@ def fill_targets(request, year=None):
 @login_required
 def profile(request):
     employee_profile = request.user.profile
+    photo_form = ProfilePhotoForm(instance=employee_profile)
     if request.method == 'POST':
-        form = UserProfileForm(
-            request.POST,
-            instance=request.user,
-            profile=employee_profile,
-        )
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Your profile has been updated.")
-            return redirect('profile')
+        if request.POST.get('action') == 'upload_profile_photo':
+            photo_form = ProfilePhotoForm(
+                request.POST,
+                request.FILES,
+                instance=employee_profile,
+            )
+            if photo_form.is_valid():
+                photo_form.save()
+                messages.success(request, "Your profile photo has been updated.")
+                return redirect('profile')
+            form = UserProfileForm(
+                instance=request.user,
+                profile=employee_profile,
+            )
+        else:
+            form = UserProfileForm(
+                request.POST,
+                instance=request.user,
+                profile=employee_profile,
+            )
+            if form.is_valid():
+                form.save()
+                messages.success(request, "Your profile has been updated.")
+                return redirect('profile')
     else:
         form = UserProfileForm(instance=request.user, profile=employee_profile)
 
-    return render(request, 'account/profile.html', {'form': form})
+    return render(request, 'account/profile.html', {
+        'form': form,
+        'photo_form': photo_form,
+    })
+
+
+@login_required
+def profile_photo_file(request):
+    photo = request.user.profile.profile_photo
+    if not photo:
+        raise Http404
+
+    with photo.open('rb') as photo_file:
+        with Image.open(photo_file) as image:
+            content_type = Image.MIME.get(image.format)
+    if content_type is None:
+        raise Http404
+
+    return FileResponse(photo.open('rb'), content_type=content_type)
 
 
 @login_required
@@ -1614,6 +1703,20 @@ def notifications(request):
             read_at__isnull=True,
         ).count(),
     })
+
+
+@login_required
+def notification_status(request):
+    if request.method != 'GET':
+        return JsonResponse({'error': 'Invalid request method.'}, status=405)
+
+    unread_count = AppNotification.objects.filter(
+        recipient=request.user,
+        read_at__isnull=True,
+    ).count()
+    response = JsonResponse({'unread_count': unread_count})
+    response['Cache-Control'] = 'no-store'
+    return response
 
 
 @login_required
@@ -2866,6 +2969,91 @@ def hr_dashboard(request):
         ],
         'department_chart': department_chart,
     })
+
+
+def _can_manage_backups(user):
+    return user.is_superuser or EmployeeProfile.objects.filter(
+        user=user,
+        role='HR',
+    ).exists()
+
+
+@login_required
+def backup_dashboard(request):
+    if not _can_manage_backups(request.user):
+        return HttpResponseForbidden('Backup access is restricted to HR and superusers.')
+
+    backup_runs = BackupRun.objects.select_related('requested_by')[:50]
+    return render(request, 'app/backup_dashboard.html', {
+        'backup_runs': backup_runs,
+        'backup_retention_days': settings.BACKUP_RETENTION_DAYS,
+    })
+
+
+@login_required
+@require_POST
+def start_backup(request):
+    if not _can_manage_backups(request.user):
+        return HttpResponseForbidden('Backup access is restricted to HR and superusers.')
+
+    if BackupRun.objects.filter(status__in=['queued', 'running']).exists():
+        messages.warning(request, 'A backup is already queued or running.')
+        return redirect('backup_dashboard')
+
+    backup_run = BackupRun.objects.create(
+        requested_by=request.user,
+        trigger_type='manual',
+    )
+    AuditLog.objects.create(
+        actor=request.user,
+        actor_username=request.user.username,
+        actor_role='HR' if not request.user.is_superuser else 'Superadmin',
+        actor_is_superuser=request.user.is_superuser,
+        action='backup_started',
+        model_name='BackupRun',
+        object_id=str(backup_run.pk),
+    )
+    try:
+        create_backup.delay(backup_run.pk)
+    except Exception:
+        logger.exception('Could not queue backup run %s.', backup_run.pk)
+        backup_run.status = 'failed'
+        backup_run.completed_at = timezone.now()
+        backup_run.error = 'Could not queue the backup. Check that Redis is running.'
+        backup_run.save(update_fields=['status', 'completed_at', 'error'])
+        messages.error(request, backup_run.error)
+    else:
+        messages.success(request, 'Backup queued. Refresh this page to see its status.')
+    return redirect('backup_dashboard')
+
+
+@login_required
+def download_backup(request, backup_run_id):
+    if not _can_manage_backups(request.user):
+        return HttpResponseForbidden('Backup access is restricted to HR and superusers.')
+
+    backup_run = get_object_or_404(BackupRun, pk=backup_run_id, status='succeeded')
+    backup_root = Path(settings.BACKUP_ROOT).resolve()
+    archive_path = (backup_root / Path(backup_run.archive_name).name).resolve()
+    if archive_path.parent != backup_root or not archive_path.is_file():
+        raise Http404('Backup file not found.')
+
+    AuditLog.objects.create(
+        actor=request.user,
+        actor_username=request.user.username,
+        actor_role='HR' if not request.user.is_superuser else 'Superadmin',
+        actor_is_superuser=request.user.is_superuser,
+        action='backup_downloaded',
+        model_name='BackupRun',
+        object_id=str(backup_run.pk),
+        object_label=backup_run.archive_name,
+    )
+    return FileResponse(
+        archive_path.open('rb'),
+        as_attachment=True,
+        filename=archive_path.name,
+        content_type='application/zip',
+    )
 
 
 @login_required

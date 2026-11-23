@@ -38,6 +38,13 @@ class EmployeeProfile(models.Model):
         ('female', 'Female'),
         ('other', 'Other'),
     ]
+    SECURITY_QUESTION_CHOICES = [
+        ('first_school', 'What was the name of your first school?'),
+        ('childhood_friend', 'What was the first name of your childhood best friend?'),
+        ('first_job', 'What was your first job?'),
+        ('favorite_teacher', 'What was the surname of a favorite teacher?'),
+        ('birth_city', 'In what city were you born?'),
+    ]
     
     # Using the User model (Staff ID should be saved in user.username)
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="profile")
@@ -49,6 +56,16 @@ class EmployeeProfile(models.Model):
     gender = models.CharField(max_length=10, choices=GENDER_CHOICES, blank=True)
     job_title = models.CharField(max_length=150, blank=True)
     appointment_to_present_grade_date = models.DateField(null=True, blank=True)
+    security_question = models.CharField(
+        max_length=32,
+        choices=SECURITY_QUESTION_CHOICES,
+        blank=True,
+    )
+    security_answer_hash = models.CharField(max_length=128, blank=True)
+    profile_photo = models.ImageField(
+        upload_to='profile_photos/%Y/%m/',
+        blank=True,
+    )
 
     def __str__(self):
         dept = self.department.name if self.department else 'No Dept'
@@ -86,6 +103,8 @@ class AuditLog(models.Model):
         ('login', 'Logged in'),
         ('logout', 'Logged out'),
         ('password_changed', 'Password changed'),
+        ('backup_started', 'Started a backup'),
+        ('backup_downloaded', 'Downloaded a backup'),
     ]
 
     actor = models.ForeignKey(
@@ -117,6 +136,42 @@ class AuditLog(models.Model):
 
     def __str__(self):
         return f"{self.get_action_display()} {self.model_name} #{self.object_id}"
+
+
+class BackupRun(models.Model):
+    STATUS_CHOICES = [
+        ('queued', 'Queued'),
+        ('running', 'Running'),
+        ('succeeded', 'Succeeded'),
+        ('failed', 'Failed'),
+    ]
+    TRIGGER_CHOICES = [
+        ('manual', 'Manual'),
+        ('scheduled', 'Scheduled'),
+    ]
+
+    requested_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='backup_runs',
+    )
+    trigger_type = models.CharField(max_length=10, choices=TRIGGER_CHOICES)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='queued')
+    created_at = models.DateTimeField(auto_now_add=True)
+    started_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    archive_name = models.CharField(max_length=255, blank=True)
+    archive_size_bytes = models.PositiveBigIntegerField(default=0)
+    sha256 = models.CharField(max_length=64, blank=True)
+    error = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ['-created_at', '-pk']
+
+    def __str__(self):
+        return f"{self.get_status_display()} backup #{self.pk}"
 
 
 class DepartmentSupervisor(models.Model):
@@ -804,3 +859,64 @@ class PreviousAppraisal(models.Model):
         return self.appraisal_file.name.lower().endswith(
             ('.pdf', '.png', '.jpg', '.jpeg'),
         )
+
+
+
+
+class StaffId(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    email = models.EmailField(blank=True)
+    registered_user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='approved_staff_id',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name 
+
+
+class RegistrationCode(models.Model):
+    staff_id = models.ForeignKey(
+        StaffId,
+        on_delete=models.CASCADE,
+        related_name='registration_codes',
+    )
+    code_hash = models.CharField(max_length=128)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    verified_at = models.DateTimeField(null=True, blank=True)
+    attempts = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        ordering = ['-created_at', '-pk']
+
+    def __str__(self):
+        return f"Registration code for staff ID {self.staff_id_id}"
+
+
+class PasswordResetCode(models.Model):
+    staff_id = models.ForeignKey(
+        StaffId,
+        on_delete=models.CASCADE,
+        related_name='password_reset_codes',
+    )
+    code_hash = models.CharField(max_length=128)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    verified_at = models.DateTimeField(null=True, blank=True)
+    attempts = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        ordering = ['-created_at', '-pk']
+
+    def __str__(self):
+        return f"Password reset code for staff ID {self.staff_id_id}"
+
+
+
+
+    

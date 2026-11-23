@@ -223,6 +223,55 @@
         color: #fff;
         transform: translateY(-1px);
     }
+    .login-account-links {
+        display: grid;
+        gap: .7rem;
+        margin-top: 1rem;
+    }
+    .login-account-link {
+        align-items: center;
+        background: #f8fbfc;
+        border: 1px solid #e3ecef;
+        border-radius: 13px;
+        color: var(--login-navy);
+        display: flex;
+        gap: .85rem;
+        min-height: 66px;
+        padding: .7rem .85rem;
+        text-decoration: none;
+        transition: background .2s ease, border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+    }
+    .login-account-link:hover {
+        background: #f0faf8;
+        border-color: rgba(22, 184, 166, .55);
+        box-shadow: 0 8px 18px rgba(9, 43, 70, .07);
+        color: var(--login-navy);
+        transform: translateY(-1px);
+    }
+    .login-account-link:focus-visible {
+        outline: 3px solid rgba(22, 184, 166, .55);
+        outline-offset: 3px;
+    }
+    .login-account-link-icon {
+        align-items: center;
+        background: #e8f7f4;
+        border-radius: 10px;
+        color: #087b74;
+        display: flex;
+        flex: 0 0 40px;
+        height: 40px;
+        justify-content: center;
+    }
+    .login-account-link-copy { display: grid; gap: .15rem; }
+    .login-account-link-title { font-size: .88rem; font-weight: 750; }
+    .login-account-link-description { color: #687c88; font-size: .76rem; line-height: 1.4; }
+    .login-account-link-arrow {
+        color: #087b74;
+        font-size: 1.15rem;
+        margin-left: auto;
+        transition: transform .2s ease;
+    }
+    .login-account-link:hover .login-account-link-arrow { transform: translateX(3px); }
     .login-security {
         align-items: center;
         color: #73858e;
@@ -336,6 +385,34 @@
                 </button>
             </form>
 
+            <div class="login-account-links" aria-label="Account assistance">
+                <a class="login-account-link" href="{% url 'password_reset_request' %}">
+                    <span class="login-account-link-icon" aria-hidden="true">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                            <path d="M7.5 10V7.5a4.5 4.5 0 0 1 9 0V10m-11 0h13v10h-13V10Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M12 14v2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                        </svg>
+                    </span>
+                    <span class="login-account-link-copy">
+                        <span class="login-account-link-title">Forgot your password?</span>
+                        <span class="login-account-link-description">Verify your staff details to reset it securely.</span>
+                    </span>
+                    <span class="login-account-link-arrow" aria-hidden="true">→</span>
+                </a>
+                <a class="login-account-link" href="{% url 'employee_registration' %}">
+                    <span class="login-account-link-icon" aria-hidden="true">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                            <circle cx="9" cy="8" r="3.2" stroke="currentColor" stroke-width="1.7"/>
+                            <path d="M3.5 19a5.5 5.5 0 0 1 11 0m3-9v7m-3.5-3.5h7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                        </svg>
+                    </span>
+                    <span class="login-account-link-copy">
+                        <span class="login-account-link-title">First time using the system?</span>
+                        <span class="login-account-link-description">Create your staff account with your HR-approved ID.</span>
+                    </span>
+                    <span class="login-account-link-arrow" aria-hidden="true">→</span>
+                </a>
+            </div>
             <div class="login-security"><span aria-hidden="true">●</span> Your appraisal information is securely protected.</div>
             <div class="login-footer">Mathias Catholic Hospital, Yeji<br>Staff Appraisal System</div>
         </div>

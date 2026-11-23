@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 
 import os
 from pathlib import Path
+from celery.schedules import crontab
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -38,16 +39,19 @@ SECRET_KEY = os.environ["DJANGO_SECRET_KEY"]
 debug_value = os.environ["DEBUG"].lower()
 if debug_value not in {"true", "false"}:
     raise ValueError("DEBUG must be set to 'true' or 'false'")
-DEBUG = debug_value == "true"
+# DEBUG = debug_value == "true"
+DEBUG = True
 
 
-ALLOWED_HOSTS = ["localhost","appraisal.mchyeji.org","192.168.1.70"]
+# ALLOWED_HOSTS = ["localhost","appraisal.mchyeji.org","192.168.1.70","192.168.0.212"]
+ALLOWED_HOSTS = ["*"]
 
-CSRF_TRUSTED_ORIGINS = ["https://appraisal.mchyeji.org", "http://localhost:8000","http://192.168.1.70"]
+# CSRF_TRUSTED_ORIGINS = ["https://appraisal.mchyeji.org", "http://localhost:8000","http://192.168.1.70","http://192.168.0.212"]
 
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+# SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 STATICFILES_DIRS = [BASE_DIR / "static"]  
+
 
 STATIC_ROOT = BASE_DIR / "staticfiles" 
 MEDIA_ROOT = BASE_DIR / "media"
@@ -114,12 +118,9 @@ WSGI_APPLICATION = 'project.wsgi.application'
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.environ["DB_NAME"],
-        "USER": os.environ["DB_USER"],
-        "PASSWORD": os.environ["DB_PASSWORD"],
-        "HOST": os.environ["DB_HOST"],
-        "PORT": os.environ["DB_PORT"],
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
+        
     }
 }
 
@@ -157,15 +158,53 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.1/howto/static-files/
 
-STATIC_URL = '/static/'
+
+STATICFILES_DIRS = [BASE_DIR / "static"]  
+
+
+STATIC_ROOT = BASE_DIR / "staticfiles" 
+MEDIA_ROOT = BASE_DIR / "media"
+
+STATIC_URL = "/static/"
 
 
 # Email
 # https://docs.djangoproject.com/en/6.1/topics/email/#topic-email-configuration
 
+email_host = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
+email_port = int(os.environ.get('EMAIL_PORT', '587'))
+email_username = os.environ.get('EMAIL_HOST_USER', '')
+email_password = os.environ.get('EMAIL_HOST_PASSWORD', '')
+email_use_tls = os.environ.get('EMAIL_USE_TLS', 'true').lower() in {
+    '1', 'true', 'yes', 'on',
+}
+email_use_ssl = os.environ.get('EMAIL_USE_SSL', 'false').lower() in {
+    '1', 'true', 'yes', 'on',
+}
+email_timeout = int(os.environ.get('EMAIL_TIMEOUT', '15'))
+DEFAULT_FROM_EMAIL = os.environ.get(
+    'DEFAULT_FROM_EMAIL',
+    f'Appraisal System <{email_username}>',
+)
+
+if email_use_tls and email_use_ssl:
+    raise ValueError('Set only one of EMAIL_USE_TLS or EMAIL_USE_SSL to true.')
+
 MAILERS = {
     'default': {
-        'BACKEND': 'django.core.mail.backends.console.EmailBackend',
+        'BACKEND': os.environ.get(
+            'EMAIL_BACKEND',
+            'django.core.mail.backends.smtp.EmailBackend',
+        ),
+        'OPTIONS': {
+            'host': email_host,
+            'port': email_port,
+            'username': email_username,
+            'password': email_password,
+            'use_tls': email_use_tls,
+            'use_ssl': email_use_ssl,
+            'timeout': email_timeout,
+        },
     },
 }
 
@@ -173,3 +212,20 @@ MAILERS = {
 LOGIN_REDIRECT_URL = 'dashboard_router' # We will later make this smart to redirect to the right dashboard based on role
 LOGOUT_REDIRECT_URL = '/'
 LOGIN_URL = 'login'
+
+CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://127.0.0.1:6379/0')
+CELERY_TIMEZONE = 'Africa/Accra'
+CELERY_ENABLE_UTC = True
+CELERY_BEAT_SCHEDULE = {
+    'weekly-appraisal-backup': {
+        'task': 'app.tasks.create_backup',
+        'schedule': crontab(minute=0, hour=2, day_of_week='saturday'),
+    },
+}
+
+
+BACKUP_ROOT = Path(os.environ.get('BACKUP_ROOT', BASE_DIR / 'backups'))
+BACKUP_ENCRYPTION_PASSWORD = os.environ.get('BACKUP_ENCRYPTION_PASSWORD', '')
+BACKUP_PG_DUMP = os.environ.get('BACKUP_PG_DUMP', 'pg_dump')
+BACKUP_RETENTION_DAYS = int(os.environ.get('BACKUP_RETENTION_DAYS', '90'))
+

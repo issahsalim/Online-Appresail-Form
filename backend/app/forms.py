@@ -1,6 +1,8 @@
 # yourapp/forms.py
 from django import forms
+from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import get_user_model
+from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.forms.models import BaseInlineFormSet
 from django.utils import timezone
@@ -16,7 +18,225 @@ from .models import (
     SupervisorReporting,
     AppraisalCycle,
     PreviousAppraisal,
+    StaffId,
 )
+
+
+class StaffLoginForm(AuthenticationForm):
+    username = forms.CharField(
+        label='Staff ID',
+        widget=forms.TextInput(attrs={
+            # 'autofocus': True,
+            'autocomplete': 'username',
+            'placeholder': 'MOH-123456',
+        }),
+    )
+    password = forms.CharField(
+        label='Password',
+        strip=False,
+        widget=forms.PasswordInput(attrs={
+            'autocomplete': 'current-password',
+            'placeholder': 'Enter your password',
+        }),
+    )
+
+
+class StaffIdEntryForm(forms.Form):
+    staff_id = forms.CharField(max_length=100, label='Staff ID', widget=forms.TextInput(attrs={'autofocus': True, 'placeholder': 'MOH-123456'}))
+    email = forms.EmailField(label='Work email', widget=forms.EmailInput(attrs={'placeholder': 'work.email@yourorg.com'}))
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs['class'] = 'form-control'
+
+    def clean_staff_id(self):
+        return self.cleaned_data['staff_id'].strip()
+
+    def clean_email(self):
+        return self.cleaned_data['email'].strip().lower()
+
+
+class StaffIdUploadForm(forms.Form):
+    file = forms.FileField(label='CSV or Excel file')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['file'].widget.attrs['class'] = 'form-control'
+
+    def clean_file(self):
+        uploaded_file = self.cleaned_data['file']
+        if uploaded_file.size > 5 * 1024 * 1024:
+            raise ValidationError('The file must be smaller than 5 MB.')
+        if not uploaded_file.name.lower().endswith(('.csv', '.xlsx')):
+            raise ValidationError('Upload a .csv or .xlsx file.')
+        return uploaded_file
+
+
+class RegistrationStaffIdForm(forms.Form):
+    staff_id = forms.CharField(max_length=100, label='Staff ID')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['staff_id'].widget.attrs['class'] = 'form-control'
+
+    def clean_staff_id(self):
+        staff_id = self.cleaned_data['staff_id'].strip()
+        approved_staff_id = StaffId.objects.filter(
+            name__iexact=staff_id,
+        ).first()
+        if not approved_staff_id:
+            raise ValidationError(
+                'This Staff ID has not been added by HR. Contact HR for assistance.'
+            )
+        if (
+            approved_staff_id.registered_user_id
+            or get_user_model().objects.filter(
+                username__iexact=approved_staff_id.name,
+            ).exists()
+        ):
+            raise ValidationError(
+                'An account already exists for this Staff ID. Please sign in or reset your password.'
+            )
+        if not approved_staff_id.email:
+            raise ValidationError(
+                'HR has not added a work email for this Staff ID. Contact HR for assistance.'
+            )
+        self.approved_staff_id = approved_staff_id
+        return staff_id
+
+
+class RegistrationCodeForm(forms.Form):
+    code = forms.RegexField(
+        regex=r'^\d{6}$',
+        label='Email verification code',
+        error_messages={'invalid': 'Enter the 6-digit code from your work email.'},
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['code'].widget.attrs.update({
+            'class': 'form-control staff-registration-code-input',
+            'data-code-pin-input': '',
+            'inputmode': 'numeric',
+            'autocomplete': 'one-time-code',
+            'maxlength': '6',
+        })
+
+
+class PasswordResetRequestForm(forms.Form):
+    staff_id = forms.CharField(max_length=100, label='Staff ID')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['staff_id'].widget.attrs.update({
+            'class': 'form-control',
+            'autocomplete': 'username',
+        })
+
+    def clean_staff_id(self):
+        return self.cleaned_data['staff_id'].strip()
+
+
+class PasswordResetAnswerForm(forms.Form):
+    security_answer = forms.CharField(
+        max_length=200,
+        label='Your security answer',
+        strip=True,
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs['class'] = 'form-control'
+
+    def clean_security_answer(self):
+        answer = self.cleaned_data['security_answer'].strip().casefold()
+        if len(answer) < 2:
+            raise ValidationError('Enter your answer with at least 2 characters.')
+        return answer
+
+
+class PasswordResetCodeForm(forms.Form):
+    code = forms.RegexField(
+        regex=r'^\d{6}$',
+        label='Email verification code',
+        error_messages={'invalid': 'Enter the 6-digit code sent to your work email.'},
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['code'].widget.attrs.update({
+            'class': 'form-control password-reset-code-input',
+            'data-code-pin-input': '',
+            'inputmode': 'numeric',
+            'autocomplete': 'one-time-code',
+            'maxlength': '6',
+        })
+
+
+class EmployeeRegistrationForm(forms.Form):
+    first_name = forms.CharField(max_length=150, label='First name')
+    last_name = forms.CharField(max_length=150, label='Surname')
+    other_names = forms.CharField(max_length=150, required=False, label='Other names')
+    title = forms.ChoiceField(
+        choices=[('', 'Select title')] + EmployeeProfile.TITLE_CHOICES,
+        required=False,
+    )
+    other_title = forms.CharField(max_length=50, required=False, label='Other title')
+    gender = forms.ChoiceField(
+        choices=[('', 'Select gender')] + EmployeeProfile.GENDER_CHOICES,
+        required=False,
+    )
+    department = forms.ModelChoiceField(
+        queryset=Department.objects.order_by('name'),
+        required=False,
+    )
+    job_title = forms.CharField(max_length=150, required=False, label='Job title')
+    appointment_to_present_grade_date = forms.DateField(
+        required=False,
+        widget=forms.DateInput(attrs={'type': 'date'}),
+        label='Date of appointment to present grade',
+    )
+    security_question = forms.ChoiceField(
+        choices=[('', 'Choose a security question')]
+        + EmployeeProfile.SECURITY_QUESTION_CHOICES,
+        label='Security question',
+    )
+    security_answer = forms.CharField(max_length=200, label='Your answer')
+    password = forms.CharField(widget=forms.PasswordInput, label='Create password')
+    password_confirm = forms.CharField(
+        widget=forms.PasswordInput,
+        label='Confirm password',
+    )
+
+    def __init__(self, *args, staff_id='', **kwargs):
+        super().__init__(*args, **kwargs)
+        self.staff_id = staff_id
+        for field in self.fields.values():
+            field.widget.attrs['class'] = (
+                'form-select' if isinstance(field.widget, forms.Select) else 'form-control'
+            )
+
+    def clean_security_answer(self):
+        answer = self.cleaned_data['security_answer'].strip().casefold()
+        if len(answer) < 2:
+            raise ValidationError('Enter an answer with at least 2 characters.')
+        return answer
+
+    def clean(self):
+        cleaned_data = super().clean()
+        password = cleaned_data.get('password')
+        password_confirm = cleaned_data.get('password_confirm')
+        if password and password_confirm and password != password_confirm:
+            self.add_error('password_confirm', 'The passwords do not match.')
+        if password:
+            user_model = get_user_model()
+            try:
+                validate_password(password, user_model(username=self.staff_id))
+            except ValidationError as error:
+                self.add_error('password', error)
+        return cleaned_data
 
 
 class PreviousAppraisalUploadForm(forms.ModelForm):
@@ -35,12 +255,7 @@ class PreviousAppraisalUploadForm(forms.ModelForm):
             }),
             'appraisal_file': forms.ClearableFileInput(attrs={
                 'class': 'form-control',
-<<<<<<< Updated upstream
-=======
                 'accept': '.pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-              'data-file-input': 'true',
-              'aria-describedby': 'previous-appraisal-file-hint',
->>>>>>> Stashed changes
             }),
         }
 
@@ -160,6 +375,27 @@ class UserProfileForm(forms.ModelForm):
                 'appointment_to_present_grade_date',
             ])
         return user
+
+
+class ProfilePhotoForm(forms.ModelForm):
+    profile_photo = forms.ImageField(
+        label='Profile photo',
+        required=True,
+        widget=forms.ClearableFileInput(attrs={
+            'accept': 'image/*',
+            'class': 'profile-photo-input',
+        }),
+    )
+
+    class Meta:
+        model = EmployeeProfile
+        fields = ['profile_photo']
+
+    def clean_profile_photo(self):
+        photo = self.cleaned_data['profile_photo']
+        if photo.size > 5 * 1024 * 1024:
+            raise ValidationError('Profile photos must be 5 MB or smaller.')
+        return photo
 
 
 class AppraisalEmployeeInfoForm(forms.ModelForm):
