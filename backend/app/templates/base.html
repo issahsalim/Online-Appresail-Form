@@ -13,6 +13,8 @@
     
     <style>
         html { overflow-x: clip; }
+        :root { --app-font-family: Inter, "Segoe UI", Arial, sans-serif; }
+        body, button, input, select, textarea { font-family: var(--app-font-family); }
         /* Optional: Custom Styles */
         body {
             background-color: #f8f9fa; /* Light gray background */
@@ -1058,6 +1060,78 @@
         {% endblock %}
 
     </div>
+
+    <style>
+        :is(.hr-dashboard-shell, .role-dashboard-shell) .table-responsive,
+        :is(.hr-dashboard-shell, .role-dashboard-shell) .supervisor-table-wrap {
+            border-radius: 10px;
+            max-width: 100%;
+            overflow-x: auto;
+            overscroll-behavior-x: contain;
+        }
+        :is(.hr-dashboard-shell, .role-dashboard-shell) table.table,
+        :is(.hr-dashboard-shell, .role-dashboard-shell) table.employee-table {
+            background: #fff;
+            border-collapse: separate;
+            border-spacing: 0;
+            color: #36584c;
+            font-family: var(--app-font-family);
+            font-size: .8rem;
+            margin-bottom: 0;
+            min-width: 620px;
+            width: 100%;
+        }
+        :is(.hr-dashboard-shell, .role-dashboard-shell) table.table > thead > tr > th,
+        :is(.hr-dashboard-shell, .role-dashboard-shell) table.employee-table > thead > tr > th {
+            background: #f2f7f3;
+            border-bottom: 1px solid #dfe9e1;
+            color: #466456;
+            font-size: .67rem;
+            font-weight: 750;
+            letter-spacing: .045em;
+            padding: .72rem .85rem;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+        :is(.hr-dashboard-shell, .role-dashboard-shell) table.table > tbody > tr > td,
+        :is(.hr-dashboard-shell, .role-dashboard-shell) table.employee-table > tbody > tr > td {
+            background: #fff;
+            border-bottom: 1px solid #eaf0eb;
+            color: #52675c;
+            padding: .72rem .85rem;
+            vertical-align: middle;
+        }
+        :is(.hr-dashboard-shell, .role-dashboard-shell) table.table > tbody > tr:hover > td,
+        :is(.hr-dashboard-shell, .role-dashboard-shell) table.employee-table > tbody > tr:hover > td { background: #f7fbf8; }
+        :is(.hr-dashboard-shell, .role-dashboard-shell) table.table > tbody > tr:last-child > td,
+        :is(.hr-dashboard-shell, .role-dashboard-shell) table.employee-table > tbody > tr:last-child > td { border-bottom: 0; }
+        :is(.hr-dashboard-shell, .role-dashboard-shell) input[type="search"],
+        :is(.hr-dashboard-shell, .role-dashboard-shell) input[data-dashboard-search],
+        .employee-history-search .form-control {
+            background-color: #fff;
+            border: 1px solid #d9e5dc;
+            border-radius: 8px;
+            color: #294b3c;
+            font-family: var(--app-font-family);
+            font-size: .8rem;
+            min-height: 42px;
+            padding: .55rem .75rem;
+            transition: border-color .18s ease, box-shadow .18s ease;
+            width: 100%;
+        }
+        :is(.hr-dashboard-shell, .role-dashboard-shell) input[type="search"]:focus,
+        :is(.hr-dashboard-shell, .role-dashboard-shell) input[data-dashboard-search]:focus,
+        .employee-history-search .form-control:focus {
+            border-color: #54a67b;
+            box-shadow: 0 0 0 .2rem rgba(22,132,93,.12);
+            outline: 0;
+        }
+        :is(.hr-dashboard-shell, .role-dashboard-shell) [data-search-status] { color: #77877d; font-size: .72rem; }
+        @media (max-width: 575.98px) {
+            :is(.hr-dashboard-shell, .role-dashboard-shell) table.table,
+            :is(.hr-dashboard-shell, .role-dashboard-shell) table.employee-table { min-width: 560px; }
+        }
+    </style>
 
     {% include 'partials/site_footer.html' %}
 
