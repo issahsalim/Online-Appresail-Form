@@ -382,6 +382,24 @@
             gap: .7rem;
             letter-spacing: .02em;
         }
+        .navbar-support-link {
+            align-items: center;
+            color: #315d4d;
+            display: inline-flex;
+            font-size: .86rem;
+            font-weight: 650;
+            gap: .45rem;
+            min-height: 42px;
+            padding: .45rem .7rem;
+            text-decoration: none;
+            transition: color .16s ease, background-color .16s ease;
+        }
+        .navbar-support-link:hover, .navbar-support-link:focus-visible {
+            background: rgba(255,255,255,.55);
+            border-radius: 8px;
+            color: #087254;
+        }
+        .navbar-support-link i { color: #16845d; font-size: 1rem; }
         .navbar-brand-mark {
             height: 40px;
             object-fit: contain;
@@ -913,6 +931,9 @@
             
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="navbar-support-link" href="{% url 'support' %}" data-global-support-link><i class="bi bi-life-preserver" aria-hidden="true"></i><span>Support</span></a>
+                    </li>
                     {% if user.is_authenticated %}
                         <li class="nav-item dropdown navbar-notifications">
                             <button
@@ -1464,6 +1485,15 @@
             window.addEventListener('popstate', () => showSection(window.location.hash.slice(1) || defaultSection, false));
             syncNavigationState();
             showSection(window.location.hash.slice(1) || defaultSection, false);
+        });
+
+        document.querySelectorAll('[data-global-support-link]').forEach((link) => {
+            link.addEventListener('click', (event) => {
+                const supportButton = document.querySelector('[data-dashboard-target="support"], [data-role-section-target="support"]');
+                if (!supportButton) return;
+                event.preventDefault();
+                supportButton.click();
+            });
         });
     </script>
 </body>

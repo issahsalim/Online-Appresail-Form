@@ -8,6 +8,8 @@
     <meta name="theme-color" content="#092b46">
     <title>Staff Appraisal | Mathias Catholic Hospital, Yeji</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="{% static 'css/site-footer.css' %}" rel="stylesheet">
     <style>
         :root {
             --app-font-family: Inter, "Segoe UI", Arial, sans-serif;
@@ -60,15 +62,19 @@
             width: 42px;
         }
         .nav-link-custom {
+            align-items: center;
             color: #435b51;
+            display: inline-flex;
             font-size: .78rem;
             font-weight: 600;
+            gap: .38rem;
             letter-spacing: .075em;
             margin: 0 .65rem;
             text-transform: uppercase;
             transition: color .18s ease;
         }
         .nav-link-custom:hover { color: #148968; }
+        .nav-link-custom i { color: #16845d; font-size: .88rem; }
         .site-nav .navbar-toggler { color: #174b3e; }
         .site-nav .navbar-toggler-icon {
             filter: brightness(0) saturate(100%) invert(27%) sepia(22%) saturate(934%) hue-rotate(103deg) brightness(93%) contrast(89%);
@@ -459,25 +465,6 @@
             letter-spacing: -.04em;
         }
         .closing p { color: rgba(255,255,255,.76); line-height: 1.75; max-width: 600px; }
-        footer {
-            background: #0a2e2c;
-            color: rgba(255,255,255,.68);
-            overflow: hidden;
-            padding: 72px 0 28px;
-            position: relative;
-        }
-        footer::before {
-            background: #0a2e2c;
-            border-radius: 50% 50% 0 0 / 100% 100% 0 0;
-            content: "";
-            height: 72px;
-            left: -5%;
-            position: absolute;
-            right: -5%;
-            top: -35px;
-        }
-        footer .container { position: relative; }
-        footer strong { color: white; }
         .reveal { opacity: 0; transform: translateY(22px); transition: opacity .7s ease, transform .7s ease; }
         .reveal.is-visible { opacity: 1; transform: translateY(0); }
         .feature-card.reveal.is-visible:hover,
@@ -548,8 +535,6 @@
             }
             .closing { padding-top: 96px; }
             .closing::before { height: 48px; }
-            footer { padding-top: 60px; }
-            footer::before { height: 58px; top: -28px; }
         }
         @media (min-width: 992px) {
             #purpose .row > .col-lg-6:first-child { order: 2; }
@@ -593,11 +578,12 @@ Performance Appraisal System<br><small class="fw-normal opacity-75">Staff perfor
             </button>
             <div class="collapse navbar-collapse" id="homeNav">
                 <div class="navbar-nav ms-auto align-items-lg-center py-3 py-lg-0">
-                    <a class="nav-link-custom" href="#purpose">Purpose</a>
-                    <a class="nav-link-custom" href="#features">Features</a>
-                    <a class="nav-link-custom" href="#process">How it works</a>
-                    <a class="nav-link-custom" href="#team">Our people</a>
-                    <a class="nav-link-custom" href="#insights">Guides</a>
+                    <a class="nav-link-custom" href="#purpose"><i class="bi bi-bullseye" aria-hidden="true"></i><span>Purpose</span></a>
+                    <a class="nav-link-custom" href="#features"><i class="bi bi-grid-1x2" aria-hidden="true"></i><span>Features</span></a>
+                    <a class="nav-link-custom" href="#process"><i class="bi bi-diagram-3" aria-hidden="true"></i><span>How it works</span></a>
+                    <a class="nav-link-custom" href="#team"><i class="bi bi-people" aria-hidden="true"></i><span>Our people</span></a>
+                    <a class="nav-link-custom" href="#insights"><i class="bi bi-journal-text" aria-hidden="true"></i><span>Guides</span></a>
+                    <a class="nav-link-custom" href="{% url 'support' %}"><i class="bi bi-life-preserver" aria-hidden="true"></i><span>Support</span></a>
                     <a class="btn btn-teal ms-lg-3 mt-2 mt-lg-0" href="{% url 'login' %}">Staff sign in <span aria-hidden="true">→</span></a>
                 </div>
             </div>
@@ -671,7 +657,8 @@ Performance Appraisal System<br><small class="fw-normal opacity-75">Staff perfor
                         <div class="section-kicker mb-3">What the system supports</div>
                         <h2 class="section-title mb-3" id="features-title">Appraisal essentials, all in one place.</h2>
                         <p class="section-copy mb-0">Simple tools help staff prepare, reflect and move through each review stage with clarity.</p>
-                    </div>
+                    </div>Your contribution matters.
+
                 </div>
                 <div class="row g-4">
                     <article class="col-md-6 col-xl-3">

@@ -1043,7 +1043,6 @@ def _return_request_page_url(appraisal, profile):
     return reverse('dashboard_router')
 
 
-@login_required
 def support(request):
     return render(request, 'support.html')
 

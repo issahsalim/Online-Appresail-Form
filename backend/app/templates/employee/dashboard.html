@@ -1222,6 +1222,9 @@
                     
                 </span>
             </button>
+            <button class="role-sidebar-link" type="button" data-role-section-target="support">
+                <span class="role-sidebar-link-copy"><span class="role-sidebar-link-title">Support</span><span class="role-sidebar-link-note">Help and FAQs</span></span>
+            </button>
         </nav>
         <div class="role-sidebar-label">Signed in as </div>
         <div class="small px-2 text-white-50">{{ request.user.username }}</div>
@@ -1515,6 +1518,9 @@
                 </div>
             {% endif %}
         </div>
+    </section>
+    <section class="role-dashboard-section" data-role-section="support" aria-label="Support and assistance" hidden>
+        {% include 'partials/support_content.html' %}
     </section>
     </main>
 </div>
