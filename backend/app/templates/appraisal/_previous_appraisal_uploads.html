@@ -10,7 +10,7 @@
             <p>Submit an appraisal from before {{ current_year }}. HR will review it before it appears in your records.</p>
         </div>
     </div>
-    <form method="post" enctype="multipart/form-data" action="{% url 'upload_previous_appraisal' %}" class="previous-appraisal-form">
+    <form method="post" enctype="multipart/form-data" action="{% url 'upload_previous_appraisal' %}" class="previous-appraisal-form" data-previous-appraisal-upload>
         {% csrf_token %}
         <div class="previous-appraisal-field">
             <label for="{{ previous_appraisal_form.appraisal_cycle.id_for_label }}" class="form-label">{{ previous_appraisal_form.appraisal_cycle.label }}</label>
@@ -28,8 +28,15 @@
                 <div class="invalid-feedback d-block">{{ error }}</div>
             {% endfor %}
         </div>
-        <button type="submit" class="previous-appraisal-button">Submit for review</button>
+        <button type="submit" class="previous-appraisal-button" data-upload-submit>Upload</button>
     </form>
+    <div class="previous-appraisal-upload-feedback" data-upload-feedback role="status" aria-live="polite" hidden></div>
+    <div class="previous-appraisal-upload-progress" data-upload-progress hidden>
+        <div class="previous-appraisal-progress-copy"><span data-progress-label>Preparing upload</span><span data-progress-value>0%</span></div>
+        <div class="previous-appraisal-progress-track" role="progressbar" aria-label="File upload progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" data-progress-track>
+            <span data-progress-fill></span>
+        </div>
+    </div>
 
     <div class="previous-appraisal-list">
         <h3>Approved previous appraisals</h3>
@@ -74,3 +81,150 @@
         </div>
     {% endif %}
 </section>
+
+<div class="modal fade previous-appraisal-success-modal" id="previousAppraisalSuccessModal" tabindex="-1" aria-labelledby="previousAppraisalSuccessTitle" aria-describedby="previousAppraisalSuccessMessage" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body">
+                <button type="button" class="btn-close previous-appraisal-modal-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <span class="previous-appraisal-success-mark" aria-hidden="true"><i class="bi bi-check-lg"></i></span>
+                <span class="previous-appraisal-success-eyebrow">Upload complete</span>
+                <h2 id="previousAppraisalSuccessTitle">Your appraisal was submitted</h2>
+                <p id="previousAppraisalSuccessMessage">Your file was uploaded successfully and is waiting for HR review.</p>
+                <div class="previous-appraisal-modal-progress"><span data-return-countdown>Returning to Previous Appraisals in 60 seconds</span><span class="previous-appraisal-modal-progress-track"><i></i></span></div>
+                <button type="button" class="previous-appraisal-button previous-appraisal-return-button" data-return-to-history>Back to Previous Appraisals <i class="bi bi-arrow-right" aria-hidden="true"></i></button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .previous-appraisal-upload-feedback { border-radius: 8px; font-size: .8rem; margin-top: .7rem; padding: .65rem .8rem; }
+    .previous-appraisal-upload-feedback.is-error { background: #fff4f1; border: 1px solid #f0d0c8; color: #874337; }
+    .previous-appraisal-upload-progress { margin-top: .85rem; }
+    .previous-appraisal-progress-copy { color: #526c62; display: flex; font-size: .72rem; justify-content: space-between; margin-bottom: .35rem; }
+    .previous-appraisal-progress-track, .previous-appraisal-modal-progress-track { background: #e7efea; border-radius: 999px; display: block; height: 8px; overflow: hidden; }
+    .previous-appraisal-progress-track > span { background: linear-gradient(90deg, #16845d, #54bd86); border-radius: inherit; display: block; height: 100%; transition: width .2s ease; width: 0; }
+    .previous-appraisal-progress-track.is-indeterminate > span { animation: previous-appraisal-progress-pulse 1.15s ease-in-out infinite; width: 40%; }
+    .previous-appraisal-success-modal .modal-content { border: 1px solid rgba(22,132,93,.13); border-radius: 18px; box-shadow: 0 24px 70px rgba(14,53,39,.2); overflow: hidden; }
+    .previous-appraisal-success-modal .modal-body { padding: 2rem clamp(1.25rem, 5vw, 2.4rem) 1.7rem; position: relative; text-align: center; }
+    .previous-appraisal-modal-close { position: absolute; right: 1rem; top: 1rem; }
+    .previous-appraisal-success-mark { align-items: center; background: linear-gradient(145deg, #e3f6e9, #d2f0df); border: 1px solid #c5e9d1; border-radius: 50%; color: #138054; display: flex; font-size: 1.8rem; height: 62px; justify-content: center; margin: 0 auto 1rem; width: 62px; }
+    .previous-appraisal-success-eyebrow { color: #16845d; display: block; font-size: .68rem; font-weight: 800; letter-spacing: .13em; margin-bottom: .45rem; text-transform: uppercase; }
+    .previous-appraisal-success-modal h2 { color: #173c32; font-size: clamp(1.2rem, 3vw, 1.55rem); font-weight: 780; margin: 0 0 .55rem; }
+    .previous-appraisal-success-modal p { color: #718078; font-size: .84rem; line-height: 1.6; margin: 0 auto 1.2rem; max-width: 380px; }
+    .previous-appraisal-modal-progress { color: #7c8b82; font-size: .68rem; margin: 0 auto 1.25rem; max-width: 300px; }
+    .previous-appraisal-modal-progress-track { height: 4px; margin-top: .5rem; }
+    .previous-appraisal-modal-progress-track i { animation: previous-appraisal-countdown 60s linear forwards; background: #36a873; display: block; height: 100%; transform-origin: left; width: 100%; }
+    .previous-appraisal-return-button { align-items: center; display: inline-flex; gap: .5rem; justify-content: center; }
+    @keyframes previous-appraisal-progress-pulse { from { transform: translateX(-110%); } to { transform: translateX(260%); } }
+    @keyframes previous-appraisal-countdown { to { transform: scaleX(0); } }
+    @media (prefers-reduced-motion: reduce) {
+        .previous-appraisal-progress-track > span, .previous-appraisal-progress-track.is-indeterminate > span,
+        .previous-appraisal-modal-progress-track i { animation: none; transition: none; }
+    }
+</style>
+
+<script>
+    (() => {
+        const form = document.querySelector('[data-previous-appraisal-upload]');
+        const modalElement = document.getElementById('previousAppraisalSuccessModal');
+        if (!form || !modalElement) return;
+
+        const submitButton = form.querySelector('[data-upload-submit]');
+        const progressPanel = document.querySelector('[data-upload-progress]');
+        const progressTrack = document.querySelector('[data-progress-track]');
+        const progressFill = document.querySelector('[data-progress-fill]');
+        const progressLabel = document.querySelector('[data-progress-label]');
+        const progressValue = document.querySelector('[data-progress-value]');
+        const feedback = document.querySelector('[data-upload-feedback]');
+        const countdown = modalElement.querySelector('[data-return-countdown]');
+        const returnButton = modalElement.querySelector('[data-return-to-history]');
+        let returnTimer = null;
+        let secondsRemaining = 60;
+
+        function returnToHistory() {
+            if (returnTimer) window.clearInterval(returnTimer);
+            const returnUrl = `${window.location.pathname}${window.location.search}#history`;
+            window.history.replaceState(null, '', returnUrl);
+            window.location.reload();
+        }
+
+        function showSuccessModal(message) {
+            modalElement.querySelector('#previousAppraisalSuccessMessage').textContent = message;
+            secondsRemaining = 60;
+            countdown.textContent = `Returning to Previous Appraisals in ${secondsRemaining} seconds`;
+            bootstrap.Modal.getOrCreateInstance(modalElement).show();
+            if (returnTimer) window.clearInterval(returnTimer);
+            returnTimer = window.setInterval(() => {
+                secondsRemaining -= 1;
+                countdown.textContent = `Returning to Previous Appraisals in ${secondsRemaining} second${secondsRemaining === 1 ? '' : 's'}`;
+                if (secondsRemaining <= 0) returnToHistory();
+            }, 1000);
+        }
+
+        returnButton.addEventListener('click', returnToHistory);
+        form.addEventListener('submit', (event) => {
+            if (!form.reportValidity()) return;
+            event.preventDefault();
+            feedback.hidden = true;
+            feedback.classList.remove('is-error');
+            progressPanel.hidden = false;
+            progressLabel.textContent = 'Uploading your file';
+            progressValue.textContent = '0%';
+            progressTrack.setAttribute('aria-valuenow', '0');
+            progressTrack.classList.add('is-indeterminate');
+            progressFill.style.width = '0%';
+            submitButton.disabled = true;
+            submitButton.textContent = 'Uploading…';
+
+            const request = new XMLHttpRequest();
+            request.open('POST', form.action);
+            request.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+            request.setRequestHeader('Accept', 'application/json');
+            request.upload.addEventListener('progress', (uploadEvent) => {
+                if (!uploadEvent.lengthComputable) return;
+                const percent = Math.min(100, Math.round((uploadEvent.loaded / uploadEvent.total) * 100));
+                progressTrack.classList.remove('is-indeterminate');
+                progressTrack.setAttribute('aria-valuenow', String(percent));
+                progressFill.style.width = `${percent}%`;
+                progressValue.textContent = `${percent}%`;
+                progressLabel.textContent = percent >= 100 ? 'Processing your submission' : 'Uploading your file';
+            });
+            request.addEventListener('load', () => {
+                let result = {};
+                try { result = JSON.parse(request.responseText); } catch (_) { /* Show the response fallback below. */ }
+                if (request.status >= 200 && request.status < 300 && result.success) {
+                    progressLabel.textContent = 'Upload complete';
+                    progressTrack.classList.remove('is-indeterminate');
+                    progressTrack.setAttribute('aria-valuenow', '100');
+                    progressFill.style.width = '100%';
+                    progressValue.textContent = '100%';
+                    form.reset();
+                    showSuccessModal(result.message || 'Your appraisal was uploaded successfully and is waiting for HR review.');
+                } else {
+                    progressPanel.hidden = true;
+                    feedback.textContent = result.message || 'We could not upload your file. Please check it and try again.';
+                    feedback.classList.add('is-error');
+                    feedback.hidden = false;
+                    submitButton.disabled = false;
+                    submitButton.textContent = 'Upload';
+                }
+            });
+            request.addEventListener('error', () => {
+                progressPanel.hidden = true;
+                feedback.textContent = 'The upload could not reach the server. Check your connection and try again.';
+                feedback.classList.add('is-error');
+                feedback.hidden = false;
+                submitButton.disabled = false;
+                submitButton.textContent = 'Upload';
+            });
+            request.addEventListener('abort', () => {
+                progressPanel.hidden = true;
+                submitButton.disabled = false;
+                submitButton.textContent = 'Upload';
+            });
+            request.send(new FormData(form));
+        });
+    })();
+</script>
