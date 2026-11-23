@@ -32,7 +32,7 @@
             font-weight: 750;
             gap: .7rem;
             line-height: 1.25;
-            margin: 0 .45rem 1.5rem;
+            margin: 0 0 1.5rem;
             padding: .25rem 0 1.25rem;
         }
         .hr-sidebar-mark {
@@ -344,9 +344,176 @@
         .hr-dashboard-section:not([data-dashboard-section="overview"]) .page-link:focus {
             box-shadow: 0 0 0 .2rem rgba(23, 63, 80, .1);
         }
+        body:has(.hr-dashboard-shell) .hr-dashboard-shell .hr-dashboard-content { background: #f4f7f5; }
+        body:has(.hr-dashboard-shell) .hr-dashboard-shell .hr-overview {
+            background: transparent;
+            border: 0;
+            border-radius: 0;
+            margin: 0;
+            padding: 0;
+        }
+        .hr-overview-title { min-width: 240px; }
+        .hr-overview-eyebrow { color: #16845d; display: block; font-size: .68rem; font-weight: 800; letter-spacing: .13em; margin-bottom: .3rem; text-transform: uppercase; }
+        .hr-overview-title h1 { color: #123d3b; font-size: clamp(1.55rem, 2.5vw, 2rem); font-weight: 780; letter-spacing: -.035em; margin: 0; }
+        .hr-overview-title p { color: #74837d; font-size: .83rem; margin: .25rem 0 0; }
+        .hr-dashboard-filters { align-items: end; background: #fff; border: 1px solid #e5ebe7; border-radius: 10px; gap: .55rem; padding: .55rem; }
+        .hr-dashboard-filters label { color: #76857e; font-size: .64rem; letter-spacing: .04em; }
+        .hr-dashboard-filters select { border-radius: 7px; font-size: .76rem; min-width: 138px; }
+        .hr-overview-filter-button { background: #16845d; border: 0; border-radius: 7px; color: #fff; font-size: .75rem; font-weight: 700; min-height: 36px; padding: .45rem .8rem; }
+        .hr-overview-filter-button:hover { background: #0e6d4d; color: #fff; }
+        .hr-metrics-grid { display: grid; gap: .65rem; grid-template-columns: repeat(6, minmax(0, 1fr)); margin-bottom: .9rem; }
+        .hr-metric {
+            border: 1px solid rgba(18,61,59,.05);
+            border-radius: 11px;
+            min-width: 0;
+            padding: .8rem .9rem;
+            position: relative;
+        }
+        .hr-metric--mint { background: #d9eee1; }
+        .hr-metric--aqua { background: #d8eef0; }
+        .hr-metric--sand { background: #f5ebcf; }
+        .hr-metric--lavender { background: #e9e1f4; }
+        .hr-metric--blue { background: #dce7f5; }
+        .hr-metric--rose { background: #f4dfdc; }
+        .hr-metric-icon { color: #2d8064; display: block; font-size: .82rem; margin-bottom: .35rem; }
+        .hr-metric-label { color: #4f6c62; font-size: .69rem; line-height: 1.3; }
+        .hr-metric-value { color: #155448; display: block; font-size: clamp(1.35rem, 2vw, 1.8rem); line-height: 1; margin: .2rem 0; }
+        .hr-metric-note { color: #688177; font-size: .64rem; margin: 0; }
+        .hr-dashboard-layout { display: grid; gap: .9rem; grid-template-columns: minmax(0, 2.1fr) minmax(265px, .92fr); }
+        .hr-dashboard-main, .hr-dashboard-rail { display: grid; gap: .9rem; min-width: 0; }
+        .hr-workspace-grid { align-items: stretch; display: grid; gap: .9rem; grid-template-columns: minmax(0, 1.55fr) minmax(220px, .8fr); }
+        .hr-panel { background: #fff; border: 1px solid #e5ebe7; border-radius: 11px; box-shadow: 0 4px 12px rgba(26,59,44,.035); min-width: 0; padding: .95rem; }
+        .hr-panel-heading { align-items: center; display: flex; gap: .6rem; justify-content: space-between; margin-bottom: .7rem; }
+        .hr-panel-heading h2 { color: #173e38; font-size: .91rem; font-weight: 750; margin: 0; }
+        .hr-panel-heading p { color: #87948d; font-size: .68rem; margin: .2rem 0 0; }
+        .hr-text-button, .hr-icon-button { background: transparent; border: 0; color: #16845d; font-size: .68rem; font-weight: 700; white-space: nowrap; }
+        .hr-text-button:hover, .hr-icon-button:hover { color: #0c5c43; }
+        .hr-todo-list { display: grid; }
+        .hr-todo-item { align-items: center; border-top: 1px solid #edf1ee; display: grid; gap: .6rem; grid-template-columns: 42px minmax(0,1fr) auto 30px; min-height: 57px; padding: .45rem 0; }
+        .hr-todo-date { align-items: center; background: #e1f3e8; border-radius: 7px; color: #147852; display: flex; flex-direction: column; justify-content: center; min-height: 40px; }
+        .hr-todo-date strong { font-size: .75rem; line-height: 1; }
+        .hr-todo-date small { font-size: .54rem; margin-top: .2rem; }
+        .hr-todo-copy { display: grid; min-width: 0; }
+        .hr-todo-copy strong { color: #324e45; font-size: .73rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .hr-todo-copy small { color: #87948d; font-size: .62rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .hr-todo-status { background: #e3f3e9; border-radius: 999px; color: #337a5e; font-size: .58rem; padding: .25rem .45rem; white-space: nowrap; }
+        .hr-todo-action { align-items: center; background: #edf6f0; border-radius: 6px; color: #26815e; display: inline-flex; height: 29px; justify-content: center; text-decoration: none; width: 29px; }
+        .hr-todo-action:hover { background: #d8eee1; color: #155b42; }
+        .hr-todo-empty { align-items: center; color: #7b8b83; display: flex; flex-direction: column; gap: .3rem; min-height: 150px; justify-content: center; text-align: center; }
+        .hr-todo-empty i { color: #24865e; font-size: 1.4rem; }
+        .hr-todo-empty strong { color: #30564a; font-size: .82rem; }
+        .hr-todo-empty span { font-size: .7rem; }
+        .hr-distribution-chart { height: 168px; margin: .2rem auto .65rem; max-width: 190px; position: relative; }
+        .hr-distribution-chart canvas { height: 100% !important; width: 100% !important; }
+        .hr-donut-center { align-items: center; display: flex; flex-direction: column; inset: 0; justify-content: center; pointer-events: none; position: absolute; }
+        .hr-donut-center strong { color: #173e38; font-size: 1.45rem; line-height: 1; }
+        .hr-donut-center span { color: #829088; font-size: .62rem; margin-top: .25rem; }
+        .hr-distribution-legend { display: grid; gap: .35rem; list-style: none; margin: 0; padding: 0; }
+        .hr-distribution-legend li { align-items: center; color: #6e7e76; display: grid; font-size: .61rem; gap: .4rem; grid-template-columns: 8px minmax(0,1fr) auto; }
+        .hr-distribution-legend strong { color: #34584c; font-size: .62rem; }
+        .hr-legend-dot { background: #258a65; border-radius: 50%; height: 7px; width: 7px; }
+        .hr-legend-dot-2 { background: #5aa88c; } .hr-legend-dot-3 { background: #a7cbb2; } .hr-legend-dot-4 { background: #d4b975; } .hr-legend-dot-5 { background: #87b6b5; } .hr-legend-dot-6 { background: #91a7bd; }
+        .hr-department-grid { display: grid; gap: .6rem; grid-template-columns: repeat(4, minmax(0,1fr)); }
+        .hr-department-card { background: #f7faf8; border: 1px solid #eef2ef; border-radius: 8px; display: grid; gap: .35rem; min-width: 0; padding: .65rem; }
+        .hr-department-card strong { color: #36584c; font-size: .7rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .hr-department-card span { color: #85928b; font-size: .6rem; }
+        .hr-department-card progress { appearance: none; background: #e5ece7; border: 0; border-radius: 999px; height: 5px; overflow: hidden; width: 100%; }
+        .hr-department-card progress::-webkit-progress-bar { background: #e5ece7; border-radius: 999px; }
+        .hr-department-card progress::-webkit-progress-value { background: #24865e; border-radius: 999px; }
+        .hr-department-card progress::-moz-progress-bar { background: #24865e; border-radius: 999px; }
+        .hr-department-empty, .hr-members-empty { color: #829088; font-size: .75rem; margin: .5rem 0; }
+        .hr-report-link { align-items: center; background: transparent; border: 0; border-top: 1px solid #edf1ee; color: #315448; display: flex; justify-content: space-between; padding: .7rem 0; text-align: left; width: 100%; }
+        .hr-report-link span { display: grid; gap: .12rem; }
+        .hr-report-link strong { font-size: .7rem; font-weight: 700; }
+        .hr-report-link small { color: #87948d; font-size: .6rem; }
+        .hr-report-link b { align-items: center; background: #e5f3e9; border-radius: 5px; color: #24815c; display: inline-flex; font-size: .7rem; justify-content: center; min-width: 26px; padding: .3rem; }
+        .hr-report-link > i { color: #69867a; font-size: .8rem; }
+        .hr-report-link:hover strong { color: #16845d; }
+        .hr-members-list { display: grid; }
+        .hr-member-row { align-items: center; border-top: 1px solid #edf1ee; display: flex; gap: .55rem; min-width: 0; padding: .55rem 0; }
+        .hr-member-avatar { align-items: center; background: #d8eee1; border-radius: 50%; color: #247354; display: inline-flex; flex: 0 0 32px; font-size: .68rem; font-weight: 750; height: 32px; justify-content: center; }
+        .hr-member-copy { display: grid; min-width: 0; }
+        .hr-member-copy strong { color: #36584c; font-size: .67rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .hr-member-copy small { color: #8a9690; font-size: .57rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .hr-member-chevron { color: #9aa59f; font-size: .65rem; margin-left: auto; }
+        .hr-view-all-button { background: #e5f2c5; border: 0; border-radius: 6px; color: #557a2c; font-size: .67rem; font-weight: 750; margin-top: .45rem; min-height: 34px; width: 100%; }
+        .hr-view-all-button:hover { background: #d8eaa9; }
+        @media (max-width: 1199.98px) {
+            .hr-dashboard-layout { grid-template-columns: minmax(0, 1fr); }
+            .hr-dashboard-rail { grid-template-columns: repeat(2, minmax(0,1fr)); }
+            .hr-metrics-grid { grid-template-columns: repeat(3, minmax(0,1fr)); }
+        }
+        @media (max-width: 767.98px) {
+            .hr-dashboard-content { padding: 4.75rem 1rem 1rem; }
+            .hr-metrics-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+            .hr-overview-top { align-items: stretch; }
+            .hr-dashboard-filters { align-items: stretch; }
+            .hr-dashboard-filters > div { flex: 1 1 130px; }
+            .hr-overview-filter-button { flex: 1 0 100%; }
+            .hr-workspace-grid, .hr-dashboard-rail { grid-template-columns: minmax(0,1fr); }
+            .hr-department-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+            .hr-todo-item { gap: .45rem; grid-template-columns: 38px minmax(0,1fr) 28px; }
+            .hr-todo-status { display: none; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .hr-dashboard-section:not([data-dashboard-section="overview"]) { animation: none; }
+        }
         @keyframes hr-section-enter {
             from { opacity: 0; transform: translateY(5px); }
             to { opacity: 1; transform: translateY(0); }
+        }
+        @media (min-width: 768px) {
+            /* Use the shared dashboard stepper layout and retain the HR palette. */
+            .hr-dashboard-shell { display: block; }
+            .hr-dashboard-sidebar {
+                align-self: stretch;
+                min-height: 0;
+                padding: .1rem clamp(.75rem, 2vw, 1.5rem);
+                position: sticky;
+                top: 64px;
+                width: 100%;
+                z-index: 1020;
+            }
+            .hr-sidebar-brand,
+            .hr-sidebar-label,
+            .hr-sidebar-toggle,
+            .hr-sidebar-backdrop,
+            .hr-sidebar-drawer-brand,
+            .hr-dashboard-sidebar > .text-white-50 { display: none !important; }
+            .hr-sidebar-nav {
+                align-content: center;
+                display: flex;
+                gap: 0;
+                grid-template-columns: none;
+                margin: 0;
+                overflow-x: auto;
+                overflow-y: hidden;
+                padding: 0;
+                position: static;
+                scrollbar-color: rgba(255,255,255,.42) transparent;
+                scrollbar-width: thin;
+                width: 100%;
+            }
+            .hr-sidebar-link {
+                clip-path: polygon(0 0, calc(100% - 13px) 0, 100% 50%, calc(100% - 13px) 100%, 0 100%, 13px 50%);
+                flex: 0 0 auto;
+                justify-content: center;
+                margin-left: -10px;
+                min-height: 46px;
+                min-width: 132px;
+                padding-left: 1.15rem;
+                padding-right: 1.15rem;
+                text-align: center;
+                transition: clip-path .18s ease, filter .18s ease;
+                white-space: nowrap;
+            }
+            .hr-sidebar-nav > .hr-sidebar-link:nth-child(2) {
+                clip-path: polygon(0 0, calc(100% - 13px) 0, 100% 50%, calc(100% - 13px) 100%, 0 100%);
+                margin-left: 0;
+            }
+            .hr-sidebar-link:hover { filter: brightness(1.04); transform: none; }
+            .hr-sidebar-link.active { box-shadow: none; position: relative; z-index: 1; }
+            .hr-dashboard-content { min-width: 0; }
         }
         @media (max-width: 767.98px) {
             .hr-dashboard-shell { display: block; }
@@ -480,195 +647,225 @@
         </button>
         <div class="hr-sidebar-brand">
             <img class="hr-sidebar-mark" src="{% static 'images/mathias-catholic-hospital-logo.png' %}" alt="Mathias Catholic Hospital">
-            <span>Mathias Catholic Hospital<br><small class="fw-normal opacity-75">HR WORKSPACE</small></span>
+            <span>Mathias Catholic Hospital<br><small class="fw-normal opacity-75"></small></span>
         </div>
-        <div class="hr-sidebar-label">Workspace</div>
+        <div class="hr-sidebar-label"></div>
         <button class="hr-sidebar-backdrop" type="button" aria-label="Close menu" hidden></button>
         <nav class="hr-sidebar-nav" id="hr-dashboard-navigation">
             <div class="hr-sidebar-drawer-brand">
                 <img class="hr-sidebar-mark" src="{% static 'images/mathias-catholic-hospital-logo.png' %}" alt="">
-                <span class="hr-sidebar-drawer-copy">Mathias Catholic Hospital<small>HR WORKSPACE</small></span>
+                <span class="hr-sidebar-drawer-copy">Mathias Catholic Hospital<small></small></span>
                 <button class="hr-sidebar-close" type="button" aria-label="Close menu" data-sidebar-close>×</button>
             </div>
             <button class="hr-sidebar-link active" type="button" data-dashboard-target="overview">
-                <span class="hr-sidebar-icon" aria-hidden="true">▦</span>
+                <!-- <span class="hr-sidebar-icon" aria-hidden="true">▦</span> -->
                 <span class="hr-sidebar-link-copy"><span class="hr-sidebar-link-title">Overview</span></span>
             </button>
             <button class="hr-sidebar-link" type="button" data-dashboard-target="pending">
-                <span class="hr-sidebar-icon" aria-hidden="true">◷</span>
+                <!-- <span class="hr-sidebar-icon" aria-hidden="true">◷</span> -->
                 <span class="hr-sidebar-link-copy">
                     <span class="hr-sidebar-link-title">Pending approvals</span>
                     <span class="hr-sidebar-link-note">Reviews waiting for HR</span>
                 </span>
-                <span class="hr-sidebar-count">{{ pending_reviews|length }}</span>
+                <!-- <span class="hr-sidebar-count">{{ pending_reviews|length }}</span> -->
             </button>
             <button class="hr-sidebar-link" type="button" data-dashboard-target="completed">
-                <span class="hr-sidebar-icon" aria-hidden="true">✓</span>
+                <!-- <span class="hr-sidebar-icon" aria-hidden="true">✓</span> -->
                 <span class="hr-sidebar-link-copy">
                     <span class="hr-sidebar-link-title">Completed appraisals</span>
                     <span class="hr-sidebar-link-note">Search finalized reviews</span>
                 </span>
             </button>
             <button class="hr-sidebar-link" type="button" data-dashboard-target="roles">
-                <span class="hr-sidebar-icon" aria-hidden="true">♙</span>
+                <!-- <span class="hr-sidebar-icon" aria-hidden="true">♙</span> -->
                 <span class="hr-sidebar-link-copy">
                     <span class="hr-sidebar-link-title">Change user role</span>
                     <span class="hr-sidebar-link-note">Manage staff access</span>
                 </span>
             </button>
             <button class="hr-sidebar-link" type="button" data-dashboard-target="assignments">
-                <span class="hr-sidebar-icon" aria-hidden="true">⇄</span>
+                <!-- <span class="hr-sidebar-icon" aria-hidden="true">⇄</span> -->
                 <span class="hr-sidebar-link-copy">
                     <span class="hr-sidebar-link-title">Assignments</span>
                     <span class="hr-sidebar-link-note">Manage department and reporting roles</span>
                 </span>
             </button>
-            <a class="hr-sidebar-link" href="{% url 'new_app_cycle' %}">
-                <span class="hr-sidebar-icon" aria-hidden="true">＋</span>
+            <button class="hr-sidebar-link" type="button" data-dashboard-target="cycles">
+                <!-- <span class="hr-sidebar-icon" aria-hidden="true">＋</span> -->
                 <span class="hr-sidebar-link-copy">
                     <span class="hr-sidebar-link-title">Appraisal cycles</span>
                     <span class="hr-sidebar-link-note">Create and manage cycles</span>
                 </span>
-            </a>
+            </button>
             <a class="hr-sidebar-link" href="{% url 'previous_appraisal_reviews' %}">
-                <span class="hr-sidebar-icon" aria-hidden="true">▧</span>
+                <!-- <span class="hr-sidebar-icon" aria-hidden="true">▧</span> -->
                 <span class="hr-sidebar-link-copy">
                     <span class="hr-sidebar-link-title">Previous appraisals</span>
                     <span class="hr-sidebar-link-note">Review uploaded historical files</span>
                 </span>
-                <span class="hr-sidebar-count">{{ pending_previous_appraisal_count }}</span>
+                <!-- <span class="hr-sidebar-count">{{ pending_previous_appraisal_count }}</span> -->
             </a>
             <a class="hr-sidebar-link" href="{% url 'audit_log' %}">
-                <span class="hr-sidebar-icon" aria-hidden="true">▤</span>
+                <!-- <span class="hr-sidebar-icon" aria-hidden="true">▤</span> -->
                 <span class="hr-sidebar-link-copy">
                     <span class="hr-sidebar-link-title">Audit log</span>
                     <span class="hr-sidebar-link-note">View recorded changes</span>
                 </span>
             </a>
+<<<<<<< Updated upstream
+=======
+            <a class="hr-sidebar-link" href="{% url 'backup_dashboard' %}">
+                <!-- <span class="hr-sidebar-icon" aria-hidden="true">↓</span> -->
+                <span class="hr-sidebar-link-copy">
+                    <span class="hr-sidebar-link-title">Backups</span>
+                    <span class="hr-sidebar-link-note">Create and download backups</span>
+                </span>
+            </a>
+            <a class="hr-sidebar-link" href="{% url 'manage_staff_ids' %}">
+                <!-- <span class="hr-sidebar-icon" aria-hidden="true">＋</span> -->
+                <span class="hr-sidebar-link-copy">
+                    <span class="hr-sidebar-link-title">Staff registration</span>
+                    <span class="hr-sidebar-link-note">Manage approved staff IDs</span>
+                </span>
+            </a>
+            <button class="hr-sidebar-link" type="button" data-dashboard-target="support">
+                <!-- <span class="hr-sidebar-icon" aria-hidden="true"><i class="bi bi-life-preserver"></i></span> -->
+                <span class="hr-sidebar-link-copy"><span class="hr-sidebar-link-title">Support</span><span class="hr-sidebar-link-note">Help and FAQs</span></span>
+            </button>
+>>>>>>> Stashed changes
         </nav>
         <div class="hr-sidebar-label">Signed in as</div>
         <div class="small px-2 text-white-50">{{ request.user.username }}</div>
     </aside>
 
     <main class="hr-dashboard-content">
-    <div class="hr-dashboard-header">
+    <!-- <div class="hr-dashboard-header">
         <div>
             <h2 class="mb-1">HR Dashboard</h2>
             <p class="text-muted mb-0">Welcome, {{ request.user.username }}. Manage appraisal progress and reviews.</p>
         </div>
-    </div>
+    </div> -->
 
     <section class="hr-dashboard-section" data-dashboard-section="overview" aria-label="Appraisal overview">
-    <section class="hr-overview" aria-labelledby="hr-overview-title">
-        <div class="hr-overview-top">
-            <div>
-                <h3 id="hr-overview-title">Appraisal analytics</h3>
-                <p>
-                    {% if dashboard_filters.cycle %}
-                        Cycle {{ dashboard_filters.cycle }}
-                    {% else %}
-                        All appraisal cycles
-                    {% endif %}
-                    · Summary by workflow stage and department
-                </p>
+        <div class="hr-overview">
+            <div class="hr-overview-top">
+                <div class="hr-overview-title">
+                    <span class="hr-overview-eyebrow">Human resources workspace</span>
+                    <h1 id="hr-overview-title">Dashboard</h1>
+                    <p>Monitor appraisal progress and keep reviews moving.</p>
+                </div>
+                <form method="get" class="hr-dashboard-filters">
+                    <div>
+                        <label for="analytics-cycle">Appraisal cycle</label>
+                        <select class="form-select form-select-sm" id="analytics-cycle" name="cycle">
+                            <option value="">All cycles</option>
+                            {% for cycle in cycles %}
+                                <option value="{{ cycle.year }}" {% if dashboard_filters.cycle == cycle.year %}selected{% endif %}>{{ cycle.year }}{% if cycle.is_active %} · Active{% endif %}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label for="analytics-department">Department</label>
+                        <select class="form-select form-select-sm" id="analytics-department" name="department">
+                            <option value="">All departments</option>
+                            {% for department in departments %}
+                                <option value="{{ department.id }}" {% if dashboard_filters.department == department.id|stringformat:"s" %}selected{% endif %}>{{ department.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button class="btn btn-sm hr-overview-filter-button" type="submit">Apply filters</button>
+                </form>
             </div>
-            <form method="get" class="hr-dashboard-filters">
-                <div>
-                    <label for="analytics-cycle">Appraisal cycle</label>
-                    <select class="form-select form-select-sm" id="analytics-cycle" name="cycle">
-                        <option value="">All cycles</option>
-                        {% for cycle in cycles %}
-                            <option value="{{ cycle.year }}" {% if dashboard_filters.cycle == cycle.year %}selected{% endif %}>
-                                {{ cycle.year }}{% if cycle.is_active %} · Active{% endif %}
-                            </option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div>
-                    <label for="analytics-department">Department</label>
-                    <select class="form-select form-select-sm" id="analytics-department" name="department">
-                        <option value="">All departments</option>
-                        {% for department in departments %}
-                            <option value="{{ department.id }}" {% if dashboard_filters.department == department.id|stringformat:"s" %}selected{% endif %}>
-                                {{ department.name }}
-                            </option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <button class="btn btn-sm btn-dark" type="submit">Apply</button>
-            </form>
-        </div>
 
-        <div class="row g-3 mb-3">
-            <div class="col-6 col-xl-3">
-                <div class="hr-metric">
-                    <span class="hr-metric-label">Total appraisals</span>
-                    <strong class="hr-metric-value">{{ dashboard_counts.total }}</strong>
-                    <span class="hr-metric-note">In selected scope</span>
-                </div>
+            <div class="hr-metrics-grid" aria-label="Appraisal summary">
+                <article class="hr-metric hr-metric--mint"><span class="hr-metric-icon"><i class="bi bi-files"></i></span><span class="hr-metric-label">Total appraisals</span><strong class="hr-metric-value">{{ dashboard_counts.total }}</strong><span class="hr-metric-note">In selected scope</span></article>
+                <article class="hr-metric hr-metric--aqua"><span class="hr-metric-icon"><i class="bi bi-arrow-repeat"></i></span><span class="hr-metric-label">In progress</span><strong class="hr-metric-value">{{ dashboard_counts.supervisor|add:dashboard_counts.hod }}</strong><span class="hr-metric-note">Supervisor and HOD review</span></article>
+                <article class="hr-metric hr-metric--sand"><span class="hr-metric-icon"><i class="bi bi-inbox"></i></span><span class="hr-metric-label">Pending HR approval</span><strong class="hr-metric-value">{{ dashboard_counts.hr }}</strong><span class="hr-metric-note">Ready for your review</span></article>
+                <article class="hr-metric hr-metric--lavender"><span class="hr-metric-icon"><i class="bi bi-check2-circle"></i></span><span class="hr-metric-label">Completed</span><strong class="hr-metric-value">{{ dashboard_counts.completed }}</strong><span class="hr-metric-note">Finalized appraisals</span></article>
+                <article class="hr-metric hr-metric--blue"><span class="hr-metric-icon"><i class="bi bi-pencil-square"></i></span><span class="hr-metric-label">Drafts</span><strong class="hr-metric-value">{{ dashboard_counts.draft }}</strong><span class="hr-metric-note">Not yet submitted</span></article>
+                <article class="hr-metric hr-metric--rose"><span class="hr-metric-icon"><i class="bi bi-arrow-counterclockwise"></i></span><span class="hr-metric-label">Returned</span><strong class="hr-metric-value">{{ dashboard_counts.returned_employee }}</strong><span class="hr-metric-note">Needs employee updates</span></article>
             </div>
-            <div class="col-6 col-xl-3">
-                <div class="hr-metric">
-                    <span class="hr-metric-label">Awaiting supervisor / HOD</span>
-                    <strong class="hr-metric-value">{{ dashboard_counts.supervisor|add:dashboard_counts.hod }}</strong>
-                    <span class="hr-metric-note">Reviews in progress</span>
-                </div>
-            </div>
-            <div class="col-6 col-xl-3">
-                <div class="hr-metric">
-                    <span class="hr-metric-label">Pending HR approval</span>
-                    <strong class="hr-metric-value">{{ dashboard_counts.hr }}</strong>
-                    <span class="hr-metric-note">Ready for your review</span>
-                </div>
-            </div>
-            <div class="col-6 col-xl-3">
-                <div class="hr-metric">
-                    <span class="hr-metric-label">Completed</span>
-                    <strong class="hr-metric-value">{{ dashboard_counts.completed }}</strong>
-                    <span class="hr-metric-note">Finalized and locked</span>
-                </div>
-            </div>
-        </div>
 
-        <div class="row g-3">
-            <div class="col-lg-5">
-                <div class="hr-chart-card">
-                    <div class="hr-chart-heading">
-                        <div>
-                            <h4>Workflow status</h4>
-                            <p>Appraisals at each review stage</p>
+            <div class="hr-dashboard-layout">
+                <div class="hr-dashboard-main">
+                    <div class="hr-workspace-grid">
+                        <section class="hr-panel hr-todo-panel" aria-labelledby="hr-todo-title">
+                            <div class="hr-panel-heading"><div><h2 id="hr-todo-title">To do list</h2><p>Reviews waiting for your attention</p></div><button type="button" class="hr-text-button" data-dashboard-target="pending">View all <i class="bi bi-arrow-right"></i></button></div>
+                            <div class="hr-todo-list">
+                                {% for appraisal in pending_reviews|slice:":5" %}
+                                    <article class="hr-todo-item">
+                                        <span class="hr-todo-date"><strong>{{ appraisal.cycle.year }}</strong><small>Cycle</small></span>
+                                        <span class="hr-todo-copy"><strong>{{ appraisal.employee.user.get_full_name|default:appraisal.employee.user.username }}</strong><small>{{ appraisal.employee_department.name|default:appraisal.employee_department_name|default:appraisal.employee.department.name|default:"Unassigned department" }}</small></span>
+                                        <span class="hr-todo-status">{{ appraisal.get_status_display }}</span>
+                                        <a class="hr-todo-action" href="{% url 'hr_approve' appraisal.id %}" aria-label="Review {{ appraisal.employee.user.username }}’s appraisal"><i class="bi bi-arrow-up-right"></i></a>
+                                    </article>
+                                {% empty %}
+                                    <div class="hr-todo-empty"><i class="bi bi-check-circle"></i><strong>You’re all caught up</strong><span>No appraisals are waiting for HR approval.</span></div>
+                                {% endfor %}
+                            </div>
+                        </section>
+
+                        <section class="hr-panel hr-distribution-panel" aria-labelledby="hr-distribution-title">
+                            <div class="hr-panel-heading"><div><h2 id="hr-distribution-title">Distribution</h2><p>By workflow stage</p></div></div>
+                            <div class="hr-distribution-chart">
+                                <canvas id="workflow-chart" role="img" aria-label="Doughnut chart showing appraisal distribution by workflow stage"></canvas>
+                                <div class="hr-donut-center"><strong>{{ dashboard_counts.total }}</strong><span>Appraisals</span></div>
+                            </div>
+                            <ul class="hr-distribution-legend">
+                                {% for stage in workflow_chart %}
+                                    <li><span class="hr-legend-dot hr-legend-dot-{{ forloop.counter }}"></span><span>{{ stage.label }}</span><strong>{{ stage.count }}</strong></li>
+                                {% endfor %}
+                            </ul>
+                        </section>
+                    </div>
+
+                    <section class="hr-panel hr-department-panel" aria-labelledby="hr-department-title">
+                        <div class="hr-panel-heading"><div><h2 id="hr-department-title">Department progress</h2><p>Completed appraisals compared with work in progress</p></div><button type="button" class="hr-text-button" data-dashboard-target="completed">Completed reviews <i class="bi bi-arrow-right"></i></button></div>
+                        <div class="hr-department-grid">
+                            {% for department in department_chart|slice:":4" %}
+                                <article class="hr-department-card">
+                                    <strong>{{ department.name }}</strong>
+                                    <span>{{ department.completed }} of {{ department.completed|add:department.in_progress }} completed</span>
+                                    <progress value="{{ department.completed }}" max="{{ department.completed|add:department.in_progress }}" aria-label="{{ department.name }} appraisal completion"></progress>
+                                </article>
+                            {% empty %}
+                                <p class="hr-department-empty">No department appraisal data for this selection.</p>
+                            {% endfor %}
                         </div>
-                    </div>
-                    <div class="hr-chart-wrap">
-                        <canvas id="workflow-chart" role="img" aria-label="Bar chart showing appraisals by workflow stage"></canvas>
-                        <p class="visually-hidden">
-                            {% for stage in workflow_chart %}{{ stage.label }}: {{ stage.count }}. {% endfor %}
-                        </p>
-                    </div>
+                    </section>
                 </div>
-            </div>
-            <div class="col-lg-7">
-                <div class="hr-chart-card">
-                    <div class="hr-chart-heading">
-                        <div>
-                            <h4>Completion by department</h4>
-                            <p>Completed compared with not yet completed</p>
+
+                <aside class="hr-dashboard-rail" aria-label="HR dashboard quick information">
+                    <section class="hr-panel hr-reports-panel" aria-labelledby="hr-reports-title">
+                        <div class="hr-panel-heading"><div><h2 id="hr-reports-title">Events reports</h2><p>Useful appraisal activity</p></div></div>
+                        <button class="hr-report-link" type="button" data-dashboard-target="pending"><span><strong>Pending HR review</strong><small>Appraisals ready for approval</small></span><b>{{ dashboard_counts.hr }}</b></button>
+                        <button class="hr-report-link" type="button" data-dashboard-target="completed"><span><strong>Completed appraisals</strong><small>Finalized in this selection</small></span><b>{{ dashboard_counts.completed }}</b></button>
+                        <button class="hr-report-link" type="button" data-dashboard-target="assignments"><span><strong>Department assignments</strong><small>Review reporting lines</small></span><i class="bi bi-arrow-up-right"></i></button>
+                    </section>
+
+                    <section class="hr-panel hr-members-panel" aria-labelledby="hr-members-title">
+                        <div class="hr-panel-heading"><div><h2 id="hr-members-title">Staff accounts</h2><p>{{ users|length }} people in the system</p></div><button type="button" class="hr-icon-button" data-dashboard-target="roles" aria-label="View all staff accounts"><i class="bi bi-arrow-right"></i></button></div>
+                        <div class="hr-members-list">
+                            {% for user_profile in users|slice:":5" %}
+                                <div class="hr-member-row">
+                                    <span class="hr-member-avatar">{{ user_profile.user.first_name|default:user_profile.user.username|slice:":1"|upper }}</span>
+                                    <span class="hr-member-copy"><strong>{{ user_profile.user.get_full_name|default:user_profile.user.username }}</strong><small>{{ user_profile.get_role_display }} · {{ user_profile.department.name|default:"No department" }}</small></span>
+                                    <i class="bi bi-chevron-right hr-member-chevron" aria-hidden="true"></i>
+                                </div>
+                            {% empty %}
+                                <p class="hr-members-empty">No staff accounts found.</p>
+                            {% endfor %}
                         </div>
-                    </div>
-                    <div class="hr-chart-wrap department-chart">
-                        <canvas id="department-chart" role="img" aria-label="Stacked bar chart comparing appraisal completion by department"></canvas>
-                        {% if not department_chart %}
-                            <div class="hr-chart-empty">No appraisal data for this selection.</div>
-                        {% endif %}
-                    </div>
-                </div>
+                        <button type="button" class="hr-view-all-button" data-dashboard-target="roles">View all staff</button>
+                    </section>
+                </aside>
             </div>
         </div>
         {{ workflow_chart|json_script:"workflow-chart-data" }}
-        {{ department_chart|json_script:"department-chart-data" }}
     </section>
+    <section class="hr-dashboard-section" data-dashboard-section="cycles" aria-label="Appraisal cycle management" hidden>
+        {% include 'partials/hr_cycle_management.html' %}
     </section>
-
     <section class="hr-dashboard-section" data-dashboard-section="pending" aria-label="Pending HR approvals" hidden>
     <div class="hr-section-heading">
         <h3>Pending HR approvals</h3>
@@ -1048,7 +1245,10 @@
         </table>           
     </div>
     </section>
-    </main>
+        <section class="hr-dashboard-section" data-dashboard-section="support" aria-label="Support and assistance" hidden>
+        {% include 'partials/support_content.html' %}
+    </section>
+</main>
 </div>
 
 <script>
@@ -1323,13 +1523,11 @@
 <script>
     (() => {
         const workflowNode = document.getElementById('workflow-chart-data');
-        const departmentNode = document.getElementById('department-chart-data');
-        if (!workflowNode || !departmentNode) return;
+        const workflowCanvas = document.getElementById('workflow-chart');
+        if (!workflowNode || !workflowCanvas) return;
 
         const workflow = JSON.parse(workflowNode.textContent);
-        const departments = JSON.parse(departmentNode.textContent);
-        const workflowCanvas = document.getElementById('workflow-chart');
-        const departmentCanvas = document.getElementById('department-chart');
+        const total = workflow.reduce((sum, stage) => sum + stage.count, 0);
         const showChartError = (canvas, message) => {
             const notice = document.createElement('p');
             notice.className = 'hr-chart-empty';
@@ -1340,72 +1538,41 @@
 
         if (typeof Chart === 'undefined') {
             showChartError(workflowCanvas, 'Charts could not load. Check your connection and refresh the page.');
-            if (departments.length) {
-                showChartError(departmentCanvas, 'Charts could not load. Check your connection and refresh the page.');
-            }
             return;
         }
 
         Chart.defaults.font.family = 'system-ui, -apple-system, "Segoe UI", sans-serif';
         Chart.defaults.color = '#71818b';
-        const charts = [new Chart(workflowCanvas, {
-            type: 'bar',
+        const chartLabels = total ? workflow.map((stage) => stage.label) : ['No appraisals'];
+        const chartValues = total ? workflow.map((stage) => stage.count) : [1];
+        const chartColors = total
+            ? ['#258a65', '#5aa88c', '#a7cbb2', '#d4b975', '#87b6b5', '#91a7bd']
+            : ['#e5ece7'];
+        const chart = new Chart(workflowCanvas, {
+            type: 'doughnut',
             data: {
-                labels: workflow.map((stage) => stage.label),
+                labels: chartLabels,
                 datasets: [{
-                    data: workflow.map((stage) => stage.count),
-                    backgroundColor: ['#9ccbc8', '#27b8a7', '#3489bd', '#efb84b', '#e88975', '#17466a'],
-                    borderRadius: 6,
-                    maxBarThickness: 28,
+                    data: chartValues,
+                    backgroundColor: chartColors,
+                    borderColor: '#fff',
+                    borderWidth: 3,
+                    hoverOffset: 3,
                 }],
             },
             options: {
+                cutout: '74%',
                 maintainAspectRatio: false,
-                indexAxis: 'y',
                 plugins: {
                     legend: { display: false },
-                    tooltip: { callbacks: { label: (context) => ` ${context.parsed.x} appraisal${context.parsed.x === 1 ? '' : 's'}` } },
-                },
-                scales: {
-                    x: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: '#edf2f4' } },
-                    y: { grid: { display: false } },
-                },
-            },
-        })];
-
-        if (departments.length) charts.push(new Chart(departmentCanvas, {
-            type: 'bar',
-            data: {
-                labels: departments.map((department) => department.name),
-                datasets: [
-                    {
-                        label: 'Completed',
-                        data: departments.map((department) => department.completed),
-                        backgroundColor: '#19b9a7',
-                        borderRadius: 5,
+                    tooltip: {
+                        enabled: total > 0,
+                        callbacks: { label: (context) => ` ${context.label}: ${context.parsed}` },
                     },
-                    {
-                        label: 'In progress',
-                        data: departments.map((department) => department.in_progress),
-                        backgroundColor: '#c7d5dc',
-                        borderRadius: 5,
-                    },
-                ],
-            },
-            options: {
-                maintainAspectRatio: false,
-                indexAxis: 'y',
-                plugins: {
-                    legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8, padding: 18 } },
-                    tooltip: { callbacks: { label: (context) => ` ${context.dataset.label}: ${context.parsed.x}` } },
-                },
-                scales: {
-                    x: { beginAtZero: true, stacked: true, ticks: { precision: 0 }, grid: { color: '#edf2f4' } },
-                    y: { stacked: true, grid: { display: false } },
                 },
             },
-        }));
-        window.hrDashboardCharts = charts;
+        });
+        window.hrDashboardCharts = [chart];
     })();
 </script>
 

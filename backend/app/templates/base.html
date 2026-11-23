@@ -10,6 +10,16 @@
     
     <style>
         html { overflow-x: clip; }
+        :root {
+            --app-font-family: Inter, "Segoe UI", Arial, sans-serif;
+        }
+        body,
+        button,
+        input,
+        select,
+        textarea {
+            font-family: var(--app-font-family);
+        }
         /* Optional: Custom Styles */
         body {
             background-color: #f8f9fa; /* Light gray background */
@@ -142,6 +152,12 @@
         body:has(.role-dashboard-shell, .hr-dashboard-shell) > .navbar-appraisal {
             margin-bottom: 0 !important;
         }
+        body > .navbar-appraisal > .container {
+            max-width: none;
+            padding-left: 1rem;
+            padding-right: 1rem;
+            width: 100%;
+        }
         .role-dashboard-shell { background: #f2f5f7; display: flex; min-height: calc(100vh - 64px); }
         .role-dashboard-sidebar {
             align-self: flex-start;
@@ -176,15 +192,100 @@
             object-fit: contain;
             padding: 2px;
         }
-        .previous-appraisal-panel { padding: clamp(1rem, 2.5vw, 1.65rem); }
+        .previous-appraisal-panel {
+            background: linear-gradient(125deg, #f2efff 0%, #f0fbf7 45%, #fff 100%);
+            border: 1px solid #e5e0f1;
+            border-radius: 18px;
+            box-shadow: 0 14px 36px rgba(46, 38, 76, .08);
+            padding: clamp(1rem, 2.5vw, 1.65rem);
+        }
+        .previous-appraisal-heading { align-items: center; display: flex; gap: .85rem; margin-bottom: .8rem; }
+        .previous-appraisal-heading-icon { align-items: center; background: linear-gradient(135deg, #eee8ff, #e3f8ef); border-radius: 13px; color: #673bd1; display: inline-flex; flex: 0 0 48px; height: 48px; justify-content: center; }
+        .previous-appraisal-heading-icon svg { height: 30px; width: 30px; }
         .previous-appraisal-heading h2,
         .previous-appraisal-list h3 { color: #173747; font-size: 1rem; font-weight: 750; margin: 0 0 .35rem; }
         .previous-appraisal-heading p,
         .previous-appraisal-empty { color: #72828b; font-size: .84rem; margin: 0 0 1rem; }
-        .previous-appraisal-form { align-items: end; display: grid; gap: .85rem; grid-template-columns: minmax(130px, .7fr) minmax(220px, 1.3fr) auto; }
+        .previous-appraisal-form { display: grid; gap: .9rem; grid-template-columns: minmax(0, 1fr); }
+        .previous-appraisal-layout { display: grid; gap: 1rem; grid-template-columns: minmax(0, 1.12fr) minmax(280px, .88fr); }
+        .previous-appraisal-upload-column,
+        .previous-appraisal-records { min-width: 0; }
+        .previous-appraisal-records { max-height: min(44vh, 350px); overflow: auto; overscroll-behavior: contain; padding-right: .2rem; scrollbar-color: #cfc3e8 transparent; scrollbar-width: thin; }
+        .previous-appraisal-records:focus-visible { border-radius: 8px; outline: 3px solid rgba(120,83,216,.2); outline-offset: 2px; }
+        .previous-appraisal-cycle-field { max-width: 280px; }
+        .previous-appraisal-file-field { min-width: 0; }
         .previous-appraisal-form .form-label { color: #365461; font-size: .8rem; font-weight: 700; }
         .previous-appraisal-form .form-control { border-color: #d5e1e4; border-radius: 9px; }
         .previous-appraisal-form .form-control:focus { border-color: #547181; box-shadow: 0 0 0 .2rem rgba(23, 63, 80, .1); }
+        .previous-appraisal-dropzone {
+            align-items: center;
+            background: rgba(255,255,255,.82);
+            border: 1.5px dashed #cfc3e8;
+            border-radius: 14px;
+            color: #25334b;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            gap: .45rem;
+            justify-content: center;
+            min-height: 145px;
+            overflow: hidden;
+            padding: 1.25rem;
+            position: relative;
+            text-align: center;
+            transition: background .2s ease, border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+        }
+        .previous-appraisal-dropzone:hover,
+        .previous-appraisal-dropzone:focus-within,
+        .previous-appraisal-dropzone:focus-visible,
+        .previous-appraisal-dropzone.is-dragging { background: #fff; border-color: #7853d8; box-shadow: 0 0 0 4px rgba(120,83,216,.1); }
+        .previous-appraisal-dropzone.is-dragging { transform: scale(1.005); }
+        .previous-appraisal-file-input { height: 1px !important; left: 50%; opacity: 0; padding: 0 !important; position: absolute; top: 0; width: 1px !important; }
+        .previous-appraisal-upload-icon { align-items: center; background: linear-gradient(135deg, #f0eaff, #e6f8ef); border-radius: 50%; color: #6b43ce; display: inline-flex; height: 54px; justify-content: center; margin-bottom: .2rem; width: 54px; }
+        .previous-appraisal-upload-icon svg { height: 38px; width: 38px; }
+        .previous-appraisal-dropzone > strong { color: #44516a; font-size: .9rem; font-weight: 700; }
+        .previous-appraisal-or { color: #8790a0; font-size: .75rem; }
+        .previous-appraisal-browse { background: #17102e; border: 1px solid #17102e; border-radius: 7px; color: #fff; cursor: pointer; font-size: .8rem; font-weight: 700; min-height: 40px; padding: .55rem 1.1rem; transition: background .18s ease, transform .18s ease; }
+        .previous-appraisal-browse:hover { background: #342360; transform: translateY(-1px); }
+        .previous-appraisal-file-hint { color: #81899b; font-size: .7rem; margin-top: .15rem; }
+        .previous-appraisal-upload-list:not([hidden]) { display: grid; gap: .55rem; margin-top: .7rem; }
+        .previous-appraisal-upload-item { align-items: center; background: #fff; border: 1px solid #ebe8f0; border-radius: 11px; display: grid; gap: .7rem; grid-template-columns: 38px minmax(0, 1fr) auto 28px; padding: .7rem .8rem; }
+        .previous-appraisal-file-badge { align-items: center; background: #7138df; border-radius: 5px; color: #fff; display: inline-flex; font-size: .55rem; font-weight: 800; height: 34px; justify-content: center; letter-spacing: .02em; width: 30px; }
+        .previous-appraisal-file-copy { min-width: 0; }
+        .previous-appraisal-file-name { color: #263149; display: block; font-size: .78rem; font-weight: 700; overflow-wrap: anywhere; }
+        .previous-appraisal-file-size { color: #8a91a0; display: block; font-size: .67rem; margin-top: .1rem; }
+        .previous-appraisal-progress { background: #ece9f2; border-radius: 999px; height: 6px; margin-top: .4rem; overflow: hidden; }
+        .previous-appraisal-progress-fill { background: linear-gradient(90deg, #7138df 0%, #22c879 100%); border-radius: inherit; display: block; height: 100%; transition: width .18s ease; width: 0; }
+        .previous-appraisal-upload-item.is-uploading .previous-appraisal-progress-fill { background-size: 180% 100%; animation: previous-upload-shimmer 1.3s linear infinite; }
+        @keyframes previous-upload-shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+        .previous-appraisal-file-percent { color: #778095; font-size: .68rem; min-width: 35px; text-align: right; }
+        .previous-appraisal-remove-file { align-items: center; background: #f5f3f8; border: 0; border-radius: 50%; color: #7d8190; cursor: pointer; display: inline-flex; font-size: .8rem; height: 28px; justify-content: center; width: 28px; }
+        .previous-appraisal-remove-file:hover { background: #eee9f7; color: #4d3a78; }
+        .previous-appraisal-submit-row { align-items: center; display: flex; flex-wrap: wrap; gap: .75rem; justify-content: space-between; }
+        .previous-appraisal-upload-status { color: #718079; font-size: .76rem; }
+        .previous-appraisal-upload-status[data-state="error"] { color: #a43a10; }
+        .previous-appraisal-submit:disabled,
+        .previous-appraisal-browse:disabled,
+        .previous-appraisal-remove-file:disabled { cursor: wait; opacity: .65; }
+        .previous-appraisal-success-modal .modal-dialog { max-width: 470px; padding: 1rem; }
+        .previous-appraisal-success-modal .modal-content { animation: previous-success-enter .28s cubic-bezier(.2,.8,.2,1) both; border: 1px solid #e7e2ef; border-radius: 20px; box-shadow: 0 24px 70px rgba(31,24,58,.2); overflow: hidden; position: relative; }
+        .previous-appraisal-success-close { align-items: center; background: #f5f3f8; border: 0; border-radius: 50%; color: #6d7080; display: inline-flex; font-size: 1.25rem; height: 32px; justify-content: center; line-height: 1; position: absolute; right: .85rem; top: .85rem; width: 32px; z-index: 1; }
+        .previous-appraisal-success-close:hover { background: #ebe7f2; color: #343044; }
+        .previous-appraisal-success-body { align-items: center; display: flex; flex-direction: column; padding: 2.15rem 1.5rem 1.55rem; text-align: center; }
+        .previous-appraisal-success-mark { align-items: center; animation: previous-success-pop .42s cubic-bezier(.18,.9,.25,1.25) both; background: linear-gradient(135deg, #e7f8ef, #f0eaff); border-radius: 50%; color: #159764; display: inline-flex; height: 76px; justify-content: center; margin-bottom: .9rem; width: 76px; }
+        .previous-appraisal-success-mark svg { height: 48px; width: 48px; }
+        .previous-appraisal-success-kicker { color: #16845e; font-size: .68rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+        .previous-appraisal-success-body h2 { color: #20283a; font-size: 1.35rem; font-weight: 780; letter-spacing: -.025em; margin: .35rem 0 .45rem; }
+        .previous-appraisal-success-body > p { color: #667184; font-size: .88rem; line-height: 1.6; margin: 0; max-width: 350px; }
+        .previous-appraisal-success-file { align-items: center; background: #faf9fc; border: 1px solid #eeeaf3; border-radius: 11px; display: flex; gap: .7rem; margin: 1.2rem 0; padding: .65rem .75rem; text-align: left; width: 100%; }
+        .previous-appraisal-success-file-copy { display: grid; gap: .12rem; min-width: 0; }
+        .previous-appraisal-success-file-copy strong { color: #30384a; font-size: .77rem; overflow-wrap: anywhere; }
+        .previous-appraisal-success-file-copy small { color: #828a99; font-size: .68rem; }
+        .previous-appraisal-success-continue { background: linear-gradient(105deg, #087b58, #13a66b); border: 0; border-radius: 9px; box-shadow: 0 7px 18px rgba(13,139,91,.18); color: #fff; font-size: .84rem; font-weight: 750; min-height: 44px; padding: .7rem 1rem; transition: box-shadow .18s ease, transform .18s ease; width: 100%; }
+        .previous-appraisal-success-continue:hover { box-shadow: 0 10px 22px rgba(13,139,91,.25); transform: translateY(-1px); }
+        .previous-appraisal-success-footnote { color: #8991a0; font-size: .68rem; margin-top: .85rem; }
+        @keyframes previous-success-enter { from { opacity: 0; transform: translateY(8px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        @keyframes previous-success-pop { from { opacity: 0; transform: scale(.65); } to { opacity: 1; transform: scale(1); } }
         .previous-appraisal-button {
             align-items: center;
             background: #173f50;
@@ -212,7 +313,24 @@
         .previous-appraisal-status-list { display: flex; flex-wrap: wrap; gap: .5rem; }
         .previous-appraisal-status { background: #f7f1df; border: 1px solid #ead9a6; border-radius: 999px; color: #765d18; font-size: .75rem; font-weight: 700; padding: .3rem .6rem; }
         .previous-appraisal-status.is-rejected { background: #fff3ef; border-color: #f2c7bd; color: #8a3f30; }
-        @media (max-width: 700px) { .previous-appraisal-form { grid-template-columns: 1fr; } }
+        @media (max-width: 575.98px) {
+            .previous-appraisal-dropzone { min-height: 170px; padding: 1rem .7rem; }
+            .previous-appraisal-upload-item { gap: .45rem; grid-template-columns: 34px minmax(0, 1fr) auto 28px; padding: .6rem; }
+            .previous-appraisal-submit-row { align-items: stretch; flex-direction: column; }
+            .previous-appraisal-submit-row .previous-appraisal-button { width: 100%; }
+        }
+        @media (max-width: 991.98px) {
+            .previous-appraisal-layout { grid-template-columns: minmax(0, 1fr); }
+            .previous-appraisal-records { max-height: none; overflow: visible; padding-right: 0; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .previous-appraisal-dropzone,
+            .previous-appraisal-progress-fill,
+            .previous-appraisal-browse,
+            .previous-appraisal-success-mark,
+            .previous-appraisal-success-modal .modal-content { animation: none !important; transition: none !important; }
+            .previous-appraisal-upload-item.is-uploading .previous-appraisal-progress-fill { animation: none !important; }
+        }
         .role-sidebar-label { color: #8fa5b1; font-size: .68rem; font-weight: 750; letter-spacing: .12em; margin: 1.2rem .7rem .55rem; text-transform: uppercase; }
         .role-sidebar-nav { display: grid; gap: .55rem; grid-template-columns: minmax(0, 1fr); }
         .role-sidebar-link {
@@ -250,6 +368,7 @@
         .role-dashboard-section:not([hidden]) { animation: role-section-enter .25s ease both; }
         @keyframes role-section-enter { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         @media (max-width: 767.98px) {
+            body.role-sidebar-open { overflow: hidden; }
             .role-dashboard-shell { display: block; }
             .role-dashboard-sidebar { background: transparent; min-height: 0; padding: 0; position: static; z-index: auto; }
             .role-sidebar-brand { display: none; }
@@ -363,6 +482,7 @@
             background: #142d3c;
             box-shadow: 0 3px 14px rgba(9, 43, 70, .12);
         }
+<<<<<<< Updated upstream
         .navbar-appraisal .navbar-brand { letter-spacing: .02em; }
         .navbar-account-toggle {
             align-items: center;
@@ -379,25 +499,102 @@
             min-width: 18px;
             padding: .55rem 1rem;
             transition: background .16s ease, border-color .16s ease;
+=======
+        .navbar-appraisal .navbar-brand {
+            align-items: center;
+            color: #07875f;
+            display: inline-flex;
+            gap: .7rem;
+            letter-spacing: .02em;
+        }
+        .navbar-brand-mark {
+            height: 42px;
+            object-fit: contain;
+            width: 42px;
+        }
+        .navbar-brand-copy { display: grid; gap: .05rem; line-height: 1.15; }
+        .navbar-brand-copy small { color: #4a9d77; font-size: .68rem; font-weight:500; }
+        .navbar-account-toggle {
+            align-items: center;
+            animation: account-outline-flow 5s ease-in-out infinite;
+            background-color: rgba(255, 255, 255, .92);
+            background-image:
+                linear-gradient(rgba(255,255,255,.94), rgba(255,255,255,.94)),
+                linear-gradient(110deg, #07875f 0%, #ddfff0 35%, #fff8cc 68%, #07875f 100%);
+            background-origin: border-box;
+            background-clip: padding-box, border-box;
+            background-size: 100% 100%, 240% 100%;
+            background-position: 0 0, 0% 50%;
+            border: 2px solid transparent;
+            border-radius: 999px;
+            color: #5d4131;
+            display: flex;
+            font-size: .92rem;
+            font-weight: bold;
+            gap: .50rem;
+            justify-content: flex-start;
+            min-height: 44px;
+            min-width: 132px;
+            padding: .25rem .75rem .25rem .3rem;
+            position: relative;
+            transition: color .16s ease, box-shadow .16s ease;
+        }
+        @keyframes account-outline-flow {
+            0%, 100% { background-position: 0 0, 0% 50%; }
+            50% { background-position: 0 0, 100% 50%; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .navbar-account-toggle { animation: none; background-position: 0 0, 50% 50%; }
+>>>>>>> Stashed changes
         }
         .navbar-account-toggle:hover,
         .navbar-account-toggle:focus-visible,
         .navbar-account-toggle[aria-expanded="true"] {
+<<<<<<< Updated upstream
             background: rgba(255, 255, 255, .08);
             border-color: #fff;
             color: #fff;
         }
         .navbar-account-icon { flex: 0 0 auto; }
+=======
+            background-color: #fff;
+            background-image:
+                linear-gradient(#fff, #fff),
+                linear-gradient(110deg, #07875f 0%, #ddfff0 35%, #fff8cc 68%, #07875f 100%);
+            color: #07875f;
+        }
+        .navbar-account-toggle:focus-visible { box-shadow: 0 0 0 3px rgba(7, 135, 95, .2); outline: 0; }
+        .navbar-account-avatar {
+            align-items: center;
+            background: linear-gradient(#e8f7cf, #e8f7cf) padding-box, linear-gradient(135deg, #07875f, #ddfff0, #fff8cc, #07875f) border-box;
+            border: 2px solid transparent;
+            border-radius:50%;
+            color: #07875f;
+            display: inline-flex;
+            flex: 0 0 36px;
+            font-size: .72rem;
+            font-weight: 750;
+            height: 36px;
+            justify-content: center;
+            overflow: hidden;
+            width: 36px;
+        }
+        .navbar-account-avatar img { height: 100%; object-fit: cover; width: 100%; }
+        .navbar-account-copy { display: grid; gap: .08rem; line-height: 1.15; min-width: 0; text-align: left; }
+        .navbar-account-copy strong { color: #315d4d; font-size: .76rem; font-weight: 750; }
+        .navbar-account-copy small { color: #70877c; font-size: .65rem; font-weight: 500; }
+>>>>>>> Stashed changes
         .navbar-account-chevron { flex: 0 0 auto; transition: transform .16s ease; }
         .navbar-account-toggle[aria-expanded="true"] .navbar-account-chevron { transform: rotate(180deg); }
         .navbar-account-menu {
-            border: 1px solid #dfe7eb;
-            border-radius: 12px;
+            border: 1.3px solid #ebdfdf;
+            border-radius: 15px;
             box-shadow: 0 14px 36px rgba(9, 43, 70, .16);
             min-width: 220px;
             padding: .5rem;
         }
         .navbar-account-details {
+<<<<<<< Updated upstream
             border-bottom: 1px solid #e8eef0;
             display: grid;
             gap: .15rem;
@@ -407,13 +604,46 @@
         .navbar-account-details span { color: #657983; font-size: .75rem; }
         .navbar-account-details strong { color: #173747; font-size: .9rem; }
         .navbar-account-menu .dropdown-item { border-radius: 7px; padding: .55rem .7rem; }
+=======
+            align-items: center;
+            border-bottom: 1px solid #9de3c0;
+            display: flex;
+            gap: .65rem;
+            margin: -.35rem -.35rem .35rem;
+            padding: .8rem .9rem;
+        }
+        .navbar-account-details-copy { display: grid; gap: .12rem; min-width: 0; }
+        .navbar-account-details strong { color: #000; font-size: .82rem; font-weight: bolder; }
+        .navbar-account-details-copy > span { color: #07875f; font-size: .72rem; }
+        .navbar-account-details > .navbar-account-avatar {
+            background: #00b878;
+            border-color: #9de3c0;
+            color: #fff;
+        }
+        .navbar-account-menu .dropdown-item {
+            align-items: center;
+            border-radius: 7px;
+            color: #315d4d;
+            display: flex;
+            font-size: .8rem;
+            gap: .65rem;
+            padding: .65rem .7rem;
+            font-weight: bolder;
+        }
+        .navbar-account-menu .dropdown-item svg { color: #07875f; flex: 0 0 17px; height: 17px; width: 17px; }
+>>>>>>> Stashed changes
         .navbar-account-logout { margin: 0; }
         .navbar-account-logout button {
             background: none;
             border: 0;
+<<<<<<< Updated upstream
             color: #294653;
+=======
+            color: #d41225;
+>>>>>>> Stashed changes
             text-align: left;
             width: 100%;
+            font-weight: bolder;
         }
         .navbar-account-logout button:hover,
         .navbar-account-logout button:focus-visible { background: #f2f5f7; }
@@ -454,8 +684,20 @@
             box-shadow: 0 14px 36px rgba(9, 43, 70, .16);
             max-height: min(70vh, 460px);
             overflow-y: auto;
+<<<<<<< Updated upstream
             padding: .45rem;
             width: min(360px, calc(100vw - 2rem));
+=======
+            overscroll-behavior: contain;
+            padding: .4rem;
+            scrollbar-color: #d5b7b7 transparent;
+            scrollbar-width: thin;
+            width: min(380px, calc(100vw - 1.5rem));
+        }
+        .navbar-notifications-menu.show {
+            animation: notification-menu-enter .18s ease-out both;
+            transform-origin: top right;
+>>>>>>> Stashed changes
         }
         .navbar-notifications-heading {
             align-items: center;
@@ -497,20 +739,281 @@
         @media (max-width: 991.98px) {
             .navbar-account-toggle { justify-content: flex-start; margin: .25rem 0; min-height: 48px; }
         }
+<<<<<<< Updated upstream
+=======
+        @media (max-width: 991.98px) {
+            body > .navbar-appraisal > .container { align-items: center; flex-wrap: wrap; }
+            body > .navbar-appraisal .navbar-collapse { flex-basis: 100%; }
+            body > .navbar-appraisal .navbar-nav { align-items: flex-start; gap: .35rem; padding: .55rem 0 .25rem; }
+            body > .navbar-appraisal .navbar-account { width: min(100%, 280px); }
+        }
+        @media (max-width: 575.98px) {
+            body > .navbar-appraisal > .container { padding-left: .75rem; padding-right: .75rem; }
+            body > .navbar-appraisal .navbar-brand {
+                flex: 1 1 0;
+                gap: .45rem;
+                margin-right: .35rem;
+                min-width: 0;
+            }
+            body > .navbar-appraisal .navbar-brand-mark { flex: 0 0 34px; height: 34px; width: 34px; }
+            body > .navbar-appraisal .navbar-brand-copy {
+                font-size: clamp(.74rem, 3.5vw, .9rem);
+                letter-spacing: 0;
+                line-height: 1.15;
+                min-width: 0;
+                overflow-wrap: anywhere;
+            }
+            body > .navbar-appraisal .navbar-brand-copy small { font-size: .58rem; line-height: 1.2; }
+            body > .navbar-appraisal .navbar-toggler { flex: 0 0 auto; padding: .3rem .45rem; }
+            body > .navbar-appraisal .navbar-account-menu { max-width: calc(100vw - 1.5rem); min-width: min(250px, calc(100vw - 1.5rem)); }
+            .appraisal-results-lines p { gap: .35rem; grid-template-columns: minmax(0, 1fr) 16px minmax(66px, .55fr); }
+        }
+        @media (min-width: 768px) {
+            body:has(.role-dashboard-shell) .role-dashboard-shell {
+                background: #f4f7f7;
+                display: block !important;
+            }
+            body:has(.role-dashboard-shell) .role-dashboard-shell > .role-dashboard-sidebar {
+                align-self: auto;
+                background: linear-gradient(90deg, #00ad78 0%, #009e83 100%);
+                border: 0;
+                border-bottom: 1px solid #07875f;
+                box-shadow: 0 5px 16px rgba(7, 135, 95, .12);
+                color: #fff;
+                min-height: 0;
+                padding: .1rem clamp(.75rem, 2vw, 1.5rem);
+                position: relative;
+                top: auto;
+                width: 100%;
+            }
+            body:has(.role-dashboard-shell) .role-dashboard-shell .role-sidebar-brand,
+            body:has(.role-dashboard-shell) .role-dashboard-shell .role-sidebar-label,
+            body:has(.role-dashboard-shell) .role-dashboard-shell .role-sidebar-toggle,
+            body:has(.role-dashboard-shell) .role-dashboard-shell .role-sidebar-backdrop,
+            body:has(.role-dashboard-shell) .role-dashboard-shell .role-sidebar-drawer-brand,
+            body:has(.role-dashboard-shell) .role-dashboard-shell > .role-dashboard-sidebar > .text-white-50 {
+                display: none !important;
+            }
+            body:has(.role-dashboard-shell) .role-dashboard-shell .role-sidebar-nav {
+                align-content: center;
+                background: transparent;
+                box-shadow: none;
+                display: flex;
+                gap: .25rem;
+                grid-template-columns: none;
+                margin: 0;
+                max-width: none;
+                overflow-x: auto;
+                overflow-y: hidden;
+                padding: 0;
+                position: static;
+                transform: none;
+                visibility: visible;
+                width: 100%;
+            }
+            body:has(.role-dashboard-shell) .role-dashboard-shell .role-sidebar-link {
+                background: transparent;
+                border-radius: 0;
+                color: rgba(255,255,255,.88);
+                flex: 0 0 auto;
+                gap: .45rem;
+                min-height: 44px;
+                padding: .4rem .75rem;
+                font-size: .82rem;
+                width: auto;
+            }
+            body:has(.role-dashboard-shell) .role-dashboard-shell .role-sidebar-link:hover {
+                background: rgba(255,255,255,.14);
+                color: #fff;
+                transform: none;
+            }
+            body:has(.role-dashboard-shell) .role-dashboard-shell .role-sidebar-link.active {
+                background: #fff;
+                box-shadow: inset 0 -3px #ffc857;
+                color: #07875f;
+            }
+            body:has(.role-dashboard-shell) .role-dashboard-shell .role-sidebar-icon {
+                background: rgba(255,255,255,.13);
+                border-color: rgba(255,255,255,.18);
+                color: #fff;
+                flex-basis: 26px;
+                height: 26px;
+            }
+            body:has(.role-dashboard-shell) .role-dashboard-shell .role-sidebar-link.active .role-sidebar-icon {
+                background: #e7f7ef;
+                border-color: #d3ebdc;
+                color: #07875f;
+            }
+            body:has(.role-dashboard-shell) .role-dashboard-shell .role-sidebar-link-note {
+                display: none;
+            }
+            body:has(.role-dashboard-shell) .role-dashboard-shell .role-sidebar-count {
+                background: rgba(255,255,255,.18);
+                border-color: rgba(255,255,255,.28);
+                color: #fff;
+            }
+            body:has(.role-dashboard-shell) .role-dashboard-shell .role-sidebar-link.active .role-sidebar-count {
+                background: #e7f7ef;
+                border-color: #d3ebdc;
+                color: #07875f;
+            }
+            body:has(.role-dashboard-shell) .role-dashboard-shell > .role-dashboard-content {
+                padding: clamp(1.25rem, 2.5vw, 2rem);
+            }
+            body:has(.hr-dashboard-shell) .hr-dashboard-shell {
+                background: #f4f7f7;
+                display: block;
+            }
+            body:has(.hr-dashboard-shell) .hr-dashboard-sidebar {
+                align-self: auto;
+                background: linear-gradient(90deg, #00ad78 0%, #009e83 100%);
+                border-bottom: 1px solid #07875f;
+                box-shadow: 0 5px 16px rgba(7, 135, 95, .12);
+                min-height: 0;
+                padding: .1rem clamp(.75rem, 2vw, 1.5rem);
+                position: relative;
+                top: auto;
+                width: 100%;
+            }
+            body:has(.hr-dashboard-shell) .hr-sidebar-brand,
+            body:has(.hr-dashboard-shell) .hr-sidebar-label,
+            body:has(.hr-dashboard-shell) .hr-sidebar-toggle,
+            body:has(.hr-dashboard-shell) .hr-sidebar-backdrop,
+            body:has(.hr-dashboard-shell) .hr-sidebar-drawer-brand,
+            body:has(.hr-dashboard-shell) .hr-dashboard-sidebar > .text-white-50 {
+                display: none !important;
+            }
+            body:has(.hr-dashboard-shell) .hr-sidebar-nav {
+                display: flex;
+                gap: .25rem;
+                grid-template-columns: none;
+                margin: 0;
+                overflow-x: auto;
+                padding: 0;
+                width: 100%;
+            }
+            body:has(.hr-dashboard-shell) .hr-sidebar-link {
+                background: transparent;
+                border-radius: 0;
+                color: rgba(255,255,255,.88);
+                flex: 0 0 auto;
+                min-height: 44px;
+                padding: .4rem .75rem;
+                font-size: .82rem;
+                width: auto;
+            }
+            body:has(.hr-dashboard-shell) .hr-sidebar-link:hover {
+                background: rgba(255,255,255,.14);
+                color: #fff;
+                transform: none;
+            }
+            body:has(.hr-dashboard-shell) .hr-sidebar-link.active {
+                background: #fff;
+                box-shadow: inset 0 -3px #ffc857;
+                color: #07875f;
+            }
+            body:has(.hr-dashboard-shell) .hr-sidebar-icon {
+                background: rgba(255,255,255,.13);
+                border-color: rgba(255,255,255,.18);
+                color: #fff;
+            }
+            body:has(.hr-dashboard-shell) .hr-sidebar-link.active .hr-sidebar-icon {
+                background: #e7f7ef;
+                color: #07875f;
+            }
+            body:has(.hr-dashboard-shell) .hr-sidebar-link-note {
+                display: none;
+            }
+            body:has(.hr-dashboard-shell) .hr-dashboard-content {
+                padding: clamp(1.25rem, 2.5vw, 2rem);
+            }
+        }
+        body:has(.supervisor-page) .supervisor-hero,
+        body:has(.hod-page) .hod-hero {
+            background: linear-gradient(110deg, #00ad78 0%, #009e83 100%);
+            box-shadow: 0 14px 32px rgba(7, 135, 95, .16);
+        }
+        body:has(.supervisor-page) .supervisor-action,
+        body:has(.hod-page) .hod-action {
+            background: #07875f;
+            border-color: #07875f;
+        }
+        body:has(.supervisor-page) .supervisor-action:hover,
+        body:has(.hod-page) .hod-action:hover {
+            background: #056e4d;
+            border-color: #056e4d;
+        }
+        body:has(.supervisor-page) .supervisor-stat-icon {
+            background: #e7f7ef;
+            color: #07875f;
+        }
+        body:has(.hr-dashboard-shell) .hr-overview { background: #f8f0f0; }
+        body:has(.hr-dashboard-shell) .hr-metric-note { color: #07875f; }
+        body:has(.hr-dashboard-shell) .hr-action-primary,
+        body:has(.hr-dashboard-shell) .hr-dashboard-section:not([data-dashboard-section="overview"]) .page-item.active .page-link {
+            background: #07875f;
+            border-color: #07875f;
+            color: #fff;
+        }
+        body:has(.hr-dashboard-shell) .hr-action-primary:hover,
+        body:has(.hr-dashboard-shell) .hr-action-primary:focus {
+            background: #056e4d;
+            border-color: #056e4d;
+            color: #fff;
+        }
+>>>>>>> Stashed changes
         .card {
             box-shadow: 0 4px 6px rgba(0,0,0,0.1); /* Soft shadow for cards */
             border: none;
         }
+        /* Shared dashboard table and search geometry; dashboard palettes stay intact. */
+        body:has(.role-dashboard-shell) .role-dashboard-shell .table-responsive,
+        body:has(.hr-dashboard-shell) .hr-dashboard-shell .table-responsive,
+        body:has(.supervisor-page) .supervisor-page .supervisor-table-wrap {
+            border-radius: 14px;
+            overscroll-behavior-x: contain;
+        }
+        body:has(.role-dashboard-shell) .role-dashboard-shell .table,
+        body:has(.hr-dashboard-shell) .hr-dashboard-shell .table,
+        body:has(.supervisor-page) .supervisor-page .supervisor-table {
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-bottom: 0;
+        }
+        body:has(.role-dashboard-shell) .role-dashboard-shell .table thead th:first-child,
+        body:has(.hr-dashboard-shell) .hr-dashboard-shell .table thead th:first-child,
+        body:has(.supervisor-page) .supervisor-page .supervisor-table thead th:first-child { border-top-left-radius: 12px; }
+        body:has(.role-dashboard-shell) .role-dashboard-shell .table thead th:last-child,
+        body:has(.hr-dashboard-shell) .hr-dashboard-shell .table thead th:last-child,
+        body:has(.supervisor-page) .supervisor-page .supervisor-table thead th:last-child { border-top-right-radius: 12px; }
+        body:has(.role-dashboard-shell) .role-dashboard-shell input[type="search"],
+        body:has(.hr-dashboard-shell) .hr-dashboard-shell input[type="search"] {
+            border-radius: 10px;
+            min-height: 44px;
+            transition: box-shadow .16s ease, border-color .16s ease;
+        }
+        body:has(.role-dashboard-shell) .role-dashboard-shell .input-group .btn,
+        body:has(.role-dashboard-shell) .role-dashboard-shell button[type="submit"],
+        body:has(.hr-dashboard-shell) .hr-dashboard-shell .input-group .btn,
+        body:has(.hr-dashboard-shell) .hr-dashboard-shell button[type="submit"] {
+            border-radius: 9px;
+            min-height: 40px;
+        }
     </style>
+    <link rel="stylesheet" href="{% static 'css/site-footer.css' %}">
 </head>
 <body>
 
     <!-- Navigation Bar -->
+<<<<<<< Updated upstream
     <nav class="navbar navbar-expand-lg navbar-dark navbar-appraisal mb-4 border-bottom">
+=======
+    <nav class="navbar navbar-expand-lg navbar-light navbar-appraisal mb-4 border-bottom" id="page-top">
+>>>>>>> Stashed changes
         <div class="container">
             <a class="navbar-brand" href="{% url 'home' %}">Appraisal System</a>
             
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             
@@ -580,10 +1083,40 @@
                                     <span>Staff ID</span>
                                     <strong>{{ user.username }}</strong>
                                 </div>
+<<<<<<< Updated upstream
                                 <a class="dropdown-item" href="{% url 'profile' %}">My Profile</a>
                                 <form class="navbar-account-logout" action="{% url 'logout' %}" method="post">
                                     {% csrf_token %}
                                     <button class="dropdown-item" type="submit">Log out</button>
+=======
+                                {% if user.is_superuser %}
+                                    <a class="dropdown-item" href="{% url 'backup_dashboard' %}">Backups</a>
+                                    <a class="dropdown-item" href="{% url 'manage_staff_ids' %}">Staff registration</a>
+                                {% endif %}
+                                <!-- <a class="dropdown-item" href="{% url 'profile' %}">My Profile</a> -->
+                                <a class="dropdown-item" href="{% url 'profile' %}">
+                                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                        <circle cx="12" cy="8" r="3.2" stroke="currentColor" stroke-width="1.7"/>
+                                        <path d="M5.5 20c.7-3.1 2.9-4.7 6.5-4.7s5.8 1.6 6.5 4.7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                                    </svg>
+                                    View Profile
+                                </a> 
+                                <a class="dropdown-item" href="{% url 'password_change' %}">
+                                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                        <rect x="5" y="10" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.7"/>
+                                        <path d="M8 10V7a4 4 0 1 1 8 0v3M12 14v2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                                    </svg>
+                                    Change Password
+                                </a>
+                                <form class="navbar-account-logout" action="{% url 'logout' %}" method="post">
+                                    {% csrf_token %}
+                                    <button class="dropdown-item" type="submit">
+                                        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                            <path d="M10 5H5v14h5M14 8l4 4-4 4M8 12h10" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                        Sign Out
+                                    </button>
+>>>>>>> Stashed changes
                                 </form>
                             </div>
                         </li>
@@ -617,6 +1150,8 @@
         {% endblock %}
 
     </div>
+
+    {% include 'partials/site_footer.html' %}
 
     <div class="modal fade" id="appConfirmationModal" tabindex="-1" aria-labelledby="appConfirmationTitle" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
@@ -787,6 +1322,358 @@
         });
     </script>
     <script>
+<<<<<<< Updated upstream
+=======
+        (() => {
+            const toggle = document.querySelector(
+                '.navbar-notifications-toggle[data-notification-status-url]',
+            );
+            const iconWrap = toggle?.querySelector('.navbar-notifications-icon-wrap');
+            const heading = document.querySelector('.navbar-notifications-heading');
+            if (!toggle || !iconWrap || !heading) return;
+
+            let unreadCount = Number(toggle.dataset.unreadCount);
+            let animationTimeout;
+
+            function renderUnreadCount(count, animate) {
+                let badge = toggle.querySelector('.navbar-notification-count');
+                if (count > 0) {
+                    if (!badge) {
+                        badge = document.createElement('span');
+                        badge.className = 'navbar-notification-count';
+                        iconWrap.append(badge);
+                    }
+                    badge.textContent = String(count);
+                } else {
+                    badge?.remove();
+                }
+
+                toggle.classList.toggle('has-unread', count > 0);
+                toggle.setAttribute(
+                    'aria-label',
+                    count > 0 ? `Notifications, ${count} unread` : 'Notifications',
+                );
+                if (count === 0) {
+                    window.clearTimeout(animationTimeout);
+                    toggle.classList.remove('is-arriving');
+                }
+
+                let headingCount = heading.querySelector('.navbar-notification-unread-count');
+                if (count > 0) {
+                    if (!headingCount) {
+                        headingCount = document.createElement('span');
+                        headingCount.className = 'navbar-notification-unread-count';
+                        heading.append(headingCount);
+                    }
+                    headingCount.textContent = `${count} unread`;
+                } else {
+                    headingCount?.remove();
+                }
+
+                if (animate) {
+                    toggle.classList.remove('is-arriving');
+                    void toggle.offsetWidth;
+                    toggle.classList.add('is-arriving');
+                    window.clearTimeout(animationTimeout);
+                    animationTimeout = window.setTimeout(
+                        () => toggle.classList.remove('is-arriving'),
+                        1900,
+                    );
+                }
+            }
+
+            async function refreshUnreadCount() {
+                if (document.hidden) return;
+
+                try {
+                    const response = await fetch(toggle.dataset.notificationStatusUrl, {
+                        cache: 'no-store',
+                        credentials: 'same-origin',
+                        headers: { Accept: 'application/json' },
+                    });
+                    if (!response.ok) {
+                        throw new Error(`Notification status request failed (${response.status}).`);
+                    }
+
+                    const payload = await response.json();
+                    const nextCount = Number(payload.unread_count);
+                    if (!Number.isSafeInteger(nextCount) || nextCount < 0) {
+                        throw new Error('Notification status returned an invalid unread count.');
+                    }
+
+                    const receivedNewNotification = nextCount > unreadCount;
+                    unreadCount = nextCount;
+                    toggle.dataset.unreadCount = String(nextCount);
+                    renderUnreadCount(nextCount, receivedNewNotification);
+                } catch (error) {
+                    console.error('Unable to refresh notification count.', error);
+                }
+            }
+
+            window.setInterval(refreshUnreadCount, 30000);
+            document.addEventListener('visibilitychange', () => {
+                if (!document.hidden) refreshUnreadCount();
+            });
+        })();
+    </script>
+    <script>
+        document.querySelectorAll('[data-previous-appraisal-upload]').forEach((form) => {
+            const fileInput = form.querySelector('[data-file-input]');
+            const dropzone = form.querySelector('[data-file-dropzone]');
+            const browseButton = form.querySelector('[data-browse-files]');
+            const fileList = form.querySelector('[data-upload-file-list]');
+            const status = form.querySelector('[data-upload-status]');
+            const submitButton = form.querySelector('.previous-appraisal-submit');
+            const successModalElement = form.closest('.previous-appraisal-panel')?.querySelector('[data-upload-success-modal]');
+            const successMessage = successModalElement?.querySelector('[data-upload-success-message]');
+            const successFileName = successModalElement?.querySelector('[data-success-file-name]');
+            const successFileType = successModalElement?.querySelector('[data-success-file-type]');
+            const successFileDetails = successModalElement?.querySelector('[data-success-file-details]');
+            const successContinue = successModalElement?.querySelector('[data-upload-success-continue]');
+            const successCountdown = successModalElement?.querySelector('[data-upload-countdown]');
+            if (!fileInput || !dropzone || !fileList || !status || !submitButton) return;
+
+            let progressFill = null;
+            let percentLabel = null;
+            let uploadItem = null;
+            let successDestination = null;
+            let successReturnTimer = null;
+            let successCountdownTimer = null;
+            let isReturningAfterUpload = false;
+            const successModal = successModalElement && window.bootstrap
+                ? bootstrap.Modal.getOrCreateInstance(successModalElement)
+                : null;
+
+            function returnAfterUpload() {
+                if (!successDestination || isReturningAfterUpload) return;
+                isReturningAfterUpload = true;
+                window.clearTimeout(successReturnTimer);
+                window.clearInterval(successCountdownTimer);
+                window.location.assign(successDestination.href);
+            }
+
+            const formatSize = (bytes) => {
+                if (bytes < 1024) return `${bytes} B`;
+                if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+                return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+            };
+
+            function setStatus(message, state = '') {
+                status.textContent = message;
+                if (state) status.dataset.state = state;
+                else delete status.dataset.state;
+            }
+
+            function renderFile(file) {
+                fileList.replaceChildren();
+                progressFill = null;
+                percentLabel = null;
+                uploadItem = null;
+                if (!file) {
+                    fileList.hidden = true;
+                    setStatus('Choose a file to begin.');
+                    return;
+                }
+
+                fileList.hidden = false;
+                uploadItem = document.createElement('div');
+                uploadItem.className = 'previous-appraisal-upload-item';
+
+                const badge = document.createElement('span');
+                badge.className = 'previous-appraisal-file-badge';
+                badge.textContent = file.name.split('.').pop().slice(0, 4).toUpperCase();
+                badge.setAttribute('aria-hidden', 'true');
+
+                const copy = document.createElement('span');
+                copy.className = 'previous-appraisal-file-copy';
+                const name = document.createElement('span');
+                name.className = 'previous-appraisal-file-name';
+                name.textContent = file.name;
+                const size = document.createElement('span');
+                size.className = 'previous-appraisal-file-size';
+                size.textContent = formatSize(file.size);
+                const progress = document.createElement('span');
+                progress.className = 'previous-appraisal-progress';
+                progress.setAttribute('role', 'progressbar');
+                progress.setAttribute('aria-label', `Upload progress for ${file.name}`);
+                progress.setAttribute('aria-valuemin', '0');
+                progress.setAttribute('aria-valuemax', '100');
+                progress.setAttribute('aria-valuenow', '0');
+                progressFill = document.createElement('span');
+                progressFill.className = 'previous-appraisal-progress-fill';
+                progress.append(progressFill);
+                copy.append(name, size, progress);
+
+                percentLabel = document.createElement('span');
+                percentLabel.className = 'previous-appraisal-file-percent';
+                percentLabel.textContent = 'Ready';
+
+                const removeButton = document.createElement('button');
+                removeButton.className = 'previous-appraisal-remove-file';
+                removeButton.type = 'button';
+                removeButton.textContent = '×';
+                removeButton.setAttribute('aria-label', `Remove ${file.name}`);
+                removeButton.addEventListener('click', () => {
+                    fileInput.value = '';
+                    renderFile(null);
+                    fileInput.focus();
+                });
+
+                uploadItem.append(badge, copy, percentLabel, removeButton);
+                fileList.append(uploadItem);
+                setStatus('File ready. Submit it when you are ready.');
+            }
+
+            function acceptFiles(files) {
+                const file = files && files[0];
+                if (!file) return;
+                const extension = file.name.split('.').pop().toLowerCase();
+                if (!['pdf', 'doc', 'docx'].includes(extension)) {
+                    fileInput.value = '';
+                    renderFile(null);
+                    setStatus('Choose a PDF, DOC, or DOCX file.', 'error');
+                    return;
+                }
+                if (files !== fileInput.files) {
+                    if (typeof DataTransfer === 'undefined') {
+                        setStatus('Drag and drop is not available in this browser. Use Browse files instead.', 'error');
+                        return;
+                    }
+                    try {
+                        const transfer = new DataTransfer();
+                        transfer.items.add(file);
+                        fileInput.files = transfer.files;
+                    } catch (error) {
+                        setStatus('This browser could not add the dropped file. Use Browse files instead.', 'error');
+                        return;
+                    }
+                }
+                renderFile(file);
+                if (files.length > 1) {
+                    setStatus('Only one file can be submitted for each appraisal. The first file is selected.', 'error');
+                }
+            }
+
+            browseButton?.addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', () => acceptFiles(fileInput.files));
+            dropzone.addEventListener('keydown', (event) => {
+                if ((event.key === 'Enter' || event.key === ' ') && event.target === dropzone) {
+                    event.preventDefault();
+                    fileInput.click();
+                }
+            });
+            ['dragenter', 'dragover'].forEach((eventName) => {
+                dropzone.addEventListener(eventName, (event) => {
+                    event.preventDefault();
+                    dropzone.classList.add('is-dragging');
+                });
+            });
+            ['dragleave', 'dragend'].forEach((eventName) => {
+                dropzone.addEventListener(eventName, (event) => {
+                    event.preventDefault();
+                    if (!event.relatedTarget || !dropzone.contains(event.relatedTarget)) {
+                        dropzone.classList.remove('is-dragging');
+                    }
+                });
+            });
+            dropzone.addEventListener('drop', (event) => {
+                event.preventDefault();
+                dropzone.classList.remove('is-dragging');
+                acceptFiles(event.dataTransfer.files);
+            });
+
+            form.addEventListener('submit', (event) => {
+                if (!fileInput.files.length || !window.XMLHttpRequest || !('upload' in new XMLHttpRequest())) return;
+                event.preventDefault();
+                submitButton.disabled = true;
+                if (browseButton) browseButton.disabled = true;
+                const removeButton = fileList.querySelector('.previous-appraisal-remove-file');
+                if (removeButton) removeButton.disabled = true;
+                uploadItem?.classList.add('is-uploading');
+                if (percentLabel) percentLabel.textContent = '0%';
+                setStatus('Uploading your appraisal…');
+
+                const request = new XMLHttpRequest();
+                request.open('POST', form.action, true);
+                request.timeout = 300000;
+                request.withCredentials = true;
+                request.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+                request.upload.addEventListener('progress', (progressEvent) => {
+                    if (!progressEvent.lengthComputable) return;
+                    const percent = Math.min(100, Math.round((progressEvent.loaded / progressEvent.total) * 100));
+                    if (progressFill) progressFill.style.width = `${percent}%`;
+                    if (percentLabel) percentLabel.textContent = `${percent}%`;
+                    const bar = fileList.querySelector('[role="progressbar"]');
+                    bar?.setAttribute('aria-valuenow', String(percent));
+                    setStatus(`Uploading your appraisal… ${percent}%`);
+                });
+                request.addEventListener('load', () => {
+                    let payload = null;
+                    try {
+                        payload = JSON.parse(request.responseText);
+                    } catch (error) {
+                        payload = null;
+                    }
+                    if (request.status < 200 || request.status >= 300 || !payload?.success) {
+                        uploadItem?.classList.remove('is-uploading');
+                        submitButton.disabled = false;
+                        if (browseButton) browseButton.disabled = false;
+                        if (removeButton) removeButton.disabled = false;
+                        setStatus(payload?.message || 'The upload could not be completed. Please try again.', 'error');
+                        return;
+                    }
+                    if (progressFill) progressFill.style.width = '100%';
+                    if (percentLabel) percentLabel.textContent = '100%';
+                    uploadItem?.classList.remove('is-uploading');
+                    setStatus('Upload complete.');
+                    const file = fileInput.files[0];
+                    const cycle = form.querySelector('[name="appraisal_cycle"]')?.value || payload.appraisal_cycle || '';
+                    if (successMessage) successMessage.textContent = `Your ${cycle} appraisal has been submitted to HR for review.`;
+                    if (successFileName) successFileName.textContent = file?.name || 'Appraisal file';
+                    if (successFileType) successFileType.textContent = (file?.name.split('.').pop() || 'FILE').slice(0, 4).toUpperCase();
+                    if (successFileDetails) successFileDetails.textContent = `${file ? formatSize(file.size) : ''} · Sent to HR for review`;
+                    successDestination = new URL(window.location.href);
+                    const isEmployeeDashboard = window.location.pathname.includes('/employee/dashboard/');
+                    successDestination.hash = isEmployeeDashboard ? 'history' : 'previous';
+                    if (successContinue) successContinue.textContent = isEmployeeDashboard
+                        ? 'Continue to Appraisal History'
+                        : 'Continue to Previous Appraisals';
+                    let secondsRemaining = 60;
+                    if (successCountdown) successCountdown.textContent = `Returning automatically in ${secondsRemaining} seconds.`;
+                    successCountdownTimer = window.setInterval(() => {
+                        secondsRemaining = Math.max(0, secondsRemaining - 1);
+                        if (successCountdown) successCountdown.textContent = secondsRemaining
+                            ? `Returning automatically in ${secondsRemaining} seconds.`
+                            : 'Returning now…';
+                    }, 1000);
+                    successReturnTimer = window.setTimeout(returnAfterUpload, 60000);
+                    if (successModal) successModal.show();
+                    else returnAfterUpload();
+                });
+                request.addEventListener('error', () => {
+                    uploadItem?.classList.remove('is-uploading');
+                    submitButton.disabled = false;
+                    if (browseButton) browseButton.disabled = false;
+                    if (removeButton) removeButton.disabled = false;
+                    setStatus('A connection error interrupted the upload. Please try again.', 'error');
+                });
+                request.addEventListener('timeout', () => {
+                    uploadItem?.classList.remove('is-uploading');
+                    submitButton.disabled = false;
+                    if (browseButton) browseButton.disabled = false;
+                    if (removeButton) removeButton.disabled = false;
+                    setStatus('The upload took too long to finish. Check your connection and try again.', 'error');
+                });
+                request.send(new FormData(form));
+            });
+            successContinue?.addEventListener('click', returnAfterUpload);
+            successModalElement?.addEventListener('hidden.bs.modal', () => {
+                returnAfterUpload();
+            });
+        });
+    </script>
+    <script>
+>>>>>>> Stashed changes
         document.querySelectorAll('.role-dashboard-shell').forEach((shell) => {
             const sidebar = shell.querySelector('.role-dashboard-sidebar');
             const toggle = shell.querySelector('.role-sidebar-toggle');
@@ -799,7 +1686,13 @@
 
             function syncNavigationState() {
                 const mobile = window.matchMedia('(max-width: 767.98px)').matches;
+                if (!mobile) sidebar.classList.remove('is-expanded');
                 const expanded = mobile && sidebar.classList.contains('is-expanded');
+<<<<<<< Updated upstream
+=======
+                const navigationHidden = mobile && !expanded && !shell.classList.contains('employee-page');
+                document.body.classList.toggle('role-sidebar-open', expanded);
+>>>>>>> Stashed changes
                 if (toggle) toggle.setAttribute('aria-expanded', String(expanded));
                 if (toggle) toggle.setAttribute('aria-label', expanded ? 'Close menu' : 'Open menu');
                 if (backdrop) backdrop.hidden = !expanded;
@@ -821,6 +1714,7 @@
                 if (window.matchMedia('(max-width: 767.98px)').matches && sidebar.classList.contains('is-expanded')) {
                     sidebar.classList.remove('is-expanded');
                     syncNavigationState();
+                    toggle?.focus({ preventScroll: true });
                 }
                 if (updateHistory) window.history.pushState(null, '', `#${name}`);
             }
@@ -828,10 +1722,12 @@
             toggle?.addEventListener('click', () => {
                 sidebar.classList.toggle('is-expanded');
                 syncNavigationState();
+                if (sidebar.classList.contains('is-expanded')) closeButton?.focus({ preventScroll: true });
             });
             backdrop?.addEventListener('click', () => {
                 sidebar.classList.remove('is-expanded');
                 syncNavigationState();
+                toggle?.focus({ preventScroll: true });
             });
             closeButton?.addEventListener('click', () => {
                 sidebar.classList.remove('is-expanded');
@@ -839,10 +1735,24 @@
                 toggle?.focus();
             });
             document.addEventListener('keydown', (event) => {
-                if (event.key === 'Escape' && sidebar.classList.contains('is-expanded')) {
+                if (!sidebar.classList.contains('is-expanded')) return;
+                if (event.key === 'Escape') {
                     sidebar.classList.remove('is-expanded');
                     syncNavigationState();
-                    toggle?.focus();
+                    toggle?.focus({ preventScroll: true });
+                    return;
+                }
+                if (event.key === 'Tab' && navigation) {
+                    const focusable = [...navigation.querySelectorAll('a[href], button:not([disabled])')];
+                    const first = focusable[0];
+                    const last = focusable[focusable.length - 1];
+                    if (event.shiftKey && document.activeElement === first) {
+                        event.preventDefault();
+                        last?.focus();
+                    } else if (!event.shiftKey && document.activeElement === last) {
+                        event.preventDefault();
+                        first?.focus();
+                    }
                 }
             });
             window.addEventListener('resize', syncNavigationState);

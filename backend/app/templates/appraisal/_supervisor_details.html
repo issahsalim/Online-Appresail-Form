@@ -5,10 +5,11 @@
             <div class="appraisal-fields">
                 <div class="appraisal-field">
                     <strong>Name:</strong>
+                    {{ supervisor.title|default:supervisor.title}}.
                     {{ supervisor.user.get_full_name|default:supervisor.user.username }}
                     {% if supervisor.other_names %} {{ supervisor.other_names }}{% endif %}
                 </div>
-                <div class="appraisal-field"><strong>Position:</strong> {{ supervisor.job_title|default:"—" }}</div>
+                <div class="appraisal-field"><strong>Position of Appraiser:</strong> {{ supervisor.job_title|default:"—" }}</div>
                 <div class="appraisal-field"><strong>Email:</strong> {{ supervisor.user.email|default:"—" }}</div>
             </div>
         {% else %}

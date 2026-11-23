@@ -35,6 +35,12 @@ class PreviousAppraisalUploadForm(forms.ModelForm):
             }),
             'appraisal_file': forms.ClearableFileInput(attrs={
                 'class': 'form-control',
+<<<<<<< Updated upstream
+=======
+                'accept': '.pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+              'data-file-input': 'true',
+              'aria-describedby': 'previous-appraisal-file-hint',
+>>>>>>> Stashed changes
             }),
         }
 

@@ -1,0 +1,153 @@
+.app-footer {
+    animation: app-footer-enter .55s cubic-bezier(.2, .7, .25, 1) both;
+    background: linear-gradient(115deg, #0b302b 0%, #10473d 58%, #0c3933 100%);
+    color: rgba(255, 255, 255, .72);
+    margin-top: 3rem;
+    overflow: hidden;
+    padding: 2.5rem 0 1rem;
+    position: relative;
+}
+
+.app-footer::before {
+    animation: app-footer-accent .8s ease-out .12s both;
+    background: linear-gradient(90deg, #07875f, #20a477);
+    border-radius: 0;
+    content: "";
+    height: 3px;
+    inset: 0 0 auto;
+    position: absolute;
+    z-index: 2;
+}
+
+.app-footer::after {
+    animation: app-footer-wave 24s linear infinite;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 64' preserveAspectRatio='none'%3E%3Cpath d='M0 30 C150 0 300 0 450 30 S750 60 900 30 S1050 0 1200 30 V64 H0Z' fill='%2320a477' fill-opacity='.12'/%3E%3Cpath d='M0 40 C180 18 300 10 480 32 S780 58 960 32 S1080 20 1200 38 V64 H0Z' fill='%2307875f' fill-opacity='.08'/%3E%3C/svg%3E");
+    background-repeat: repeat-x;
+    background-size: 50% 34px;
+    content: "";
+    height: 34px;
+    left: -50%;
+    pointer-events: none;
+    position: absolute;
+    top: 0;
+    width: 200%;
+    z-index: 0;
+}
+
+.app-footer-main {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem 2rem;
+    justify-content: space-between;
+    padding-bottom: 1.7rem;
+    position: relative;
+    z-index: 1;
+}
+
+.app-footer-brand {
+    align-items: center;
+    color: #fff;
+    display: inline-flex;
+    gap: .8rem;
+    min-width: 0;
+    text-decoration: none;
+}
+
+.app-footer-brand img {
+    background: #fff;
+    border-radius: 11px;
+    flex: 0 0 44px;
+    height: 44px;
+    object-fit: contain;
+    padding: 3px;
+    width: 44px;
+}
+
+.app-footer-brand span { display: grid; gap: .2rem; min-width: 0; }
+.app-footer-brand strong { font-size: .96rem; font-weight: 750; }
+.app-footer-brand small { color: rgba(255, 255, 255, .66); font-size: .76rem; }
+.app-footer-message { color: rgba(255, 255, 255, .7); font-size: .84rem; margin: 0; }
+
+.app-footer-links {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: .45rem 1.2rem;
+}
+
+.app-footer-links a,
+.app-footer-bottom a {
+    color: rgba(255, 255, 255, .8);
+    font-size: .8rem;
+    font-weight: 650;
+    text-decoration: none;
+    transition: color .16s ease;
+}
+
+.app-footer-links a:hover,
+.app-footer-bottom a:hover {
+    color: #bdebd9;
+    transform: translateY(-2px);
+}
+
+.app-footer-links a:focus-visible,
+.app-footer-bottom a:focus-visible,
+.app-footer-brand:focus-visible {
+    border-radius: 4px;
+    outline: 2px solid #bdebd9;
+    outline-offset: 4px;
+}
+
+.app-footer-links a,
+.app-footer-bottom a { transition: color .16s ease, transform .16s ease; }
+
+.app-footer-bottom {
+    align-items: center;
+    border-top: 1px solid rgba(255, 255, 255, .14);
+    color: rgba(255, 255, 255, .58);
+    display: flex;
+    flex-wrap: wrap;
+    font-size: .73rem;
+    gap: .65rem 1rem;
+    justify-content: space-between;
+    padding-top: .85rem;
+    position: relative;
+    z-index: 1;
+}
+
+@media (max-width: 767.98px) {
+    .app-footer { margin-top: 2rem; padding-top: 2rem; }
+    .app-footer-main { align-items: flex-start; flex-direction: column; gap: .9rem; }
+    .app-footer-links { gap: .55rem 1rem; }
+}
+
+@media (max-width: 380px) {
+    .app-footer-brand img { flex-basis: 38px; height: 38px; width: 38px; }
+    .app-footer-bottom { align-items: flex-start; flex-direction: column; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .app-footer,
+    .app-footer::before,
+    .app-footer::after,
+    .app-footer * {
+        animation: none !important;
+        transition-duration: .01ms !important;
+    }
+}
+
+@keyframes app-footer-enter {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes app-footer-accent {
+    from { transform: scaleX(0); transform-origin: left; }
+    to { transform: scaleX(1); transform-origin: left; }
+}
+
+@keyframes app-footer-wave {
+    from { transform: translateX(0); }
+    to { transform: translateX(50%); }
+}

@@ -5,7 +5,7 @@ from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Case, CharField, Count, F, Q, Value, When
 from django.urls import reverse
-from django.http import FileResponse, Http404, JsonResponse
+from django.http import FileResponse, Http404, HttpResponseForbidden, JsonResponse
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.contrib import messages
@@ -390,6 +390,550 @@ def _return_request_destination_url(appraisal, status, requester=None):
     return reverse('dashboard_router')
 
 
+def _can_manage_staff_ids(user):
+    return user.is_superuser or EmployeeProfile.objects.filter(
+        user=user,
+        role='HR',
+    ).exists()
+
+
+def _parse_staff_id_upload(uploaded_file):
+    if uploaded_file.name.lower().endswith('.csv'):
+        try:
+            rows = list(csv.reader(io.StringIO(
+                uploaded_file.read().decode('utf-8-sig'),
+            )))
+        except UnicodeDecodeError as error:
+            raise ValidationError('The CSV file must use UTF-8 encoding.') from error
+    else:
+        from openpyxl import load_workbook
+
+        try:
+            workbook = load_workbook(uploaded_file, read_only=True, data_only=True)
+            try:
+                rows = list(workbook.active.iter_rows(values_only=True))
+            finally:
+                workbook.close()
+        except Exception as error:
+            raise ValidationError('The Excel file could not be read.') from error
+
+    if not rows:
+        raise ValidationError('The file is empty.')
+    headers = [str(value or '').strip().lower().replace(' ', '_') for value in rows[0]]
+    staff_id_column = next(
+        (index for index, value in enumerate(headers) if value in {'staff_id', 'name'}),
+        None,
+    )
+    email_column = next(
+        (index for index, value in enumerate(headers) if value == 'email'),
+        None,
+    )
+    if staff_id_column is None or email_column is None:
+        raise ValidationError('The first row must contain staff_id and email columns.')
+    if len(rows) - 1 > 5000:
+        raise ValidationError('Upload no more than 5,000 staff IDs at a time.')
+
+    staff_rows = []
+    seen = {}
+    for row_number, row in enumerate(rows[1:], start=2):
+        values = list(row)
+        staff_id = str(values[staff_id_column] or '').strip() if staff_id_column < len(values) else ''
+        email = str(values[email_column] or '').strip().lower() if email_column < len(values) else ''
+        if not staff_id and not email:
+            continue
+        if not staff_id or not email:
+            raise ValidationError(f'Row {row_number} needs both a staff ID and email.')
+        if len(staff_id) > 100:
+            raise ValidationError(f'Staff ID on row {row_number} is too long.')
+        try:
+            validate_email(email)
+        except ValidationError as error:
+            raise ValidationError(f'Email on row {row_number} is invalid.') from error
+
+        normalized_id = staff_id.casefold()
+        if normalized_id in seen and seen[normalized_id] != email:
+            raise ValidationError(f'Staff ID on row {row_number} has conflicting emails.')
+        if normalized_id not in seen:
+            seen[normalized_id] = email
+            staff_rows.append((staff_id, email))
+    return staff_rows
+
+
+def _save_staff_id_rows(staff_rows):
+    added = 0
+    updated = 0
+    with transaction.atomic():
+        for staff_id, email in staff_rows:
+            existing = StaffId.objects.filter(name__iexact=staff_id).first()
+            if existing:
+                if existing.registered_user_id:
+                    continue
+                if existing.email != email:
+                    existing.email = email
+                    existing.save(update_fields=['email'])
+                    updated += 1
+                continue
+            try:
+                with transaction.atomic():
+                    StaffId.objects.create(name=staff_id, email=email)
+                added += 1
+            except IntegrityError:
+                continue
+    return added, updated
+
+
+@login_required
+def manage_staff_ids(request):
+    if not _can_manage_staff_ids(request.user):
+        return HttpResponseForbidden('Only HR and superusers can manage staff IDs.')
+
+    entry_form = StaffIdEntryForm()
+    upload_form = StaffIdUploadForm()
+    if request.method == 'POST' and request.POST.get('action') == 'add':
+        entry_form = StaffIdEntryForm(request.POST)
+        if entry_form.is_valid():
+            added, updated = _save_staff_id_rows([(
+                entry_form.cleaned_data['staff_id'],
+                entry_form.cleaned_data['email'],
+            )])
+            if added or updated:
+                messages.success(request, 'Staff ID and work email saved.')
+                return redirect('manage_staff_ids')
+            entry_form.add_error('staff_id', 'This staff ID already has an account or is already listed.')
+    elif request.method == 'POST' and request.POST.get('action') == 'upload':
+        upload_form = StaffIdUploadForm(request.POST, request.FILES)
+        if upload_form.is_valid():
+            try:
+                staff_rows = _parse_staff_id_upload(upload_form.cleaned_data['file'])
+                added, updated = _save_staff_id_rows(staff_rows)
+            except ValidationError as error:
+                upload_form.add_error('file', error)
+            else:
+                messages.success(
+                    request,
+                    f'Import complete: {added} added, {updated} updated. Already registered IDs were skipped.',
+                )
+                return redirect('manage_staff_ids')
+
+    return render(request, 'app/manage_staff_ids.html', {
+        'entry_form': entry_form,
+        'upload_form': upload_form,
+        'staff_ids': StaffId.objects.select_related('registered_user').order_by('name')[:200],
+    })
+
+
+def employee_registration(request):
+    form = RegistrationStaffIdForm(request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        request.session.pop('registration_code_id', None)
+        staff_id = form.approved_staff_id
+        now = timezone.now()
+        recent_code_count = RegistrationCode.objects.filter(
+            staff_id=staff_id,
+            created_at__gte=now - timedelta(hours=1),
+        ).count()
+        if recent_code_count >= 5:
+            form.add_error(
+                None,
+                'Too many verification codes were requested for this Staff ID. Try again later.',
+            )
+        else:
+            RegistrationCode.objects.filter(
+                staff_id=staff_id,
+                verified_at__isnull=True,
+            ).update(expires_at=now)
+            code = f'{secrets.randbelow(1_000_000):06d}'
+            registration_code = RegistrationCode.objects.create(
+                staff_id=staff_id,
+                code_hash=make_password(code),
+                expires_at=now + timedelta(minutes=10),
+            )
+            try:
+                send_registration_code.delay(registration_code.pk, code)
+            except Exception:
+                logger.exception('Could not queue registration email for staff ID %s.', staff_id.pk)
+                registration_code.delete()
+                form.add_error(
+                    None,
+                    'We could not send a verification code right now. Please try again later.',
+                )
+            else:
+                request.session['registration_code_id'] = registration_code.pk
+                messages.info(
+                    request,
+                    'A verification code has been sent to the work email HR has on file.',
+                )
+                return redirect('verify_registration_code')
+
+    return render(request, 'registration/employee_registration.html', {'form': form})
+
+
+def verify_registration_code(request):
+    form = RegistrationCodeForm(request.POST or None)
+    code_id = request.session.get('registration_code_id')
+    registration_code = RegistrationCode.objects.filter(
+        pk=code_id,
+        verified_at__isnull=True,
+    ).first() if code_id else None
+
+    if request.method == 'POST':
+        if not registration_code or registration_code.expires_at <= timezone.now():
+            form.add_error(None, 'The code is invalid or expired. Start registration again.')
+        elif registration_code.attempts >= 5:
+            form.add_error(None, 'Too many attempts. Start registration again.')
+        elif form.is_valid():
+            registration_code.attempts += 1
+            if check_password(form.cleaned_data['code'], registration_code.code_hash):
+                registration_code.verified_at = timezone.now()
+                registration_code.save(update_fields=['attempts', 'verified_at'])
+                request.session['verified_registration_code_id'] = registration_code.pk
+                return redirect('complete_employee_registration')
+            registration_code.save(update_fields=['attempts'])
+            form.add_error('code', 'The code is incorrect.')
+
+    return render(request, 'registration/verify_registration_code.html', {'form': form})
+
+
+@require_POST
+def resend_registration_code(request):
+    registration_code_id = request.session.get('registration_code_id')
+    previous_code = RegistrationCode.objects.select_related('staff_id').filter(
+        pk=registration_code_id,
+        verified_at__isnull=True,
+    ).first() if registration_code_id else None
+    if not previous_code or previous_code.staff_id.registered_user_id:
+        request.session.pop('registration_code_id', None)
+        messages.error(request, 'Please start registration again to request a verification code.')
+        return redirect('employee_registration')
+
+    now = timezone.now()
+    recent_code_count = RegistrationCode.objects.filter(
+        staff_id=previous_code.staff_id,
+        created_at__gte=now - timedelta(hours=1),
+    ).count()
+    if recent_code_count >= 5:
+        messages.error(request, 'Too many verification codes were requested. Try again later.')
+        return redirect('verify_registration_code')
+
+    code = f'{secrets.randbelow(1_000_000):06d}'
+    replacement_code = RegistrationCode.objects.create(
+        staff_id=previous_code.staff_id,
+        code_hash=make_password(code),
+        expires_at=now + timedelta(minutes=10),
+    )
+    try:
+        send_registration_code.delay(replacement_code.pk, code)
+    except Exception:
+        logger.exception(
+            'Could not queue registration email for staff ID %s.',
+            previous_code.staff_id_id,
+        )
+        replacement_code.delete()
+        messages.error(request, 'We could not send a verification code right now. Please try again later.')
+        return redirect('verify_registration_code')
+
+    RegistrationCode.objects.filter(
+        staff_id=previous_code.staff_id,
+        verified_at__isnull=True,
+    ).exclude(pk=replacement_code.pk).update(expires_at=now)
+    request.session['registration_code_id'] = replacement_code.pk
+    messages.success(request, 'A new verification code has been sent to your work email.')
+    return redirect('verify_registration_code')
+
+
+def complete_employee_registration(request):
+    registration_code_id = request.session.get('verified_registration_code_id')
+    registration_code = RegistrationCode.objects.select_related('staff_id').filter(
+        pk=registration_code_id,
+        verified_at__isnull=False,
+        expires_at__gt=timezone.now(),
+    ).first() if registration_code_id else None
+    if not registration_code or registration_code.staff_id.registered_user_id:
+        request.session.pop('verified_registration_code_id', None)
+        messages.error(request, 'Please verify your staff ID and work email again.')
+        return redirect('employee_registration')
+
+    form = EmployeeRegistrationForm(
+        request.POST or None,
+        staff_id=registration_code.staff_id.name,
+    )
+    if request.method == 'POST' and form.is_valid():
+        try:
+            with transaction.atomic():
+                staff_id = StaffId.objects.select_for_update().get(
+                    pk=registration_code.staff_id_id,
+                )
+                if staff_id.registered_user_id or User.objects.filter(
+                    username__iexact=staff_id.name,
+                ).exists():
+                    raise ValidationError('This staff ID already has an account.')
+                user = User.objects.create_user(
+                    username=staff_id.name,
+                    email=staff_id.email,
+                    password=form.cleaned_data['password'],
+                    first_name=form.cleaned_data['first_name'],
+                    last_name=form.cleaned_data['last_name'],
+                )
+                EmployeeProfile.objects.create(
+                    user=user,
+                    role='Employee',
+                    department=form.cleaned_data['department'],
+                    title=form.cleaned_data['title'],
+                    other_title=form.cleaned_data['other_title'],
+                    other_names=form.cleaned_data['other_names'],
+                    gender=form.cleaned_data['gender'],
+                    job_title=form.cleaned_data['job_title'],
+                    appointment_to_present_grade_date=(
+                        form.cleaned_data['appointment_to_present_grade_date']
+                    ),
+                    security_question=form.cleaned_data['security_question'],
+                    security_answer_hash=make_password(
+                        form.cleaned_data['security_answer'],
+                    ),
+                )
+                staff_id.registered_user = user
+                staff_id.save(update_fields=['registered_user'])
+        except (IntegrityError, ValidationError):
+            form.add_error(None, 'This staff ID already has an account. Contact HR if you need help.')
+        else:
+            request.session.pop('registration_code_id', None)
+            request.session.pop('verified_registration_code_id', None)
+            messages.success(request, 'Your account is ready. You can now sign in.')
+            return redirect('login')
+
+    return render(request, 'registration/complete_employee_registration.html', {
+        'form': form,
+        'staff_id': registration_code.staff_id.name,
+        'email': registration_code.staff_id.email,
+    })
+
+
+def _issue_password_reset_code(staff_id):
+    now = timezone.now()
+    recent_code_count = PasswordResetCode.objects.filter(
+        staff_id=staff_id,
+        created_at__gte=now - timedelta(hours=1),
+    ).count()
+    if recent_code_count >= 5:
+        return None, 'Too many verification codes were requested. Try again later.'
+
+    code = f'{secrets.randbelow(1_000_000):06d}'
+    reset_code = PasswordResetCode.objects.create(
+        staff_id=staff_id,
+        code_hash=make_password(code),
+        expires_at=now + timedelta(minutes=10),
+    )
+    try:
+        send_password_reset_code.delay(reset_code.pk, code)
+    except Exception:
+        reset_code.delete()
+        logger.exception(
+            'Could not queue password reset email for staff ID %s.',
+            staff_id.name,
+        )
+        return None, 'The verification email could not be queued right now. Please try again later.'
+
+    PasswordResetCode.objects.filter(
+        staff_id=staff_id,
+        verified_at__isnull=True,
+    ).exclude(pk=reset_code.pk).update(expires_at=now)
+    return reset_code, None
+
+
+def request_password_reset(request):
+    stage = request.session.get('password_reset_stage', 'staff_id')
+    context = {'step': stage, 'form': None}
+
+    if stage == 'staff_id':
+        form = PasswordResetRequestForm(request.POST or None)
+        if request.method == 'POST' and form.is_valid():
+            staff_id = StaffId.objects.select_related(
+                'registered_user__profile',
+            ).filter(name__iexact=form.cleaned_data['staff_id']).first()
+            user = staff_id.registered_user if staff_id else None
+            profile = getattr(user, 'profile', None) if user else None
+            if (
+                not user or not user.is_active or not staff_id.email
+                or not profile or not profile.security_question
+                or not profile.security_answer_hash
+            ):
+                form.add_error(None, 'We could not verify that staff ID. Check it or contact HR.')
+            else:
+                request.session['password_reset_staff_id'] = staff_id.pk
+                request.session['password_reset_stage'] = 'answer'
+                request.session['password_reset_answer_attempts'] = 0
+                stage = 'answer'
+                context.update({
+                    'step': stage,
+                    'welcome_name': user.first_name or user.username,
+                    'security_question': profile.get_security_question_display(),
+                })
+                form = PasswordResetAnswerForm()
+        context.setdefault('step', stage)
+        context['form'] = form
+
+    elif stage == 'answer':
+        staff_id = StaffId.objects.select_related(
+            'registered_user__profile',
+        ).filter(pk=request.session.get('password_reset_staff_id')).first()
+        user = staff_id.registered_user if staff_id else None
+        profile = getattr(user, 'profile', None) if user else None
+        if not staff_id or not user or not profile:
+            request.session.pop('password_reset_stage', None)
+            request.session.pop('password_reset_staff_id', None)
+            return redirect('password_reset_request')
+
+        form = PasswordResetAnswerForm(request.POST or None)
+        context.update({
+            'step': stage,
+            'form': form,
+            'welcome_name': user.first_name or user.username,
+            'security_question': profile.get_security_question_display(),
+        })
+        if request.method == 'POST' and form.is_valid():
+            if not check_password(
+                form.cleaned_data['security_answer'],
+                profile.security_answer_hash,
+            ):
+                attempts = request.session.get('password_reset_answer_attempts', 0) + 1
+                request.session['password_reset_answer_attempts'] = attempts
+                form.add_error('security_answer', 'The security answer is incorrect.')
+                if attempts >= 5:
+                    request.session.pop('password_reset_stage', None)
+                    request.session.pop('password_reset_staff_id', None)
+                    request.session.pop('password_reset_answer_attempts', None)
+                    messages.error(request, 'Too many attempts. Start the reset process again.')
+                    return redirect('password_reset_request')
+            else:
+                reset_code, error = _issue_password_reset_code(staff_id)
+                if error:
+                    messages.error(request, error)
+                else:
+                    request.session['password_reset_code_id'] = reset_code.pk
+                    request.session['password_reset_stage'] = 'code'
+                    request.session.pop('password_reset_answer_attempts', None)
+                    return redirect('password_reset_request')
+
+    elif stage == 'code':
+        reset_code = PasswordResetCode.objects.select_related(
+            'staff_id__registered_user',
+        ).filter(
+            pk=request.session.get('password_reset_code_id'),
+            staff_id_id=request.session.get('password_reset_staff_id'),
+            verified_at__isnull=True,
+        ).first()
+        if not reset_code or reset_code.expires_at <= timezone.now():
+            if reset_code:
+                reset_code.delete()
+            for key in (
+                'password_reset_stage', 'password_reset_staff_id',
+                'password_reset_code_id',
+            ):
+                request.session.pop(key, None)
+            messages.error(request, 'Your verification code expired. Start the reset process again.')
+            return redirect('password_reset_request')
+
+        user = reset_code.staff_id.registered_user
+        form = PasswordResetCodeForm(request.POST or None)
+        context.update({
+            'step': stage,
+            'form': form,
+            'welcome_name': user.first_name or user.username,
+            'masked_email': (
+                f"{reset_code.staff_id.email[:1]}***@"
+                f"{reset_code.staff_id.email.split('@', 1)[1]}"
+            ),
+        })
+        if request.method == 'POST' and form.is_valid():
+            if check_password(form.cleaned_data['code'], reset_code.code_hash):
+                reset_code.verified_at = timezone.now()
+                reset_code.save(update_fields=['verified_at'])
+                return redirect('password_reset_confirm')
+            reset_code.attempts += 1
+            reset_code.save(update_fields=['attempts'])
+            form.add_error('code', 'That code is incorrect.')
+            if reset_code.attempts >= 5:
+                reset_code.delete()
+                for key in (
+                    'password_reset_stage', 'password_reset_staff_id',
+                    'password_reset_code_id',
+                ):
+                    request.session.pop(key, None)
+                messages.error(request, 'Too many attempts. Start the reset process again.')
+                return redirect('password_reset_request')
+    else:
+        request.session.pop('password_reset_stage', None)
+        return redirect('password_reset_request')
+
+    return render(request, 'registration/password_reset_request.html', context)
+
+
+@require_POST
+def resend_password_reset_code(request):
+    staff_id_id = request.session.get('password_reset_staff_id')
+    reset_code = PasswordResetCode.objects.filter(
+        pk=request.session.get('password_reset_code_id'),
+        staff_id_id=staff_id_id,
+        verified_at__isnull=True,
+    ).first()
+    if (
+        request.session.get('password_reset_stage') != 'code'
+        or not staff_id_id
+        or not reset_code
+        or reset_code.expires_at <= timezone.now()
+        or reset_code.attempts >= 5
+    ):
+        for key in (
+            'password_reset_stage', 'password_reset_staff_id',
+            'password_reset_code_id',
+        ):
+            request.session.pop(key, None)
+        messages.error(request, 'Start the password reset process again to request a new code.')
+        return redirect('password_reset_request')
+
+    staff_id = reset_code.staff_id
+    replacement_code, error = _issue_password_reset_code(staff_id)
+    if error:
+        messages.error(request, error)
+        return redirect('password_reset_request')
+
+    request.session['password_reset_code_id'] = replacement_code.pk
+    messages.success(request, 'A new verification code has been sent to your work email.')
+    return redirect('password_reset_request')
+
+
+def password_reset_confirm(request):
+    reset_code = PasswordResetCode.objects.select_related(
+        'staff_id__registered_user',
+    ).filter(
+        pk=request.session.get('password_reset_code_id'),
+        staff_id_id=request.session.get('password_reset_staff_id'),
+        verified_at__isnull=False,
+        expires_at__gt=timezone.now(),
+    ).first()
+    user = reset_code.staff_id.registered_user if reset_code else None
+    if not user:
+        messages.error(request, 'Verify your email code before choosing a new password.')
+        return redirect('password_reset_request')
+
+    form = SetPasswordForm(user, request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        reset_code.delete()
+        for key in (
+            'password_reset_stage', 'password_reset_staff_id',
+            'password_reset_code_id', 'password_reset_answer_attempts',
+        ):
+            request.session.pop(key, None)
+        messages.success(request, 'Your password has been reset successfully. Please sign in.')
+        return redirect('login')
+
+    return render(request, 'registration/password_reset_set_password.html', {
+        'form': form,
+        'welcome_name': user.first_name or user.username,
+    })
+
+
 def home(request):
     if request.user.is_authenticated:
         return redirect('dashboard_router')
@@ -404,6 +948,11 @@ def _return_request_page_url(appraisal, profile):
     if appraisal.status == 'pending_hr':
         return reverse('hod_view_appraisal', args=[appraisal.id])
     return reverse('dashboard_router')
+
+
+@login_required
+def support(request):
+    return render(request, 'support.html')
 
 
 @login_required
@@ -539,9 +1088,15 @@ def employee_dashboard(request):
 def upload_previous_appraisal(request):
     if request.method != 'POST':
         return redirect('employee_dashboard')
+    is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
 
     profile = EmployeeProfile.objects.filter(user=request.user).first()
     if profile is None:
+        if is_ajax:
+            return JsonResponse(
+                {'success': False, 'message': 'A staff profile is required to upload an appraisal.'},
+                status=400,
+            )
         messages.error(request, "A staff profile is required to upload an appraisal.")
         return redirect('dashboard_router')
 
@@ -574,11 +1129,28 @@ def upload_previous_appraisal(request):
         previous_appraisal.save()
         if previous_file_name:
             previous_appraisal.appraisal_file.storage.delete(previous_file_name)
+        if is_ajax:
+            return JsonResponse({
+                'success': True,
+                'message': f"Your {previous_appraisal.appraisal_cycle} appraisal was submitted for review.",
+                'appraisal_cycle': previous_appraisal.appraisal_cycle,
+            })
         messages.success(
             request,
             f"Your {previous_appraisal.appraisal_cycle} appraisal was submitted for review.",
         )
     else:
+        errors = [
+            str(error)
+            for field_errors in form.errors.values()
+            for error in field_errors
+        ]
+        if is_ajax:
+            return JsonResponse({
+                'success': False,
+                'message': errors[0] if errors else 'Check the form and try again.',
+                'errors': errors,
+            }, status=400)
         for field_errors in form.errors.values():
             for error in field_errors:
                 messages.error(request, str(error))
@@ -2012,9 +2584,23 @@ def hr_dashboard(request):
     ]
     reporting_form = SupervisorReportingForm(prefix='reporting')
     hod_assignment_form = HRDepartmentHodAssignmentForm()
+    cycle_form = AppraisalCycleForm()
     reporting_confirmation = None
 
-    if request.method == 'POST':
+    if request.method == 'POST' and request.POST.get('cycle_action') == 'create':
+        cycle_form = AppraisalCycleForm(request.POST)
+        if cycle_form.is_valid():
+            with transaction.atomic():
+                cycle = cycle_form.save(commit=False)
+                if cycle.is_active:
+                    for existing_cycle in AppraisalCycle.objects.exclude(pk=cycle.pk):
+                        if existing_cycle.is_active:
+                            existing_cycle.is_active = False
+                            existing_cycle.save(update_fields=['is_active'])
+                cycle.save()
+            messages.success(request, f"Appraisal cycle {cycle.year} was created successfully.")
+            return redirect(f"{reverse('hr_dashboard')}#cycles")
+    elif request.method == 'POST':
         if request.POST.get('assignment_action') == 'save':
             assignment_form, transfer_confirmation, saved_assignment = (
                 _process_hr_supervisor_assignment(request)
@@ -2170,7 +2756,9 @@ def hr_dashboard(request):
         status='pending_hr'
     ).select_related('employee__user', 'supervisor__user', 'hod__user', 'cycle')
 
-    cycles = AppraisalCycle.objects.order_by('-year')
+    cycles = AppraisalCycle.objects.annotate(
+        appraisal_count=Count('appraisals'),
+    ).order_by('-year')
     departments = Department.objects.order_by('name')
     selected_cycle = request.GET.get('cycle', '').strip()
     available_cycle_years = set(cycles.values_list('year', flat=True))
@@ -2238,6 +2826,7 @@ def hr_dashboard(request):
         ).count(),
         'departments': departments,
         'cycles': cycles,
+        'cycle_form': cycle_form,
         'users': users,
         'role_choices': role_choices,
         'supervisor_assignment_form': (
@@ -2800,7 +3389,7 @@ def set_appraisal_cycle_status(request, cycle_id):
         return redirect('dashboard_router')
     if request.method != 'POST':
         messages.error(request, "Use the cycle controls to change its status.")
-        return redirect('new_app_cycle')
+        return redirect(f"{reverse('hr_dashboard')}#cycles")
 
     cycle = get_object_or_404(AppraisalCycle, pk=cycle_id)
     activate = request.POST.get('is_active') == 'true'
@@ -2817,7 +3406,7 @@ def set_appraisal_cycle_status(request, cycle_id):
         messages.success(request, f"Appraisal cycle {cycle.year} is now active.")
     else:
         messages.success(request, f"Appraisal cycle {cycle.year} is now inactive.")
-    return redirect('new_app_cycle')
+    return redirect(f"{reverse('hr_dashboard')}#cycles")
 
 
 @login_required
@@ -2827,7 +3416,7 @@ def delete_appraisal_cycle(request, cycle_id):
         return redirect('dashboard_router')
     if request.method != 'POST':
         messages.error(request, "Use the cycle controls to delete a cycle.")
-        return redirect('new_app_cycle')
+        return redirect(f"{reverse('hr_dashboard')}#cycles")
 
     cycle = get_object_or_404(AppraisalCycle, pk=cycle_id)
     if cycle.appraisals.exists():
@@ -2836,12 +3425,12 @@ def delete_appraisal_cycle(request, cycle_id):
             f"Cycle {cycle.year} cannot be deleted because it has appraisal records. "
             "Deactivate it instead to preserve those records.",
         )
-        return redirect('new_app_cycle')
+        return redirect(f"{reverse('hr_dashboard')}#cycles")
 
     year = cycle.year
     cycle.delete()
     messages.success(request, f"Appraisal cycle {year} was deleted.")
-    return redirect('new_app_cycle')
+    return redirect(f"{reverse('hr_dashboard')}#cycles")
 
 
 def changer_user_role(request):

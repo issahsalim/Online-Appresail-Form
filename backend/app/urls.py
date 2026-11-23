@@ -24,6 +24,7 @@ urlpatterns = [
     path('notifications/<int:notification_id>/open/', views.open_notification, name='open_notification'),
     path('delete_noti/<int:noti_id>/',views.delete_noti, name='delete_noti'), 
     path('notifications/read-all/', views.mark_all_notifications_read, name='mark_all_notifications_read'),
+    path('support/', views.support, name='support'),
     path('supervisor/dashboard/', views.supervisor_dashboard, name='supervisor_dashboard'),
     path('supervisor/create-appraisals/', views.supervisor_create_appraisals, name='supervisor_create_appraisals'),
     path('supervisor/review/<int:appraisal_id>/', views.supervisor_review, name='supervisor_review'),

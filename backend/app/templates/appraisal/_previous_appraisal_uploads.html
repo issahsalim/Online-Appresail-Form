@@ -1,22 +1,90 @@
 <section class="previous-appraisal-panel">
     <div class="previous-appraisal-heading">
+<<<<<<< Updated upstream
         <h2>Upload a previous appraisal</h2>
         <p>Submit an appraisal from before {{ current_year }}. HR must approve it before it is added to your records.</p>
-    </div>
-    <form method="post" enctype="multipart/form-data" action="{% url 'upload_previous_appraisal' %}" class="previous-appraisal-form">
-        {% csrf_token %}
+=======
+        <span class="previous-appraisal-heading-icon" aria-hidden="true">
+            <svg viewBox="0 0 48 48" fill="none">
+                <path d="M13.5 31.5a9 9 0 0 1-.8-18 11.8 11.8 0 0 1 22.7 2.7 7.8 7.8 0 0 1 1 15.3" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                <path d="M24 37V21m0 0-6.2 6.2M24 21l6.2 6.2" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </span>
         <div>
+            <h2>Upload a previous appraisal</h2>
+            <p>Submit an appraisal from before {{ current_year }}. HR will review it before it appears in your records.</p>
+        </div>
+>>>>>>> Stashed changes
+    </div>
+    <div class="previous-appraisal-layout">
+        <div class="previous-appraisal-upload-column">
+    <form method="post" enctype="multipart/form-data" action="{% url 'upload_previous_appraisal' %}" class="previous-appraisal-form" data-previous-appraisal-upload>
+        {% csrf_token %}
+<<<<<<< Updated upstream
+        <div>
+=======
+        <div class="previous-appraisal-field previous-appraisal-cycle-field">
+>>>>>>> Stashed changes
             <label for="{{ previous_appraisal_form.appraisal_cycle.id_for_label }}" class="form-label">{{ previous_appraisal_form.appraisal_cycle.label }}</label>
             {{ previous_appraisal_form.appraisal_cycle }}
             <div class="form-text">{{ previous_appraisal_form.appraisal_cycle.help_text }}</div>
         </div>
         <div>
             <label for="{{ previous_appraisal_form.appraisal_file.id_for_label }}" class="form-label">{{ previous_appraisal_form.appraisal_file.label }}</label>
+<<<<<<< Updated upstream
             {{ previous_appraisal_form.appraisal_file }}
         </div>
         <button type="submit" class="previous-appraisal-button">Submit for approval</button>
+=======
+            <div class="previous-appraisal-dropzone" data-file-dropzone tabindex="0" role="group" aria-label="Choose or drop one previous appraisal file">
+                {{ previous_appraisal_form.appraisal_file }}
+                <span class="previous-appraisal-upload-icon" aria-hidden="true">
+                    <svg viewBox="0 0 48 48" fill="none"><path d="M13.5 31.5a9 9 0 0 1-.8-18 11.8 11.8 0 0 1 22.7 2.7 7.8 7.8 0 0 1 1 15.3" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M24 37V21m0 0-6.2 6.2M24 21l6.2 6.2" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
+                <strong>Drag and drop your file here</strong>
+                <span class="previous-appraisal-or">or</span>
+                <button class="previous-appraisal-browse" type="button" data-browse-files>Browse files</button>
+                <span class="previous-appraisal-file-hint" id="previous-appraisal-file-hint">PDF, DOC, or DOCX · one file per appraisal</span>
+            </div>
+            <div class="previous-appraisal-upload-list" data-upload-file-list aria-live="polite" hidden></div>
+            {% for error in previous_appraisal_form.appraisal_file.errors %}
+                <div class="invalid-feedback d-block">{{ error }}</div>
+            {% endfor %}
+        </div>
+        <div class="previous-appraisal-submit-row">
+            <span class="previous-appraisal-upload-status" data-upload-status role="status" aria-live="polite">Choose a file to begin.</span>
+            <button type="submit" class="previous-appraisal-button previous-appraisal-submit">Upload</button>
+        </div>
+>>>>>>> Stashed changes
     </form>
 
+    <div class="modal fade previous-appraisal-success-modal" data-upload-success-modal tabindex="-1" aria-labelledby="previous-appraisal-success-title" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <button class="previous-appraisal-success-close" type="button" data-bs-dismiss="modal" aria-label="Close">×</button>
+                <div class="previous-appraisal-success-body">
+                    <span class="previous-appraisal-success-mark" aria-hidden="true">
+                        <svg viewBox="0 0 48 48" fill="none"><path d="m13 24.5 7.2 7.2L35 17" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="24" cy="24" r="21" stroke="currentColor" stroke-width="2"/></svg>
+                    </span>
+                    <span class="previous-appraisal-success-kicker">Upload complete</span>
+                    <h2 id="previous-appraisal-success-title">File submitted successfully</h2>
+                    <p data-upload-success-message>Your appraisal was received and sent to HR for review.</p>
+                    <div class="previous-appraisal-success-file">
+                        <span class="previous-appraisal-file-badge" data-success-file-type>PDF</span>
+                        <span class="previous-appraisal-success-file-copy">
+                            <strong data-success-file-name>Appraisal file</strong>
+                            <small data-success-file-details>Ready for HR review</small>
+                        </span>
+                    </div>
+                    <button class="previous-appraisal-success-continue" type="button" data-upload-success-continue>Continue to Previous Appraisals</button>
+                    <span class="previous-appraisal-success-footnote" data-upload-countdown>You can track the review status on your dashboard.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+        </div>
+
+        <div class="previous-appraisal-records" role="region" aria-label="Previous appraisal records" tabindex="0">
     <div class="previous-appraisal-list">
         <h3>Approved previous appraisals</h3>
         {% if approved_previous_appraisals %}
@@ -59,4 +127,6 @@
             </div>
         </div>
     {% endif %}
+        </div>
+    </div>
 </section>
