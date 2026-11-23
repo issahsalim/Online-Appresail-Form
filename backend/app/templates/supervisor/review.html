@@ -410,7 +410,7 @@
         <section class="appraisal-paper" id="targets-section" aria-labelledby="targets-heading">
             <h2 class="appraisal-section-title" id="targets-heading">SECTION 2: Performance Planning Form</h2>
             <div class="appraisal-section-body">
-                <p class="appraisal-help">Performance targets agreed between the appraiser and employee.</p>
+                <p class="appraisal-help">To be agreed between the appraiser and the employee at the start of the annual appraisal cycle or when a new employee commences.</p>
                 {{ target_formset.management_form }}
                 {{ target_formset.non_form_errors }}
                 <div class="table-responsive">
@@ -418,9 +418,9 @@
                         <thead>
                             <tr>
                                 <th class="appraisal-table-number">No.</th>
-                                <th>Key result areas<br><span class="fw-normal">(Not more than 5)</span></th>
-                                <th>Targets<br><span class="fw-normal">(Specific, measurable, realistic and time-framed)</span></th>
-                                <th>Resources required</th>
+                                <th>KEY RESULT AREAS<br><span class="fw-normal">(Not more than 5 - To be drawn from employees Job Description)</span></th>
+                                <th>TARGETS<br><span class="fw-normal">(Results to be achieved.  Not more than 5. Should be specific, measurable, realistic and time-framed)</span></th>
+                                <th>RESOURCES REQUIRED</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -447,10 +447,10 @@
         <section class="appraisal-paper" aria-labelledby="mid-year-review-heading">
             <h2 class="appraisal-section-title" id="mid-year-review-heading">SECTION 3: Mid-Year Review Form</h2>
             <div class="appraisal-section-body">
-                <p class="appraisal-help">Review progress against each target and record the agreed remarks.</p>
-                <div class="table-responsive mb-4">
-                    <table class="table table-bordered align-middle target-review-table">
-                        <thead><tr><th class="appraisal-table-number">No.</th><th>Target</th><th>Progress review</th><th>Remarks</th></tr></thead>
+                <p class="appraisal-help">This is to be completed in July by the Appraiser and Appraisee Progress has been discussed and Agreements have been reached as detailed below.</p>
+                <div class="table-responsive mb-4"><center><b>MID-YEAR REVIEW</b> </center> 
+                    <table class="table table-bordered align-middle target-review-table" >
+                        <thead style="text-transform: uppercase;"><tr><th class="appraisal-table-number">No.</th><th>Target </th><th>Progress review</th><th>Remarks</th></tr></thead>
                         <tbody>
                             {% for form in target_formset %}
                                 <tr>
@@ -465,7 +465,7 @@
                         </tbody>
                     </table>
                 </div>
-                <h3 class="overall-assessment-label">Competency progress review</h3>
+                <center><h2 class="overall-assessment-label" style="font-weight: bolder;">Competency progress review </h2></center>
                 {{ comp_formset.management_form }}
                 {{ comp_formset.non_form_errors }}
                 {% for group in competency_groups %}
@@ -499,10 +499,11 @@
         <section class="appraisal-paper" aria-labelledby="end-year-review-heading">
             <h2 class="appraisal-section-title" id="end-year-review-heading">SECTION 4: End-of-Year Review Form</h2>
             <div class="appraisal-section-body">
-                <p class="appraisal-help">Complete the performance assessment, target weight, score and comments for each target.</p>
-                <div class="table-responsive">
+                <p class="appraisal-help">This is to be completed in December by the Appraiser and Appraisee.
+<b>■ Please refer to page 8 of the manual for guidance to the scoring / rating.</b></p>
+                <div class="table-responsive"> <center><b>END–OF–YEAR REVIEW FORM TARGETS</b></center>
                     <table class="table table-bordered align-middle target-review-table">
-                        <thead>
+                        <thead style="text-transform: uppercase;">
                             <tr><th class="appraisal-table-number">No.</th><th>Target</th><th>Performance assessment</th><th>Weight of target</th><th>Score / rating</th><th>Comments</th></tr>
                         </thead>
                         <tbody>
@@ -529,6 +530,59 @@
         <section class="appraisal-paper" aria-labelledby="core-competencies-heading">
             <h2 class="appraisal-section-title" id="core-competencies-heading">SECTION 5: Annual Appraisal — Core Competencies</h2>
             <div class="appraisal-section-body">
+                <b>Assessment of Core Competencies</b>
+               
+<table class="table table-bordered align-middle mb-0">
+                                        <thead><tr><th>5</th><th>Exceptional exceed expectations</th><th>Exhibits the highest level of performance. Exceeds goals and objectives.</th></tr></thead>
+                                        <thead><tr><th>4</th><th>Exceeds Expectations</th><th>Performance above standard level. Job performance clearly more than satisfactory. Meets all goals and exceeds several. </th></tr></thead>
+                                        <thead><tr><th>3</th><th>Meets Expectations</th><th>A solid, consistent performance. Meets most goals and exceeds some.</th></tr></thead>
+                                        <thead><tr><th>2</th><th>Below Expectation</th><th>Performance needs to be improved in several major areas. Did not meet many goals.</th></tr></thead>
+                                        <thead><tr><th>1</th><th>Unacceptable</th><th>Performance is below job requirements and needs definite and significant improvement.	Did not meet most goals.	</th></tr></thead>
+
+                                        <tbody>
+                                            <!-- <tr><th colspan="1">5</th><td data-group-total>Exceptional exceed expectations</td><th>Exhibits the highest level of performance. Exceeds goals and objectives.</th></tr>
+                                            <tr><th colspan="1">4</th><td data-group-total>—</td></tr>
+                                            <tr><th colspan="1">3</th><td data-group-total>—</td></tr>
+                                            <tr><th colspan="1">2</th><td data-group-total>—</td></tr>
+                                            <tr><th colspan="1">1</th><td data-group-total>—</td></tr> -->
+
+                                            
+                                        </tbody>
+                                        <tfoot>
+                                            <!-- <tr><th colspan="3">Average</th><td data-group-average>—</td></tr> -->
+                                        </tfoot>
+                                    </table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
                 {% for group in competency_groups %}
                     {% if group.type == 'core' %}
                         <div
@@ -555,8 +609,8 @@
                                             {% endfor %}
                                         </tbody>
                                         <tfoot>
-                                            <tr><th colspan="3">Group total</th><td data-group-total>—</td></tr>
-                                            <tr><th colspan="3">Group average</th><td data-group-average>—</td></tr>
+                                            <tr><th colspan="3">Total</th><td data-group-total>—</td></tr>
+                                            <tr><th colspan="3">Average</th><td data-group-average>—</td></tr>
                                         </tfoot>
                                     </table>
                                 </div>

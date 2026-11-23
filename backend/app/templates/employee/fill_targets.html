@@ -421,14 +421,21 @@
         }
         .appraisal-field textarea,
         .appraisal-table textarea { min-height: 64px; }
-        .appraisal-table:not(.appraisal-target-entry-table) { min-width: 600px; }
+        .appraisal-table:not(.appraisal-target-entry-table):not(.appraisal-training-entry-table) { min-width: 600px; }
         .appraisal-target-entry-table {
             border: 0;
             display: block;
             min-width: 0;
             width: 100%;
         }
-        .appraisal-target-entry-table thead {
+        .appraisal-training-entry-table {
+            border: 0;
+            display: block;
+            min-width: 0;
+            width: 100%;
+        }
+        .appraisal-target-entry-table thead,
+        .appraisal-training-entry-table thead {
             height: 1px;
             overflow: hidden;
             position: absolute;
@@ -437,16 +444,20 @@
             white-space: nowrap;
         }
         .appraisal-target-entry-table tbody,
-        .appraisal-target-entry-table tr {
+        .appraisal-target-entry-table tr,
+        .appraisal-training-entry-table tbody,
+        .appraisal-training-entry-table tr {
             display: block;
             width: 100%;
         }
-        .appraisal-target-entry-table tr {
+        .appraisal-target-entry-table tr,
+        .appraisal-training-entry-table tr {
             border: 1px solid #b8a69e;
             margin-bottom: .5rem;
             padding: .25rem;
         }
-        .appraisal-target-entry-table td {
+        .appraisal-target-entry-table td,
+        .appraisal-training-entry-table td {
             border: 0;
             display: block;
             padding: .3rem;
@@ -479,7 +490,7 @@
         .appraisal-competency-grid { grid-template-columns: minmax(0, 1fr); }
         .appraisal-navigation {
             align-items: center;
-            flex-wrap: nowrap;
+            flex-wrap: wrap;
             gap: .3rem;
             justify-content: space-between;
             margin-top: .65rem;
@@ -487,18 +498,20 @@
         }
         .appraisal-navigation-group {
             align-items: center;
-            flex: 0 1 auto;
-            flex-wrap: nowrap;
+            flex: 1 1 auto;
+            flex-wrap: wrap;
             gap: .3rem;
-            width: auto;
+            justify-content: flex-end;
+            width: 100%;
         }
         .appraisal-navigation .btn {
             flex: 0 1 auto;
-            font-size: .74rem;
+            font-size: .8rem;
             line-height: 1.2;
             min-width: 0;
-            padding: .38rem .48rem;
-            white-space: nowrap;
+            min-height: 42px;
+            padding: .45rem .55rem;
+            white-space: normal;
         }
         .appraisal-navigation-group > span { font-size: .68rem; white-space: nowrap; }
         .appraisal-stepper { margin-bottom: .7rem; padding: .75rem; }
@@ -507,6 +520,9 @@
         .appraisal-competency-card { padding: .65rem; }
         .appraisal-competency-statement { gap: .4rem; margin-top: .45rem; }
         .appraisal-readonly-card { margin: .55rem 0; padding: .65rem; }
+        .appraisal-form-page input,
+        .appraisal-form-page select,
+        .appraisal-form-page textarea { font-size: 16px; }
     }
     @media print {
         @page { size: A4 portrait; margin: 10mm; }
@@ -649,7 +665,7 @@
             <a href="{% url 'employee_appraisal_detail' appraisal.id %}" class="btn btn-outline-secondary">Back to appraisal</a>
             <button type="button" class="btn appraisal-button-primary" onclick="window.print()">Download / Save as PDF</button>
         {% else %}
-            <a href="{% url dashboard_url_name %}" class="btn btn-outline-secondary">Dashboard</a>
+            <a href="{% url dashboard_url_name %}" class="btn btn-outline-secondary">Dashboard </a>
             {% if read_only and allow_pdf and appraisal.status == 'completed' %}
                 <a href="{% url 'employee_appraisal_pdf' appraisal.id %}" class="btn btn-outline-primary">Open PDF / Print view</a>
             {% endif %}
@@ -668,17 +684,7 @@
             <img src="{% static 'images/mathias-catholic-hospital-logo.png' %}" alt="Mathias Catholic Hospital logo">
         </header>
 
-            <div class="appraisal-page-title">
-                <!-- <h2>My Appraisal — {{ appraisal.cycle.year }}</h2> -->
-                <span class="appraisal-status">
-                    Status:
-                    {% if appraisal.status == 'pending_manager' %}Supervisor Review
-                    {% elif appraisal.status == 'pending_hod' %}HOD Review
-                    {% elif appraisal.status == 'pending_hr' %}HR Review
-                    {% else %}{{ appraisal.get_status_display }}{% endif %}
-                </span>
-            </div>
-
+            
         {% if not read_only %}
             <nav class="appraisal-stepper no-print" aria-label="Appraisal form progress">
                 <div class="appraisal-stepper-header">
@@ -807,10 +813,10 @@
                             <span class="appraisal-period-label">PERIOD OF REPORT</span>
                             <strong>From:</strong> {{ appraisal.cycle.report_period_from|date:"d/m/Y"|default:"Not set" }}
                             <strong>To:</strong> {{ appraisal.cycle.report_period_to|date:"d/m/Y"|default:"Not set" }}
-                            <span class="text-muted">(set by HR for this cycle)</span>
+                            <!-- <span class="text-muted">(set by HR for this cycle)</span> -->
                         </div>
                         <div class="appraisal-section-body">
-                            <p class="appraisal-section-intro">Check your details and complete any missing information. Your information is saved with this appraisal.</p>
+                            <!-- <p class="appraisal-section-intro">Check your details and complete any missing information. Your information is saved with this appraisal.</p> -->
                             <div class="appraisal-fields-grid">
                                 {% for field in employee_info_form %}
                                     {% if field.name != 'employee_comments' %}
@@ -829,13 +835,13 @@
                     </div>
 
                     <div class="appraisal-section">
-                        <h2 class="appraisal-section-heading">Training received during the year under review</h2>
+                        <h2 class="appraisal-section-heading" style="text-transform:uppercase;">Training received during the year under review</h2>
                         <div class="appraisal-section-body">
-                            <p class="appraisal-help">List up to four training programmes attended during this appraisal period. Leave unused rows blank.</p>
+                            <!-- <p class="appraisal-help">List up to four training programmes attended during this appraisal period. Leave unused rows blank.</p> -->
                             {% if training_formset.non_form_errors %}<div class="alert alert-danger">{{ training_formset.non_form_errors }}</div>{% endif %}
                             {{ training_formset.management_form }}
                             <div class="table-responsive">
-                                <table class="table table-bordered align-middle appraisal-table">
+                                <table class="table table-bordered align-middle appraisal-table appraisal-training-entry-table">
                                     <thead><tr><th>Institution</th><th>Date (dd-mm-yyyy)</th><th>Programme</th></tr></thead>
                                     <tbody>
                                         {% for form in training_formset %}
@@ -843,6 +849,7 @@
                                                 {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
                                                 {% for field in form.visible_fields %}
                                                     <td>
+                                                        {% if forloop.counter == 1 %}<span class="appraisal-mobile-field-label">Institution</span>{% elif forloop.counter == 2 %}<span class="appraisal-mobile-field-label">Date</span>{% else %}<span class="appraisal-mobile-field-label">Programme</span>{% endif %}
                                                         {{ field }}
                                                         {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
                                                     </td>
@@ -866,7 +873,7 @@
                     <div class="appraisal-section">
                         <h2 class="appraisal-section-heading" id="performance-planning-heading">SECTION 2: Performance Planning Form</h2>
                         <div class="appraisal-section-body">
-                            <p class="appraisal-section-intro">Agree your key result areas, targets and resources with your appraiser. Use up to five goals; at least one complete key result area and target is required before submission.</p>
+                            <p class="appraisal-section-intro">To be agreed between the appraiser and the employee at the start of the annual appraisal cycle or when a new employee commences.</p>
                             {% if formset.non_form_errors %}<div class="alert alert-danger">{{ formset.non_form_errors }}</div>{% endif %}
                             {{ formset.management_form }}
                             <div class="table-responsive">
@@ -874,9 +881,9 @@
                                     <thead>
                                         <tr>
                                             <th>No.</th>
-                                            <th>Key result areas<br><small>(drawn from your job description)</small></th>
-                                            <th>Targets<br><small>(specific, measurable, realistic and time-framed)</small></th>
-                                            <th>Resources required</th>
+                             <th>KEY RESULT AREAS <br><small>(Not more than 5 - To be drawn from employees Job Description)</small></th>
+                                            <th>TARGETS<br><small>(Results to be achieved. Not more than 5. Should be specific,measurable, realistic and time-framed)</small></th>
+                                            <th>RESOURCES  REQUIRED</th>
                                         </tr>
                                     </thead>
                                     <tbody>

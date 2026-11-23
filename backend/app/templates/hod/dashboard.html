@@ -74,46 +74,50 @@
         </button>
         <div class="role-sidebar-brand">
             <img class="role-sidebar-mark" src="{% static 'images/mathias-catholic-hospital-logo.png' %}" alt="Mathias Catholic Hospital">
-            <span>Staff Appraisal<br><small class="fw-normal opacity-75">HOD WORKSPACE</small></span>
+            <span>Staff Appraisal<br><small class="fw-normal opacity-75"></small></span>
         </div>
-        <div class="role-sidebar-label">Workspace</div>
+        <div class="role-sidebar-label"></div>
         <button class="role-sidebar-backdrop" type="button" aria-label="Close menu" hidden></button>
         <nav class="role-sidebar-nav" id="hod-dashboard-navigation">
             <div class="role-sidebar-drawer-brand">
                 <img class="role-sidebar-mark" src="{% static 'images/mathias-catholic-hospital-logo.png' %}" alt="">
-                <span class="role-sidebar-drawer-copy">Mathias Catholic Hospital<small>HOD WORKSPACE</small></span>
+                <span class="role-sidebar-drawer-copy">Mathias Catholic Hospital<small></small></span>
                 <button class="role-sidebar-close" type="button" aria-label="Close menu" data-sidebar-close>×</button>
             </div>
             <button class="role-sidebar-link active" type="button" data-role-section-target="pending">
-                <span class="role-sidebar-icon" aria-hidden="true">◷</span>
+                <!-- <span class="role-sidebar-icon" aria-hidden="true">◷</span> -->
                 <span class="role-sidebar-link-copy">
                     <span class="role-sidebar-link-title">Pending review</span>
                     <span class="role-sidebar-link-note">Department appraisals</span>
                 </span>
-                <span class="role-sidebar-count">{{ pending_reviews.count }}</span>
+                <!-- <span class="role-sidebar-count">{{ pending_reviews.count }}</span> -->
             </button>
             <button class="role-sidebar-link" type="button" data-role-section-target="history">
-                <span class="role-sidebar-icon" aria-hidden="true">▤</span>
+                <!-- <span class="role-sidebar-icon" aria-hidden="true">▤</span> -->
                 <span class="role-sidebar-link-copy">
                     <span class="role-sidebar-link-title">Appraisal history</span>
                     <span class="role-sidebar-link-note">Submitted and completed</span>
                 </span>
-                <span class="role-sidebar-count">{{ historical_appraisals.count }}</span>
+                <!-- <span class="role-sidebar-count">{{ historical_appraisals.count }}</span> -->
             </button>
             <button class="role-sidebar-link" type="button" data-role-section-target="own">
-                <span class="role-sidebar-icon" aria-hidden="true">♙</span>
+                <!-- <span class="role-sidebar-icon" aria-hidden="true">♙</span> -->
                 <span class="role-sidebar-link-copy">
                     <span class="role-sidebar-link-title">My own appraisal</span>
                     <span class="role-sidebar-link-note">Your employee appraisal</span>
                 </span>
             </button>
             <button class="role-sidebar-link" type="button" data-role-section-target="previous">
-                <span class="role-sidebar-icon" aria-hidden="true">▤</span>
+                <!-- <span class="role-sidebar-icon" aria-hidden="true">▤</span> -->
                 <span class="role-sidebar-link-copy">
                     <span class="role-sidebar-link-title">Previous appraisals</span>
                     <span class="role-sidebar-link-note">Upload and view your past records</span>
                 </span>
-                <span class="role-sidebar-count">{{ previous_appraisals|length }}</span>
+                <!-- <span class="role-sidebar-count">{{ previous_appraisals|length }}</span> -->
+            </button>
+            <button class="role-sidebar-link" type="button" data-role-section-target="support">
+                <!-- <span class="role-sidebar-icon" aria-hidden="true"><i class="bi bi-life-preserver"></i></span> -->
+                <span class="role-sidebar-link-copy"><span class="role-sidebar-link-title">Support</span><span class="role-sidebar-link-note">Help and FAQs</span></span>
             </button>
         </nav>
         <div class="role-sidebar-label">Signed in as</div>
@@ -121,14 +125,14 @@
     </aside>
 
     <main class="role-dashboard-content hod-dashboard-content">
-    <header class="hod-hero">
-        <div>
+    <!-- <header class="hod-hero">
+        <!-- <div>
             <div class="hod-eyebrow">Department head workspace</div>
             <h1>Welcome, {{ request.user.first_name|default:request.user.username }}</h1>
             <p>Review department appraisals and follow the records you oversee.</p>
-        </div>
+        </div> -->
         {% if cycle %}<div class="hod-cycle">Active cycle · {{ cycle.year }}</div>{% endif %}
-    </header>
+    <!-- </header> --> 
 
     <section class="hod-stats" aria-label="Department appraisal summary">
         <div class="hod-stat">
@@ -278,6 +282,9 @@
     <section class="hod-workspace role-dashboard-section" data-role-section="previous" aria-label="Previous appraisals" hidden>
         {% include 'appraisal/_previous_appraisal_uploads.html' %}
     </section>
-    </main>
+        <section class="role-dashboard-section" data-role-section="support" aria-label="Support and assistance" hidden>
+        {% include 'partials/support_content.html' %}
+    </section>
+</main>
 </div>
 {% endblock %}

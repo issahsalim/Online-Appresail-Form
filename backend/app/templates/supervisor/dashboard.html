@@ -16,65 +16,17 @@
             padding: 0;
         }
         .supervisor-dashboard-content { margin: 0 auto; max-width: 1600px; }
-        .supervisor-hero {
-            align-items: center;
-            background: linear-gradient(115deg, #142d3c 0%, #1d4254 100%);
-            border: 1px solid rgba(255,255,255,.08);
-            border-radius: 24px;
-            box-shadow: 0 18px 42px rgba(20, 45, 60, .14);
-            color: #fff;
-            display: flex;
-            gap: 1.5rem;
-            justify-content: space-between;
-            margin-bottom: 1.25rem;
-            overflow: hidden;
-            padding: clamp(1.4rem, 3vw, 2.25rem);
-            position: relative;
-        }
-        .supervisor-hero::after {
-            border: 1px solid rgba(255,255,255,.08);
-            border-radius: 50%;
-            content: "";
-            height: 280px;
-            position: absolute;
-            right: -80px;
-            top: -155px;
-            width: 280px;
-        }
-        .supervisor-hero-content { position: relative; z-index: 1; }
-        .supervisor-eyebrow {
-            color: #c2d0d7;
-            font-size: .73rem;
-            font-weight: 750;
-            letter-spacing: .13em;
-            margin-bottom: .55rem;
-            text-transform: uppercase;
-        }
-        .supervisor-hero h1 {
-            font-size: clamp(1.7rem, 4vw, 2.45rem);
-            font-weight: 780;
-            letter-spacing: -.045em;
-            margin: 0 0 .45rem;
-        }
-        .supervisor-hero p { color: #d1dce1; margin: 0; max-width: 640px; }
-        .supervisor-cycle {
-            background: rgba(255,255,255,.1);
-            border: 1px solid rgba(255,255,255,.17);
-            border-radius: 12px;
-            color: #fff;
-            flex: 0 0 auto;
-            font-size: .8rem;
-            font-weight: 700;
-            padding: .75rem .95rem;
-            position: relative;
-            z-index: 1;
-        }
         .supervisor-stats {
             display: grid;
             gap: .9rem;
             grid-template-columns: repeat(3, minmax(0, 1fr));
             margin-bottom: 1.35rem;
         }
+        .supervisor-stats { display: none; }
+        .supervisor-page:has([data-role-section="assigned"]:not([hidden])) .supervisor-stats { display: grid; }
+        .supervisor-view-heading { margin: 0 0 1rem; }
+        .supervisor-view-heading h1 { color: #173747; font-size: clamp(1.35rem, 3vw, 1.85rem); font-weight: 760; letter-spacing: -.025em; margin: 0 0 .3rem; }
+        .supervisor-view-heading p { color: #72828b; font-size: .88rem; margin: 0; }
         .supervisor-stat {
             align-items: center;
             background: #fff;
@@ -85,17 +37,6 @@
             gap: .9rem;
             min-width: 0;
             padding: 1rem 1.1rem;
-        }
-        .supervisor-stat-icon {
-            align-items: center;
-            background: #edf2f5;
-            border-radius: 12px;
-            color: #23495b;
-            display: flex;
-            flex: 0 0 42px;
-            font-size: 1rem;
-            height: 42px;
-            justify-content: center;
         }
         .supervisor-stat-label { color: #72828b; display: block; font-size: .76rem; font-weight: 650; }
         .supervisor-stat-value { color: #173747; display: block; font-size: 1.35rem; font-weight: 780; line-height: 1.2; }
@@ -197,6 +138,8 @@
             border: 1px solid #e2eaed;
             border-radius: 13px;
             overflow: auto;
+            overscroll-behavior-x: contain;
+            -webkit-overflow-scrolling: touch;
         }
         .supervisor-table { color: #294653; margin: 0; vertical-align: middle; }
         .supervisor-table thead th {
@@ -258,12 +201,9 @@
         .supervisor-action-secondary:hover { background: #edf2f5; color: #173747; }
         @media (max-width: 767.98px) {
             .supervisor-page { display: block; }
-            .supervisor-dashboard-content { padding: 1rem; }
-            .supervisor-hero { align-items: start; border-radius: 18px; flex-direction: column; }
-            .supervisor-cycle { align-self: flex-start; }
+            .supervisor-dashboard-content { padding: 4.75rem 1rem 1rem; }
             .supervisor-stats { gap: .55rem; grid-template-columns: 1fr; }
             .supervisor-stat { padding: .8rem .9rem; }
-            .supervisor-stat-icon { flex-basis: 38px; height: 38px; }
             .supervisor-tabs { padding-left: .55rem; padding-right: .55rem; }
             .supervisor-tabs .nav-link { font-size: .8rem; padding: .6rem .7rem; }
             .supervisor-tab-content { padding: 1rem; }
@@ -272,6 +212,54 @@
             .supervisor-table { min-width: 620px; }
             .supervisor-own-actions { flex-direction: column; }
             .supervisor-own-actions > * { width: 100%; }
+            .supervisor-page .role-sidebar-nav {
+                background: linear-gradient(110deg, #00ad78 0%, #009e83 100%);
+                max-height: 100dvh;
+                overscroll-behavior: contain;
+                padding: calc(1rem + env(safe-area-inset-top)) 1rem calc(1rem + env(safe-area-inset-bottom));
+            }
+            .supervisor-page .role-sidebar-toggle { background: linear-gradient(110deg, #00ad78 0%, #009e83 100%); }
+            .supervisor-page .role-sidebar-drawer-brand { margin-bottom: .85rem; }
+            .supervisor-page .role-sidebar-drawer-copy small { color: #b7c8d0; display: block; }
+            .supervisor-page .role-sidebar-link {
+                border-radius: 12px;
+                color: rgba(255,255,255,.92);
+                gap: .75rem;
+                min-height: 54px;
+                padding: .6rem .7rem;
+                width: 100%;
+            }
+            .supervisor-page .role-sidebar-link:hover,
+            .supervisor-page .role-sidebar-link.active { background: rgba(255,255,255,.16); color: #fff; }
+            .supervisor-page .role-sidebar-count { background: rgba(255,255,255,.17); border-color: rgba(255,255,255,.24); color: #fff; }
+            .supervisor-page .role-sidebar-link-note { display: none; }
+            .supervisor-page .role-sidebar-link:focus-visible,
+            .supervisor-page .role-sidebar-close:focus-visible,
+            .supervisor-page .role-sidebar-toggle:focus-visible { outline: 3px solid #8ee7c3; outline-offset: 2px; }
+            .supervisor-page .role-sidebar-link.active { box-shadow: inset 3px 0 #8ee7c3; }
+            .supervisor-page .role-sidebar-toggle { flex: 0 0 auto; min-height: 42px; min-width: 0; padding: .5rem .75rem; width: auto; }
+            .supervisor-page .role-sidebar-close { flex-basis: auto; min-width: 0; padding: .45rem .6rem; width: auto; }
+        }
+        @media (min-width: 768px) {
+            /* Keep the shared dashboard palette; change only the navigation shape. */
+            .supervisor-page .role-sidebar-nav { gap: 0; }
+            .supervisor-page .role-sidebar-link {
+                clip-path: polygon(0 0, calc(100% - 13px) 0, 100% 50%, calc(100% - 13px) 100%, 0 100%, 13px 50%);
+                flex: 1 0 148px;
+                justify-content: center;
+                margin-left: -10px;
+                min-height: 46px;
+                padding-left: 1.15rem;
+                padding-right: 1.15rem;
+                text-align: center;
+                transition: clip-path .18s ease, filter .18s ease;
+            }
+            .supervisor-page .role-sidebar-nav > .role-sidebar-link:nth-child(2) {
+                clip-path: polygon(0 0, calc(100% - 13px) 0, 100% 50%, calc(100% - 13px) 100%, 0 100%);
+                margin-left: 0;
+            }
+            .supervisor-page .role-sidebar-link:hover { filter: brightness(1.04); transform: none; }
+            .supervisor-page .role-sidebar-link.active { box-shadow: none; position: relative; z-index: 1; }
         }
         @media (prefers-reduced-motion: reduce) {
             .supervisor-page *,
@@ -282,7 +270,7 @@
 
     <aside class="role-dashboard-sidebar" aria-label="Supervisor dashboard navigation" data-default-section="assigned">
         <button class="role-sidebar-toggle" type="button" aria-controls="supervisor-dashboard-navigation" aria-expanded="false" aria-label="Open menu">
-            <span aria-hidden="true">☰</span>
+            Menu
         </button>
         <div class="role-sidebar-brand">
             <img class="role-sidebar-mark" src="{% static 'images/mathias-catholic-hospital-logo.png' %}" alt="Mathias Catholic Hospital">
@@ -293,11 +281,10 @@
         <nav class="role-sidebar-nav" id="supervisor-dashboard-navigation">
             <div class="role-sidebar-drawer-brand">
                 <img class="role-sidebar-mark" src="{% static 'images/mathias-catholic-hospital-logo.png' %}" alt="">
-                <span class="role-sidebar-drawer-copy">Mathias Catholic Hospital<small>SUPERVISOR WORKSPACE</small></span>
-                <button class="role-sidebar-close" type="button" aria-label="Close menu" data-sidebar-close>×</button>
+                <span class="role-sidebar-drawer-copy">Mathias Catholic Hospital<small>Supervisor workspace</small></span>
+                <button class="role-sidebar-close" type="button" aria-label="Close menu" data-sidebar-close>Close</button>
             </div>
             <button class="role-sidebar-link active" type="button" data-role-section-target="assigned">
-                <span class="role-sidebar-icon" aria-hidden="true">◉</span>
                 <span class="role-sidebar-link-copy">
                     <span class="role-sidebar-link-title">Assigned appraisals</span>
                     <span class="role-sidebar-link-note">All team appraisal records</span>
@@ -305,7 +292,6 @@
                 <span class="role-sidebar-count">{{ assigned_appraisals.count }}</span>
             </button>
             <button class="role-sidebar-link" type="button" data-role-section-target="pending">
-                <span class="role-sidebar-icon" aria-hidden="true">◷</span>
                 <span class="role-sidebar-link-copy">
                     <span class="role-sidebar-link-title">Pending review</span>
                     <span class="role-sidebar-link-note">Appraisals needing your review</span>
@@ -314,7 +300,6 @@
             </button>
             {% if request.user.profile.role == 'Supervisor' %}
                 <button class="role-sidebar-link" type="button" data-role-section-target="create">
-                    <span class="role-sidebar-icon" aria-hidden="true">＋</span>
                     <span class="role-sidebar-link-copy">
                         <span class="role-sidebar-link-title">Create appraisals</span>
                         <span class="role-sidebar-link-note">Start an appraisal cycle</span>
@@ -323,7 +308,6 @@
             {% endif %}
             {% if has_supervisor %}
                 <button class="role-sidebar-link" type="button" data-role-section-target="own">
-                    <span class="role-sidebar-icon" aria-hidden="true">▤</span>
                     <span class="role-sidebar-link-copy">
                         <span class="role-sidebar-link-title">My own appraisal</span>
                         <span class="role-sidebar-link-note">Your employee appraisal</span>
@@ -331,12 +315,14 @@
                 </button>
             {% endif %}
             <button class="role-sidebar-link" type="button" data-role-section-target="previous">
-                <span class="role-sidebar-icon" aria-hidden="true">▤</span>
                 <span class="role-sidebar-link-copy">
                     <span class="role-sidebar-link-title">Previous appraisals</span>
                     <span class="role-sidebar-link-note">Upload and view your past records</span>
                 </span>
                 <span class="role-sidebar-count">{{ previous_appraisals|length }}</span>
+            </button>
+            <button class="role-sidebar-link" type="button" data-role-section-target="support">
+                <span class="role-sidebar-link-copy"><span class="role-sidebar-link-title">Support</span><span class="role-sidebar-link-note">Help and FAQs</span></span>
             </button>
         </nav>
         <div class="role-sidebar-label">Signed in as</div>
@@ -344,32 +330,20 @@
     </aside>
 
     <main class="role-dashboard-content supervisor-dashboard-content">
-    <header class="supervisor-hero">
-        <div class="supervisor-hero-content">
-            <div class="supervisor-eyebrow">Supervisor workspace</div>
-            <h1>Welcome, {{ request.user.first_name|default:request.user.username }}</h1>
-            <p>Manage your team’s appraisal progress and keep reviews moving through the cycle.</p>
-        </div>
-        <div class="supervisor-cycle">Active cycle · {{ cycle.year }}</div>
-    </header>
-
     <section class="supervisor-stats" aria-label="Team appraisal summary">
         <div class="supervisor-stat">
-            <span class="supervisor-stat-icon" aria-hidden="true">◉</span>
             <span>
                 <span class="supervisor-stat-label">Assigned employees</span>
                 <span class="supervisor-stat-value">{{ assigned_employees.count }}</span>
             </span>
         </div>
         <div class="supervisor-stat">
-            <span class="supervisor-stat-icon" aria-hidden="true">▤</span>
             <span>
                 <span class="supervisor-stat-label">Assigned appraisals</span>
                 <span class="supervisor-stat-value">{{ assigned_appraisals.count }}</span>
             </span>
         </div>
         <div class="supervisor-stat">
-            <span class="supervisor-stat-icon" aria-hidden="true">◷</span>
             <span>
                 <span class="supervisor-stat-label">Awaiting your review</span>
                 <span class="supervisor-stat-value">{{ pending_reviews.count }}</span>
@@ -379,6 +353,10 @@
 
     {% if request.user.profile.role == 'Supervisor' %}
     <section class="supervisor-workspace role-dashboard-section" data-role-section="create" aria-label="Create appraisals">
+        <header class="supervisor-view-heading">
+            <h1>Create Appraisals</h1>
+            <p>Start an appraisal for one employee or your assigned team.</p>
+        </header>
         <div class="supervisor-tab-content">
                     <section class="supervisor-create-panel" aria-labelledby="create-appraisal-heading">
                         <h2 class="supervisor-create-heading" id="create-appraisal-heading">Create employee appraisals</h2>
@@ -537,6 +515,10 @@
         </div>
     </section>
     <section class="supervisor-workspace role-dashboard-section" data-role-section="previous" aria-label="Previous appraisals" hidden>
+        <header class="supervisor-view-heading">
+            <h1>Previous Appraisals</h1>
+            <p>Upload and review appraisals from earlier cycles.</p>
+        </header>
         {% include 'appraisal/_previous_appraisal_uploads.html' %}
     </section>
     {% if has_supervisor %}
@@ -587,6 +569,9 @@
                     </div>
                 </section>
     {% endif %}
-    </main>
+        <section class="role-dashboard-section" data-role-section="support" aria-label="Support and assistance" hidden>
+        {% include 'partials/support_content.html' %}
+    </section>
+</main>
 </div>
 {% endblock %}

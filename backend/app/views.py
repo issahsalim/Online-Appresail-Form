@@ -983,6 +983,11 @@ def _return_request_page_url(appraisal, profile):
 
 
 @login_required
+def support(request):
+    return render(request, 'support.html')
+
+
+@login_required
 def dashboard_router(request):
     """Checks the user's role and redirects them to the correct dashboard."""
     if request.user.is_superuser:
@@ -1138,9 +1143,15 @@ def employee_dashboard(request):
 def upload_previous_appraisal(request):
     if request.method != 'POST':
         return redirect('employee_dashboard')
+    is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
 
     profile = EmployeeProfile.objects.filter(user=request.user).first()
     if profile is None:
+        if is_ajax:
+            return JsonResponse(
+                {'success': False, 'message': 'A staff profile is required to upload an appraisal.'},
+                status=400,
+            )
         messages.error(request, "A staff profile is required to upload an appraisal.")
         return redirect('dashboard_router')
 
@@ -1173,11 +1184,28 @@ def upload_previous_appraisal(request):
         previous_appraisal.save()
         if previous_file_name:
             previous_appraisal.appraisal_file.storage.delete(previous_file_name)
+        if is_ajax:
+            return JsonResponse({
+                'success': True,
+                'message': f"Your {previous_appraisal.appraisal_cycle} appraisal was submitted for review.",
+                'appraisal_cycle': previous_appraisal.appraisal_cycle,
+            })
         messages.success(
             request,
             f"Your {previous_appraisal.appraisal_cycle} appraisal was submitted for review.",
         )
     else:
+        errors = [
+            str(error)
+            for field_errors in form.errors.values()
+            for error in field_errors
+        ]
+        if is_ajax:
+            return JsonResponse({
+                'success': False,
+                'message': errors[0] if errors else 'Check the form and try again.',
+                'errors': errors,
+            }, status=400)
         for field_errors in form.errors.values():
             for error in field_errors:
                 messages.error(request, str(error))
@@ -2659,9 +2687,23 @@ def hr_dashboard(request):
     ]
     reporting_form = SupervisorReportingForm(prefix='reporting')
     hod_assignment_form = HRDepartmentHodAssignmentForm()
+    cycle_form = AppraisalCycleForm()
     reporting_confirmation = None
 
-    if request.method == 'POST':
+    if request.method == 'POST' and request.POST.get('cycle_action') == 'create':
+        cycle_form = AppraisalCycleForm(request.POST)
+        if cycle_form.is_valid():
+            with transaction.atomic():
+                cycle = cycle_form.save(commit=False)
+                if cycle.is_active:
+                    for existing_cycle in AppraisalCycle.objects.exclude(pk=cycle.pk):
+                        if existing_cycle.is_active:
+                            existing_cycle.is_active = False
+                            existing_cycle.save(update_fields=['is_active'])
+                cycle.save()
+            messages.success(request, f"Appraisal cycle {cycle.year} was created successfully.")
+            return redirect(f"{reverse('hr_dashboard')}#cycles")
+    elif request.method == 'POST':
         if request.POST.get('assignment_action') == 'save':
             assignment_form, transfer_confirmation, saved_assignment = (
                 _process_hr_supervisor_assignment(request)
@@ -2817,7 +2859,9 @@ def hr_dashboard(request):
         status='pending_hr'
     ).select_related('employee__user', 'supervisor__user', 'hod__user', 'cycle')
 
-    cycles = AppraisalCycle.objects.order_by('-year')
+    cycles = AppraisalCycle.objects.annotate(
+        appraisal_count=Count('appraisals'),
+    ).order_by('-year')
     departments = Department.objects.order_by('name')
     selected_cycle = request.GET.get('cycle', '').strip()
     available_cycle_years = set(cycles.values_list('year', flat=True))
@@ -2885,6 +2929,7 @@ def hr_dashboard(request):
         ).count(),
         'departments': departments,
         'cycles': cycles,
+        'cycle_form': cycle_form,
         'users': users,
         'role_choices': role_choices,
         'supervisor_assignment_form': (
@@ -3532,7 +3577,7 @@ def set_appraisal_cycle_status(request, cycle_id):
         return redirect('dashboard_router')
     if request.method != 'POST':
         messages.error(request, "Use the cycle controls to change its status.")
-        return redirect('new_app_cycle')
+        return redirect(f"{reverse('hr_dashboard')}#cycles")
 
     cycle = get_object_or_404(AppraisalCycle, pk=cycle_id)
     activate = request.POST.get('is_active') == 'true'
@@ -3549,7 +3594,7 @@ def set_appraisal_cycle_status(request, cycle_id):
         messages.success(request, f"Appraisal cycle {cycle.year} is now active.")
     else:
         messages.success(request, f"Appraisal cycle {cycle.year} is now inactive.")
-    return redirect('new_app_cycle')
+    return redirect(f"{reverse('hr_dashboard')}#cycles")
 
 
 @login_required
@@ -3559,7 +3604,7 @@ def delete_appraisal_cycle(request, cycle_id):
         return redirect('dashboard_router')
     if request.method != 'POST':
         messages.error(request, "Use the cycle controls to delete a cycle.")
-        return redirect('new_app_cycle')
+        return redirect(f"{reverse('hr_dashboard')}#cycles")
 
     cycle = get_object_or_404(AppraisalCycle, pk=cycle_id)
     if cycle.appraisals.exists():
@@ -3568,12 +3613,12 @@ def delete_appraisal_cycle(request, cycle_id):
             f"Cycle {cycle.year} cannot be deleted because it has appraisal records. "
             "Deactivate it instead to preserve those records.",
         )
-        return redirect('new_app_cycle')
+        return redirect(f"{reverse('hr_dashboard')}#cycles")
 
     year = cycle.year
     cycle.delete()
     messages.success(request, f"Appraisal cycle {year} was deleted.")
-    return redirect('new_app_cycle')
+    return redirect(f"{reverse('hr_dashboard')}#cycles")
 
 
 def changer_user_role(request):

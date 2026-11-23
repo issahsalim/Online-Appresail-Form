@@ -1,0 +1,24 @@
+{% load static %}
+<footer class="app-footer" id="site-footer">
+    <div class="container">
+        <div class="app-footer-main">
+            <a class="app-footer-brand" href="{% url 'home' %}" aria-label="Mathias Catholic Hospital Staff Appraisal home">
+                <img src="{% static 'images/mathias-catholic-hospital-logo.png' %}" alt="">
+                <span>
+                    <strong>Mathias Catholic Hospital</strong>
+                    <small>Staff Appraisal System &middot; </small>
+                </span>
+            </a>
+            <p class="app-footer-message">Supporting the people who care for our community.</p>
+            <nav class="app-footer-links" aria-label="Footer navigation">
+                <a href="{% url 'home' %}">Home</a>
+                <a href="{% url 'home' %}#purpose">About the system</a>
+                <a href="{% url 'support' %}">Support</a>
+            </nav>
+        </div>
+        <div class="app-footer-bottom">
+            <span>&copy; {% now "Y" %} Mathias Catholic Hospital, Yeji</span>
+            <a href="{% url 'home' %}">Back to top <span aria-hidden="true">&uarr;</span></a>
+        </div>
+    </div>
+</footer>
