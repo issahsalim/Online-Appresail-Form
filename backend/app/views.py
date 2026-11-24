@@ -4,6 +4,7 @@ import logging
 from datetime import timedelta
 from pathlib import Path
 import secrets
+from urllib.parse import urlencode
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
@@ -559,6 +560,18 @@ def _staff_id_upload_template_response():
     return response
 
 
+def _staff_ids_redirect(request):
+    params = {}
+    query = request.POST.get('q', request.GET.get('q', '')).strip()
+    page = request.POST.get('page', request.GET.get('page', '1'))
+    if query:
+        params['q'] = query
+    if page:
+        params['page'] = page
+    query_string = urlencode(params)
+    return redirect(f"{reverse('manage_staff_ids')}{'?' + query_string if query_string else ''}")
+
+
 @login_required
 def manage_staff_ids(request):
     if not _can_manage_staff_ids(request.user):
@@ -576,7 +589,56 @@ def manage_staff_ids(request):
 
     entry_form = StaffIdEntryForm()
     upload_form = StaffIdUploadForm()
-    if request.method == 'POST' and request.POST.get('action') == 'add':
+    action = request.POST.get('action') if request.method == 'POST' else ''
+    if action == 'update':
+        staff = get_object_or_404(StaffId.objects.select_related('registered_user'), pk=request.POST.get('staff_pk'))
+        edit_form = StaffIdEntryForm(request.POST)
+        if edit_form.is_valid():
+            staff_id = edit_form.cleaned_data['staff_id']
+            email = edit_form.cleaned_data['email']
+            duplicate_staff_id = StaffId.objects.filter(name__iexact=staff_id).exclude(pk=staff.pk).exists()
+            username_matches = User.objects.filter(username__iexact=staff_id)
+            if staff.registered_user_id:
+                username_matches = username_matches.exclude(pk=staff.registered_user_id)
+            duplicate_username = username_matches.exists()
+            if duplicate_staff_id or duplicate_username:
+                messages.error(request, 'That staff ID is already assigned to another staff member or account.')
+            else:
+                with transaction.atomic():
+                    staff.name = staff_id
+                    staff.email = email
+                    staff.save(update_fields=['name', 'email'])
+                    if staff.registered_user_id:
+                        staff.registered_user.username = staff_id
+                        staff.registered_user.email = email
+                        staff.registered_user.save(update_fields=['username', 'email'])
+                messages.success(request, f'Staff record {staff_id} updated.')
+        else:
+            messages.error(request, 'Enter a valid staff ID and work email before saving.')
+        return _staff_ids_redirect(request)
+    elif action == 'delete':
+        staff = get_object_or_404(StaffId.objects.select_related('registered_user'), pk=request.POST.get('staff_pk'))
+        if staff.registered_user_id:
+            messages.error(request, 'This staff ID is linked to an account. Update it or freeze the account instead of deleting it.')
+        else:
+            staff.delete()
+            messages.success(request, 'Staff ID entry deleted.')
+        return _staff_ids_redirect(request)
+    elif action == 'toggle_account':
+        staff = get_object_or_404(StaffId.objects.select_related('registered_user'), pk=request.POST.get('staff_pk'))
+        if not staff.registered_user_id:
+            messages.error(request, 'There is no registered account linked to this staff ID.')
+        else:
+            requested_status = request.POST.get('account_status')
+            if requested_status not in {'freeze', 'activate'}:
+                messages.error(request, 'Choose Freeze or Reactivate to change this account status.')
+            else:
+                staff.registered_user.is_active = requested_status == 'activate'
+                staff.registered_user.save(update_fields=['is_active'])
+                state = 'reactivated' if staff.registered_user.is_active else 'frozen'
+                messages.success(request, f"The account for {staff.name} was {state}.")
+        return _staff_ids_redirect(request)
+    elif action == 'add':
         entry_form = StaffIdEntryForm(request.POST)
         if entry_form.is_valid():
             added, updated = _save_staff_id_rows([(
@@ -585,9 +647,9 @@ def manage_staff_ids(request):
             )])
             if added or updated:
                 messages.success(request, 'Staff ID and work email saved.')
-                return redirect('manage_staff_ids')
+                return _staff_ids_redirect(request)
             entry_form.add_error('staff_id', 'This staff ID already has an account or is already listed.')
-    elif request.method == 'POST' and request.POST.get('action') == 'upload':
+    elif action == 'upload':
         upload_form = StaffIdUploadForm(request.POST, request.FILES)
         if upload_form.is_valid():
             try:
@@ -600,18 +662,34 @@ def manage_staff_ids(request):
                     request,
                     f'Import complete: {added} added, {updated} updated. Already registered IDs were skipped.',
                 )
-                return redirect('manage_staff_ids')
+                return _staff_ids_redirect(request)
 
-    staff_ids = list(staff_queryset[:200])
+    search_query = request.GET.get('q', '').strip()
     staff_total = staff_queryset.count()
     registered_total = staff_queryset.filter(registered_user__isnull=False).count()
+    unregistered_total = staff_total - registered_total
+    if search_query:
+        staff_queryset = staff_queryset.filter(
+            Q(name__icontains=search_query)
+            | Q(email__icontains=search_query)
+            | Q(registered_user__username__icontains=search_query)
+            | Q(registered_user__first_name__icontains=search_query)
+            | Q(registered_user__last_name__icontains=search_query)
+        )
+    paginator = Paginator(staff_queryset, 15)
+    page_obj = paginator.get_page(request.GET.get('page', 1))
     return render(request, 'app/manage_staff_ids.html', {
         'entry_form': entry_form,
         'upload_form': upload_form,
-        'staff_ids': staff_ids,
+        'staff_ids': page_obj.object_list,
+        'page_obj': page_obj,
+        'page_range': paginator.get_elided_page_range(page_obj.number),
+        'page_ellipsis': paginator.ELLIPSIS,
+        'search_query': search_query,
+        'filtered_total': paginator.count,
         'staff_total': staff_total,
         'registered_total': registered_total,
-        'unregistered_total': staff_total - registered_total,
+        'unregistered_total': unregistered_total,
     })
 
 

@@ -26,6 +26,8 @@
             <form method="post" class="staff-form">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="add">
+                <input type="hidden" name="q" value="{{ search_query }}">
+                <input type="hidden" name="page" value="{{ page_obj.number }}">
                 {% for field in entry_form %}
                     <div class="staff-field">
                         <label for="{{ field.id_for_label }}">{{ field.label }}</label>
@@ -47,6 +49,8 @@
             <form method="post" enctype="multipart/form-data" class="staff-form">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="upload">
+                <input type="hidden" name="q" value="{{ search_query }}">
+                <input type="hidden" name="page" value="{{ page_obj.number }}">
                 {% for field in upload_form %}
                     <div class="staff-field">
                         <label for="{{ field.id_for_label }}">{{ field.label }}</label>
@@ -68,33 +72,95 @@
             <div>
                 <span class="staff-id-eyebrow">Approved list</span>
                 <h2 id="staff-directory-title">Staff ID directory</h2>
-                <p>Showing {{ staff_ids|length }} of {{ staff_total }} staff IDs</p>
+                <p>
+                    {% if filtered_total %}Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ filtered_total }}{% else %}No matching staff IDs{% endif %}
+                    {% if search_query %} for “{{ search_query }}”{% else %} staff IDs{% endif %}
+                </p>
             </div>
-            <div class="staff-directory-tools">
-                <label class="staff-search"><i class="bi bi-search" aria-hidden="true"></i><input id="staff-id-search" type="search" placeholder="Search staff IDs or emails" aria-label="Search staff IDs or emails" autocomplete="off"></label>
+            <form method="get" action="{% url 'manage_staff_ids' %}" class="staff-directory-tools">
+                <label class="staff-search"><i class="bi bi-search" aria-hidden="true"></i><input id="staff-id-search" name="q" type="search" value="{{ search_query }}" placeholder="Search staff IDs or emails" aria-label="Search staff IDs or emails" autocomplete="off"></label>
+                <button class="staff-action staff-action-secondary" type="submit">Search</button>
+                {% if search_query %}<a class="staff-clear-search" href="{% url 'manage_staff_ids' %}">Clear</a>{% endif %}
                 <a class="staff-action staff-action-primary" href="?download=all"><i class="bi bi-download" aria-hidden="true"></i> Export CSV</a>
-            </div>
+            </form>
         </header>
         <div class="staff-table-scroll">
-            <table class="staff-table">
-                <thead><tr><th scope="col">Staff ID</th><th scope="col">Work email</th><th scope="col">Account</th><th class="staff-download-column" scope="col">Download</th></tr></thead>
+            <table class="staff-table table-striped">
+                <thead><tr><th class="staff-number-column" scope="col">No.</th><th scope="col">Staff ID</th><th scope="col">Work email</th><th scope="col">Account</th><th class="staff-download-column" scope="col">Download</th><th class="staff-actions-column" scope="col">Actions</th></tr></thead>
                 <tbody>
                     {% for staff in staff_ids %}
-                        <tr data-staff-row>
+                        <tr>
+                            <td class="staff-number-column">{{ page_obj.start_index|add:forloop.counter0 }}</td>
                             <td><strong>{{ staff.name }}</strong></td>
                             <td>{{ staff.email|default:'Email needed' }}</td>
-                            <td><span class="staff-status{% if staff.registered_user_id %} is-registered{% endif %}"><i class="bi {% if staff.registered_user_id %}bi-check-circle-fill{% else %}bi-clock{% endif %}" aria-hidden="true"></i>{% if staff.registered_user_id %}Registered{% else %}Not registered{% endif %}</span></td>
+                            <td>
+                                {% if staff.registered_user_id %}
+                                    <span class="staff-status{% if not staff.registered_user.is_active %} is-frozen{% else %} is-registered{% endif %}"><i class="bi {% if staff.registered_user.is_active %}bi-check-circle-fill{% else %}bi-snow{% endif %}" aria-hidden="true"></i>{% if staff.registered_user.is_active %}Active{% else %}Frozen{% endif %}</span>
+                                {% else %}
+                                    <span class="staff-status"><i class="bi bi-clock" aria-hidden="true"></i>Not registered</span>
+                                {% endif %}
+                            </td>
                             <td class="staff-download-column"><a class="staff-row-download" href="?download_id={{ staff.pk }}" aria-label="Download CSV for staff ID {{ staff.name }}"><i class="bi bi-download" aria-hidden="true"></i><span>Download</span></a></td>
+                            <td class="staff-actions-column">
+                                <div class="staff-row-actions">
+                                    <button class="staff-icon-action" type="button" data-bs-toggle="modal" data-bs-target="#editStaffModal" data-staff-pk="{{ staff.pk }}" data-staff-name="{{ staff.name }}" data-staff-email="{{ staff.email }}" aria-label="Edit {{ staff.name }}" title="Edit entry"><i class="bi bi-pencil-square" aria-hidden="true"></i></button>
+                                    {% if staff.registered_user_id %}
+                                        <form method="post" class="staff-inline-form">
+                                            {% csrf_token %}<input type="hidden" name="action" value="toggle_account"><input type="hidden" name="staff_pk" value="{{ staff.pk }}"><input type="hidden" name="q" value="{{ search_query }}"><input type="hidden" name="page" value="{{ page_obj.number }}">
+                                            <button class="staff-icon-action staff-account-action{% if staff.registered_user.is_active %} is-warning{% endif %}" type="submit" name="account_status" value="{% if staff.registered_user.is_active %}freeze{% else %}activate{% endif %}" data-confirm="{% if staff.registered_user.is_active %}Freeze this account? The user will not be able to sign in until HR reactivates it.{% else %}Reactivate this account and allow the user to sign in again?{% endif %}" data-confirm-title="{% if staff.registered_user.is_active %}Freeze account{% else %}Reactivate account{% endif %}" data-confirm-label="{% if staff.registered_user.is_active %}Freeze account{% else %}Reactivate{% endif %}" data-confirm-tone="{% if staff.registered_user.is_active %}danger{% else %}primary{% endif %}" aria-label="{% if staff.registered_user.is_active %}Freeze{% else %}Reactivate{% endif %} {{ staff.name }} account" title="{% if staff.registered_user.is_active %}Freeze account{% else %}Reactivate account{% endif %}"><i class="bi {% if staff.registered_user.is_active %}bi-person-lock{% else %}bi-person-check{% endif %}" aria-hidden="true"></i><span>{% if staff.registered_user.is_active %}Freeze{% else %}Reactivate{% endif %}</span></button>
+                                        </form>
+                                    {% endif %}
+                                    <form method="post" class="staff-inline-form">
+                                        {% csrf_token %}<input type="hidden" name="action" value="delete"><input type="hidden" name="staff_pk" value="{{ staff.pk }}"><input type="hidden" name="q" value="{{ search_query }}"><input type="hidden" name="page" value="{{ page_obj.number }}">
+                                        <button class="staff-icon-action is-danger" type="submit" {% if staff.registered_user_id %}disabled title="Update or freeze linked accounts instead" aria-label="Cannot delete linked account for {{ staff.name }}"{% else %}data-confirm="Delete this staff ID entry? This cannot be undone." data-confirm-title="Delete staff ID" data-confirm-label="Delete entry" data-confirm-tone="danger" aria-label="Delete {{ staff.name }}" title="Delete entry"{% endif %}><i class="bi bi-trash3" aria-hidden="true"></i></button>
+                                    </form>
+                                </div>
+                            </td>
                         </tr>
                     {% empty %}
-                        <tr><td class="staff-empty" colspan="4">No staff IDs have been added yet.</td></tr>
+                        <tr><td class="staff-empty" colspan="6">{% if search_query %}No staff IDs match your search.{% else %}No staff IDs have been added yet.{% endif %}</td></tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
         <p class="staff-search-status" id="staff-search-status" role="status" aria-live="polite"></p>
+        {% if page_obj.paginator.num_pages > 1 %}
+            <nav class="staff-pagination" aria-label="Staff directory pages">
+                <span class="staff-pagination-count">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                <div class="staff-pagination-pages">
+                    {% if page_obj.has_previous %}<a class="staff-page-link" href="?q={{ search_query|urlencode }}&amp;page={{ page_obj.previous_page_number }}" aria-label="Previous page"><i class="bi bi-chevron-left" aria-hidden="true"></i><span>Previous</span></a>{% endif %}
+                    {% for page_number in page_range %}
+                        {% if page_number == page_ellipsis %}<span class="staff-page-ellipsis" aria-hidden="true">{{ page_ellipsis }}</span>
+                        {% elif page_number == page_obj.number %}<span class="staff-page-link is-current" aria-current="page">{{ page_number }}</span>
+                        {% else %}<a class="staff-page-link" href="?q={{ search_query|urlencode }}&amp;page={{ page_number }}">{{ page_number }}</a>{% endif %}
+                    {% endfor %}
+                    {% if page_obj.has_next %}<a class="staff-page-link" href="?q={{ search_query|urlencode }}&amp;page={{ page_obj.next_page_number }}" aria-label="Next page"><span>Next</span><i class="bi bi-chevron-right" aria-hidden="true"></i></a>{% endif %}
+                </div>
+            </nav>
+        {% endif %}
     </section>
 </main>
+
+<div class="modal fade" id="editStaffModal" tabindex="-1" aria-labelledby="editStaffModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content staff-edit-modal">
+            <form method="post" id="edit-staff-form">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="update">
+                <input type="hidden" name="staff_pk" id="edit-staff-pk">
+                <input type="hidden" name="q" value="{{ search_query }}">
+                <input type="hidden" name="page" value="{{ page_obj.number }}">
+                <div class="modal-header"><div><span class="staff-id-eyebrow">Staff directory</span><h2 class="modal-title" id="editStaffModalTitle">Edit staff record</h2></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+                <div class="modal-body">
+                    <div class="staff-field"><label for="edit-staff-name">Staff ID</label><input class="form-control" id="edit-staff-name" name="staff_id" maxlength="100" required></div>
+                    <div class="staff-field mt-3"><label for="edit-staff-email">Work email</label><input class="form-control" id="edit-staff-email" name="email" type="email" required></div>
+                    <p class="staff-edit-note"><i class="bi bi-info-circle" aria-hidden="true"></i> For registered accounts, the username and email will be updated with this record.</p>
+                </div>
+                <div class="modal-footer"><button type="button" class="staff-modal-cancel" data-bs-dismiss="modal">Cancel</button><button class="staff-action staff-action-primary" type="submit"><i class="bi bi-check2" aria-hidden="true"></i> Save changes</button></div>
+            </form>
+        </div>
+    </div>
+</div>
 
 <style>
     .staff-id-page { color: #173747; margin: 0 auto; max-width: 1440px; padding: .5rem 0 2rem; }
@@ -141,24 +207,57 @@
     .staff-search { align-items: center; background: #f8faf8; border: 1px solid #e3eae5; border-radius: 7px; color: #85948b; display: flex; gap: .45rem; min-height: 38px; padding: 0 .65rem; }
     .staff-search input { background: transparent; border: 0; color: #36584c; font-size: .72rem; min-width: 190px; outline: 0; }
     .staff-table-scroll { max-width: 100%; overflow-x: auto; }
-    .staff-table { border-collapse: collapse; margin: 0; min-width: 620px; width: 100%; }
+    .staff-table { border-collapse: collapse; margin: 0; min-width: 930px; width: 100%; }
     .staff-table th { background: #f7f9f7; border-bottom: 1px solid #e8eee9; color: #6d7e74; font-size: .65rem; font-weight: 750; letter-spacing: .055em; padding: .65rem .9rem; text-align: left; text-transform: uppercase; white-space: nowrap; }
     .staff-table td { border-bottom: 1px solid #edf1ee; color: #52675c; font-size: .75rem; padding: .68rem .9rem; vertical-align: middle; }
     .staff-table tbody tr:last-child td { border-bottom: 0; }
     .staff-table tbody tr:hover { background: #fbfdfb; }
     .staff-table td strong { color: #315447; font-weight: 700; }
+    .staff-number-column { color: #84928a !important; font-variant-numeric: tabular-nums; width: 58px; }
     .staff-status { align-items: center; background: #f1f3ee; border-radius: 999px; color: #78826f; display: inline-flex; font-size: .66rem; gap: .35rem; padding: .27rem .5rem; white-space: nowrap; }
     .staff-status.is-registered { background: #e6f4e9; color: #28764d; }
+    .staff-status.is-frozen { background: #fff1e9; color: #a34a25; }
+    .staff-account-name { color: #84948a; display: block; font-size: .64rem; margin: .2rem 0 0 .15rem; }
     .staff-download-column { text-align: right !important; }
+    .staff-actions-column { text-align: right !important; white-space: nowrap; }
+    .staff-row-actions { align-items: center; display: inline-flex; gap: .35rem; }
+    .staff-inline-form { display: inline-flex; margin: 0; }
+    .staff-icon-action { align-items: center; background: #edf5ef; border: 1px solid #dfebe1; border-radius: 7px; color: #307653; display: inline-flex; height: 32px; justify-content: center; padding: 0; transition: background .16s ease, color .16s ease, transform .16s ease; width: 34px; }
+    .staff-account-action { gap: .35rem; padding: 0 .55rem; width: auto; }
+    .staff-account-action span { font-size: .66rem; font-weight: 700; }
+    .staff-icon-action:hover:not(:disabled) { background: #dcefe2; color: #145c3d; transform: translateY(-1px); }
+    .staff-icon-action.is-warning { background: #fff5e9; border-color: #f3e3c9; color: #a96c19; }
+    .staff-icon-action.is-danger { background: #fff1ee; border-color: #f2d9d3; color: #a84d3e; }
+    .staff-icon-action.is-danger:hover:not(:disabled) { background: #fce4de; color: #87392c; }
+    .staff-icon-action:disabled { cursor: not-allowed; opacity: .4; }
     .staff-empty { color: #87948d !important; padding: 2rem !important; text-align: center; }
     .staff-search-status { color: #7f8d85; font-size: .67rem; margin: 0; min-height: 0; padding: 0 1rem; }
     .staff-search-status:not(:empty) { padding-bottom: .7rem; }
+    .staff-clear-search { align-items: center; color: #468269; display: inline-flex; font-size: .72rem; font-weight: 700; padding: .4rem; text-decoration: none; }
+    .staff-clear-search:hover { color: #145c3d; text-decoration: underline; }
+    .staff-pagination { align-items: center; border-top: 1px solid #e9eeea; display: flex; flex-wrap: wrap; gap: .7rem 1rem; justify-content: space-between; padding: .8rem 1rem; }
+    .staff-pagination-count { color: #7e8d84; font-size: .69rem; }
+    .staff-pagination-pages { align-items: center; display: flex; flex-wrap: wrap; gap: .25rem; }
+    .staff-page-link { align-items: center; background: #fff; border: 1px solid #e1e9e2; border-radius: 6px; color: #42745c; display: inline-flex; font-size: .7rem; gap: .3rem; justify-content: center; min-height: 31px; min-width: 31px; padding: .3rem .5rem; text-decoration: none; }
+    .staff-page-link:hover { background: #f0f7f2; border-color: #c7ddcc; color: #145c3d; }
+    .staff-page-link.is-current { background: #16845d; border-color: #16845d; color: #fff; font-weight: 750; }
+    .staff-page-ellipsis { color: #7d8a81; padding: 0 .2rem; }
+    .staff-edit-modal { border: 1px solid #e2ece4; border-radius: 14px; box-shadow: 0 22px 60px rgba(24,65,45,.18); }
+    .staff-edit-modal .modal-header { align-items: flex-start; border-bottom-color: #e9efea; padding: 1rem 1.2rem; }
+    .staff-edit-modal .modal-title { color: #23483d; font-size: 1.1rem; font-weight: 750; }
+    .staff-edit-modal .modal-body { padding: 1.1rem 1.2rem; }
+    .staff-edit-modal .modal-footer { border-top-color: #e9efea; padding: .85rem 1.2rem; }
+    .staff-edit-note { align-items: flex-start; color: #74847a; display: flex; font-size: .69rem; gap: .45rem; line-height: 1.5; margin: .9rem 0 0; }
+    .staff-edit-note i { color: #43896a; margin-top: .1rem; }
+    .staff-modal-cancel { background: #fff; border: 1px solid #dce6dd; border-radius: 7px; color: #52675c; font-size: .74rem; font-weight: 700; min-height: 38px; padding: .5rem .8rem; }
+    .staff-modal-cancel:hover { background: #f5f8f5; }
     @media (max-width: 767.98px) {
         .staff-id-forms { grid-template-columns: 1fr; }
         .staff-directory-header { align-items: stretch; flex-direction: column; }
         .staff-directory-tools { width: 100%; }
         .staff-search { flex: 1 1 auto; min-width: 0; }
         .staff-search input { min-width: 0; width: 100%; }
+        .staff-pagination { align-items: flex-start; flex-direction: column; }
     }
     @media (max-width: 420px) {
         .staff-id-summary { grid-template-columns: 1fr; }
@@ -169,19 +268,14 @@
 
 <script>
     (() => {
-        const search = document.getElementById('staff-id-search');
-        const rows = [...document.querySelectorAll('[data-staff-row]')];
-        const status = document.getElementById('staff-search-status');
-        if (!search || !rows.length) return;
-        search.addEventListener('input', () => {
-            const query = search.value.trim().toLocaleLowerCase();
-            let visible = 0;
-            rows.forEach((row) => {
-                const matches = !query || row.textContent.toLocaleLowerCase().includes(query);
-                row.hidden = !matches;
-                if (matches) visible += 1;
-            });
-            status.textContent = query ? `Showing ${visible} matching staff ID${visible === 1 ? '' : 's'}.` : '';
+        const modal = document.getElementById('editStaffModal');
+        if (!modal) return;
+        modal.addEventListener('show.bs.modal', (event) => {
+            const trigger = event.relatedTarget;
+            if (!trigger) return;
+            document.getElementById('edit-staff-pk').value = trigger.dataset.staffPk || '';
+            document.getElementById('edit-staff-name').value = trigger.dataset.staffName || '';
+            document.getElementById('edit-staff-email').value = trigger.dataset.staffEmail || '';
         });
     })();
 </script>
