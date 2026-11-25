@@ -1139,24 +1139,32 @@
             padding: clamp(1.25rem, 2.5vw, 2rem);
         }
         @media (max-width: 767.98px) {
-            .employee-progress-stages{display:block;overflow-x:auto;padding:.25rem 0 .4rem;}
+            .employee-progress-stages { display: block; overflow-x: auto; padding: .25rem 0 .4rem; }
             .employee-history-card .employee-workspace-heading { align-items: flex-start; flex-direction: column; }
             .employee-history-heading-copy { align-items: flex-start; }
             .employee-page .previous-appraisal-heading { align-items: flex-start; }
             .employee-page .previous-appraisal-form { grid-template-columns: 1fr; }
             .employee-page .previous-appraisal-form .previous-appraisal-button { width: 100%; }
-            .employee-page .role-dashboard-sidebar { padding: .1rem .45rem; }
-            .employee-page .role-sidebar-nav { gap: .1rem; }
+            .employee-page .role-dashboard-sidebar { padding: .25rem .5rem; }
+            .employee-page .role-sidebar-nav {
+                gap: .2rem;
+                justify-content: space-between;
+                scrollbar-width: thin;
+            }
             .employee-page .role-sidebar-link {
                 flex: 1 1 0;
-                min-height: 38px;
-                padding: .3rem .45rem;
+                min-height: 42px;
+                min-width: max-content;
+                padding: .35rem .5rem;
                 justify-content: center;
             }
             .employee-page .role-sidebar-link-title { font-size: .76rem; }
             .employee-page { display: block; }
-            .employee-dashboard-content { padding: 1rem; }
+            .employee-page > .role-dashboard-content { padding: 1rem .75rem; }
+            .employee-dashboard-content { min-width: 0; }
             .employee-hero { align-items: flex-start; border-radius: 18px; flex-direction: column; }
+            .employee-hero h1 { overflow-wrap: anywhere; }
+            .employee-hero p { font-size: .92rem; line-height: 1.55; }
             .employee-cycle { align-self: flex-start; }
             .employee-workspace-heading { flex-direction: column; }
             .employee-progress { padding: .85rem; }
@@ -1180,10 +1188,15 @@
             .employee-application-meta { align-self: stretch; }
             .employee-application-card .employee-actions { flex-direction: column; }
             .employee-table th, .employee-table td { padding: .65rem .75rem; font-size: .78rem; }
+            .employee-history-card .employee-table { min-width: 680px; }
+            .employee-no-cycle { padding: 1.75rem .9rem; }
         }
         @media (max-width: 360px) {
-            .employee-page .role-dashboard-sidebar { padding-inline: .25rem; }
-            .employee-page .role-sidebar-link { padding-inline: .25rem; }
+            .employee-page .role-dashboard-sidebar { padding-inline: .35rem; }
+            .employee-page .role-sidebar-link { padding-inline: .4rem; }
+            .employee-page > .role-dashboard-content { padding-inline: .6rem; }
+            .employee-body { padding: .85rem; }
+            .employee-application-title-row { align-items: flex-start; flex-direction: column; }
         }
         @media (prefers-reduced-motion: reduce) {
             .employee-page *,
@@ -1268,8 +1281,8 @@
             <article class="employee-appraisal-stat">
                 <span class="employee-appraisal-stat-icon" aria-hidden="true"><i class="bi bi-check2-circle"></i></span>
                 <div>
-                    <span class="employee-appraisal-stat-label">Submitted</span>
-                    <strong class="employee-appraisal-stat-value">{{ submitted_appraisal_count }}</strong>
+                    <span class="employee-appraisal-stat-label">Completed</span>
+                    <strong class="employee-appraisal-stat-value">{{ completed_appraisal_count }}</strong>
                     <span class="employee-appraisal-stat-note">Approved by HR</span>
                 </div>
             </article>
@@ -1426,7 +1439,7 @@
             {% include 'appraisal/_previous_appraisal_uploads.html' %}
             <div class="employee-history-note" role="note">
                 <i class="bi bi-info-circle-fill" aria-hidden="true"></i>
-                <span><strong>Note:</strong> Completed appraisals will appear here after the review cycle is approved. Older appraisal documents can be added using the upload form above.</span>
+                <span><strong>Note:</strong> Completed appraisals appear here after HR finishes the review. Older appraisal documents can be added using the upload form above.</span>
             </div>
             {% if all_appraisals %}
                 <div class="employee-history-search">
