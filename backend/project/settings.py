@@ -40,7 +40,7 @@ debug_value = os.environ["DEBUG"].lower()
 if debug_value not in {"true", "false"}:
     raise ValueError("DEBUG must be set to 'true' or 'false'")
 # DEBUG = debug_value == "true"
-DEBUG = False  
+DEBUG = False 
 
 
 # ALLOWED_HOSTS = ["localhost","appraisal.mchyeji.org","192.168.1.70","192.168.0.212"]
@@ -120,14 +120,18 @@ WSGI_APPLICATION = 'project.wsgi.application'
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-        
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.environ.get("DB_NAME", "appraisal"),
+        "USER": os.environ.get("DB_USER", "appraisal_user"),
+        "PASSWORD": os.environ.get("DB_PASSWORD", "appraisal_password"),
+        "HOST": os.environ.get("DB_HOST", "localhost"),
+        "PORT": os.environ.get("DB_PORT", "5432"),
     }
 }
 
 # Password validation
 # https://docs.djangoproject.com/en/6.1/ref/settings/#auth-password-validators
+
 
 AUTH_PASSWORD_VALIDATORS = [
     {

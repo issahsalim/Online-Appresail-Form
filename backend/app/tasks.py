@@ -1,4 +1,5 @@
 import logging
+import smtplib
 from datetime import timedelta
 from email.mime.image import MIMEImage
 from pathlib import Path
@@ -8,6 +9,7 @@ from celery import shared_task
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives, send_mail
 from django.contrib.staticfiles import finders
+from django.db import OperationalError
 from django.template.loader import render_to_string
 from django.utils import timezone
 
@@ -17,11 +19,22 @@ from .models import BackupRun, PasswordResetCode, RegistrationCode
 logger = logging.getLogger(__name__)
 
 
-@shared_task(name='app.tasks.send_registration_code', autoretry_for=(Exception,), retry_backoff=True, max_retries=3)
+@shared_task(
+    name='app.tasks.send_registration_code',
+    autoretry_for=(OperationalError, smtplib.SMTPException, ConnectionError, TimeoutError),
+    retry_backoff=True,
+    max_retries=3,
+)
 def send_registration_code(registration_code_id, code):
-    registration_code = RegistrationCode.objects.select_related('staff_id').get(
+    registration_code = RegistrationCode.objects.select_related('staff_id').filter(
         pk=registration_code_id,
-    )
+    ).first()
+    if registration_code is None:
+        logger.warning(
+            'Skipping registration email: registration code %s no longer exists.',
+            registration_code_id,
+        )
+        return 'missing'
     if registration_code.verified_at or registration_code.expires_at <= timezone.now():
         return 'expired'
 
@@ -37,14 +50,20 @@ def send_registration_code(registration_code_id, code):
 
 @shared_task(
     name='app.tasks.send_password_reset_code',
-    autoretry_for=(Exception,),
+    autoretry_for=(OperationalError, smtplib.SMTPException, ConnectionError, TimeoutError),
     retry_backoff=True,
     max_retries=3,
 )
 def send_password_reset_code(password_reset_code_id, code):
     reset_code = PasswordResetCode.objects.select_related(
         'staff_id__registered_user',
-    ).get(pk=password_reset_code_id)
+    ).filter(pk=password_reset_code_id).first()
+    if reset_code is None:
+        logger.warning(
+            'Skipping password reset email: reset code %s no longer exists.',
+            password_reset_code_id,
+        )
+        return 'missing'
     if reset_code.verified_at or reset_code.expires_at <= timezone.now():
         return 'expired'
 
@@ -188,5 +207,3 @@ def _remove_expired_backups(backup_root, current_run_id):
                 logger.exception('Could not remove expired backup %s.', archive_path)
                 continue
         expired_run.delete()
-
-        
