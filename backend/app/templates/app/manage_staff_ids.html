@@ -5,8 +5,8 @@
     <header class="staff-id-header">
         <div>
             <span class="staff-id-eyebrow">Human resources · Staff directory</span>
-            <h1 id="staff-id-title">Staff registration</h1>
-            <p>Add staff IDs and work emails before employees create accounts.</p>
+            <h1 id="staff-id-title">Staff Registration</h1>
+            <p>Add staff IDs and valid email addresses before employees create accounts.</p>
         </div>
         <a class="staff-action staff-action-primary" href="?download=all"><i class="bi bi-download" aria-hidden="true"></i> Download all CSV</a>
     </header>
@@ -21,7 +21,7 @@
         <article class="staff-card">
             <div class="staff-card-heading">
                 <span class="staff-card-icon"><i class="bi bi-person-plus" aria-hidden="true"></i></span>
-                <div><h2>Add one staff member</h2><p>Enter an approved staff ID and work email.</p></div>
+                <div><h2>Add New Staff</h2><p>Enter an approved staff ID and valid email address.</p></div>
             </div>
             <form method="post" class="staff-form">
                 {% csrf_token %}
@@ -36,7 +36,7 @@
                         {% for error in field.errors %}<span class="staff-error" role="alert">{{ error }}</span>{% endfor %}
                     </div>
                 {% endfor %}
-                <button class="staff-action staff-action-primary" type="submit"><i class="bi bi-plus-lg" aria-hidden="true"></i> Add staff ID</button>
+                <button class="staff-action staff-action-primary" type="submit"><i class="bi bi-plus-lg" aria-hidden="true"></i> Add Staff</button>
             </form>
         </article>
 
@@ -60,7 +60,7 @@
                     </div>
                 {% endfor %}
                 <div class="staff-upload-actions">
-                    <button class="staff-action staff-action-secondary" type="submit"><i class="bi bi-upload" aria-hidden="true"></i> Upload list</button>
+                    <button class="staff-action staff-action-secondary" type="submit"><i class="bi bi-upload" aria-hidden="true"></i> Bulk Upload </button>
                     <a class="staff-template-download" href="?download=template"><i class="bi bi-file-earmark-spreadsheet" aria-hidden="true"></i> Download Excel template</a>
                 </div>
             </form>
@@ -153,8 +153,8 @@
                 <div class="modal-header"><div><span class="staff-id-eyebrow">Staff directory</span><h2 class="modal-title" id="editStaffModalTitle">Edit staff record</h2></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
                 <div class="modal-body">
                     <div class="staff-field"><label for="edit-staff-name">Staff ID </label><input class="form-control" id="edit-staff-name" name="staff_id" maxlength="100" required></div>
-                    <div class="staff-field mt-3"><label for="edit-staff-email">email address </label><input class="form-control" id="edit-staff-email" name="email" type="email" required></div>
-                    <p class="staff-edit-note"><i class="bi bi-info-circle" aria-hidden="true"></i> For registered accounts, the username and email will be updated with this record.</p>
+                    <div class="staff-field mt-3"><label for="edit-staff-email">Email address</label><input class="form-control" id="edit-staff-email" name="email" type="email" required></div>
+                    <p class="staff-edit-note"><i class="bi bi-info-circle" aria-hidden="true"></i> For registered accounts, the Staff ID and email will be updated with this record.</p>
                 </div>
                 <div class="modal-footer"><button type="button" class="staff-modal-cancel" data-bs-dismiss="modal">Cancel</button><button class="staff-action staff-action-primary" type="submit"><i class="bi bi-check2" aria-hidden="true"></i> Save changes</button></div>
             </form>

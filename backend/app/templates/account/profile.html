@@ -112,6 +112,7 @@
             position: relative;
             width: 84px;
         }
+        .profile-photo-controls { align-items: center; display: flex; flex: 0 0 84px; flex-direction: column; width: 84px; }
         .profile-photo-form .profile-avatar { height: 100%; width: 100%; }
         .profile-photo-input {
             clip-path: inset(50%);
@@ -164,6 +165,17 @@
             right: 0;
             width: 28px;
             z-index: 1;
+        }
+        .profile-avatar-edit-badge { cursor: pointer; }
+        .profile-avatar-remove-form { margin-top: .25rem; }
+        .profile-avatar-remove {
+            background: transparent;
+            border: 0;
+            color: #963f32;
+            cursor: pointer;
+            font-size: .7rem;
+            padding: .2rem 0;
+            text-decoration: underline;
         }
         .profile-avatar-edit-badge svg { height: 15px; width: 15px; }
         .profile-photo-error { color: #963f32; font-size: .75rem; margin: .5rem 1.5rem; }
@@ -257,26 +269,40 @@
         }
         .profile-close-button:hover { background: #f1f3f5; color: #202b3a; }
         .profile-edit {
-            border-top: 1px solid #e8ebee;
-            padding: 0 1.5rem;
+            background: linear-gradient(180deg, #fbfdfc 0%, #fff 100%);
+            border: 1px solid #e5ece8;
+            border-radius: 12px;
+            margin: 1rem 1.5rem;
+            padding: 0 1.1rem;
         }
         .profile-edit summary {
             align-items: center;
             color: #176f4e;
             cursor: pointer;
             display: flex;
-            font-size: .84rem;
-            font-weight: 700;
+            font-size: .92rem;
+            font-weight: 750;
             justify-content: space-between;
             list-style: none;
-            padding: 1rem 0;
+            min-height: 54px;
+            padding: .85rem 0;
         }
+        .profile-edit summary::before { background: #e6f7ee; border-radius: 8px; color: #07875f; content: "✎"; display: inline-grid; height: 30px; margin-right: .7rem; place-items: center; width: 30px; }
+        .profile-edit summary { justify-content: flex-start; }
+        .profile-edit summary::after { margin-left: auto; }
         .profile-edit summary::-webkit-details-marker { display: none; }
         .profile-edit summary::after { content: "+"; font-size: 1.15rem; font-weight: 500; }
         .profile-edit[open] summary::after { content: "−"; }
-        .profile-form-body { border-top: 1px solid #eef0f2; padding: 1.1rem 0 1.3rem; }
-        .profile-edit-intro { color: #778393; font-size: .78rem; margin: 0 0 1rem; }
+        .profile-form-body { border-top: 1px solid #e9efec; padding: 1.1rem 0 1.3rem; }
+        .profile-edit-intro { color: #778393; font-size: .8rem; margin: 0 0 1.2rem; }
         .profile-field-grid { display: grid; gap: 1rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .profile-field-title { grid-column: 1 / -1; max-width: 220px; }
+        .profile-field-title-specify[hidden] { display: none !important; }
+        .profile-field-title-specify:not([hidden]) { animation: profile-field-reveal .2s ease-out both; }
+        @keyframes profile-field-reveal {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
         .profile-field { min-width: 0; }
         .profile-field label {
             color: #445164;
@@ -342,7 +368,7 @@
             .profile-avatar-edit-badge { height: 24px; width: 24px; }
             .profile-identity h2 { font-size: 1.12rem; }
             .profile-information { gap: 1rem; grid-template-columns: 1fr; padding: 1.1rem; }
-            .profile-edit { padding-inline: 1.1rem; }
+            .profile-edit { margin: .8rem 1.1rem; padding-inline: .85rem; }
             .profile-field-grid { grid-template-columns: 1fr; }
             .profile-form-footer { align-items: stretch; flex-direction: column; }
             .profile-form-actions { flex-direction: column-reverse; }
@@ -361,6 +387,7 @@
         </header>
 
         <div class="profile-identity">
+            <div class="profile-photo-controls">
             <form method="post" enctype="multipart/form-data" class="profile-photo-form">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="upload_profile_photo">
@@ -389,12 +416,20 @@
                     </span>
                     <span class="visually-hidden">Upload or change profile photo</span>
                 </label>
-                <span class="profile-avatar-edit-badge" aria-hidden="true">
+                <button class="profile-avatar-edit-badge" type="button" aria-label="Upload or change profile photo" onclick="document.getElementById('{{ photo_form.profile_photo.id_for_label }}').click()">
                         <svg viewBox="0 0 24 24" fill="none">
                             <path d="m14.5 5.5 4 4M4.5 19.5l4.3-.9L19.2 8.2a2.1 2.1 0 0 0-3-3L5.8 15.6l-1.3 3.9Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
-                </span>
+                </button>
             </form>
+            {% if request.user.profile.profile_photo %}
+                <form method="post" class="profile-avatar-remove-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="remove_profile_photo">
+                    <button class="profile-avatar-remove" type="submit">Remove photo</button>
+                </form>
+            {% endif %}
+            </div>
             <div class="profile-identity-copy">
                 <h2>{{ request.user.get_full_name|default:request.user.username }} </h2>
                 {% if request.user.first_name %}
@@ -415,6 +450,16 @@
         {% endfor %}
 
         <script>
+            const profileTitleSelect = document.querySelector('.profile-title-select');
+            const profileOtherTitleField = document.getElementById('other-title-field');
+            if (profileTitleSelect && profileOtherTitleField) {
+                const updateOtherTitleVisibility = () => {
+                    const showOtherTitle = profileTitleSelect.value === 'other';
+                    profileOtherTitleField.hidden = !showOtherTitle;
+                };
+                profileTitleSelect.addEventListener('change', updateOtherTitleVisibility);
+                updateOtherTitleVisibility();
+            }
             const profilePhotoInput = document.querySelector('.profile-photo-input');
             if (profilePhotoInput) {
                 profilePhotoInput.addEventListener('change', function () {
@@ -505,14 +550,31 @@
                             </svg>
                         </span>
                         <div class="profile-info-copy">
-                            <dt>Email address</dt>
+                            <dt>Email Address</dt>
                             <dd>{{ request.user.email|default:"No email address added" }}</dd>
                         </div>
+                        
                     </div>
-                    
+                   
+                   
+                    <div class="profile-info-item is-contact">
+                        <span class="profile-info-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none">
+                                <path d="M7.2 3.8h2.6l1.3 4.1-1.8 1.5a15 15 0 0 0 5.3 5.3l1.5-1.8 4.1 1.3v2.6a2 2 0 0 1-2.2 2A15.8 15.8 0 0 1 5.2 6a2 2 0 0 1 2-2.2Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </span>
+                        <div class="profile-info-copy">
+                            <dt>Phone Number</dt>
+                            <dd>{{ request.user.profile.mobile_contact|default:"No contact number added" }}</dd>
+                        </div>
+                        
+                    </div>
                 </dl>
             </section>
+            
         </div>
+
+        
         
 
         <details class="profile-edit"{% if form.errors %} open{% endif %}>
@@ -522,7 +584,7 @@
                 <p class="profile-edit-intro">Update the personal information associated with your account.</p>
                 <div class="profile-field-grid">
                     {% for field in form %}
-                        <div class="profile-field">
+                        <div{% if field.name == 'other_title' %} id="other-title-field"{% endif %} class="profile-field{% if field.name == 'title' %} profile-field-title{% elif field.name == 'other_title' %} profile-field-title-specify{% endif %}"{% if field.name == 'other_title' and form.title.value != 'other' %} hidden{% endif %}>
                             {{ field.label_tag }}
                             {{ field }}
                             {% for error in field.errors %}
@@ -538,7 +600,7 @@
                     <p>Your staff ID, Management unit, and role are managed by HR.</p>
                     <div class="profile-form-actions">
                         <a href="{% url 'password_change' %}" class="profile-password-link">Change password</a>
-                        <button type="submit" class="profile-save">Save profile</button>
+                        <button type="submit" class="profile-save">Update profile</button>
                     </div>
                 </div>
             </form>

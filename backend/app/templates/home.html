@@ -21,7 +21,7 @@
             --accent: #bd3f4d;
         }
 
-        html { scroll-behavior: smooth; }
+        html { overflow-x: clip; scroll-behavior: smooth; }
         body {
             color: var(--ink);
             font-family: var(--app-font-family);
@@ -562,6 +562,119 @@
             }
             .reveal { opacity: 1; transform: none; }
         }
+        /* Landing page layout inspired by the supplied reference. */
+        :root { --ink: #183330; --navy: #145b55; --teal: #167b70; --mint: #edf7f0; --accent: #167b70; }
+        main { display: flex; flex-direction: column; }
+        main > .hero { order: 1; }
+        main > .stats-section { order: 2; }
+        main > #purpose { order: 3; }
+        main > #features { order: 4; }
+        main > #process { order: 5; }
+        main > #team { order: 6; }
+        main > #faq { order: 7; }
+        main > #insights { order: 8; }
+        main > .closing { order: 9; }
+        .site-nav { box-shadow: none; }
+        .hero {
+            background: linear-gradient(110deg, #fff 0%, #f7fbf8 58%, #e8f5ef 100%);
+            color: var(--ink);
+            min-height: 600px;
+            padding: 68px 0 88px;
+        }
+        .hero-slides {
+            border-radius: 24px;
+            bottom: 12%;
+            box-shadow: 0 24px 54px rgba(20, 54, 43, .15);
+            left: auto;
+            right: max(calc((100vw - 1140px) / 2), 4%);
+            top: 10%;
+            width: 44%;
+        }
+        .hero-preview-card {
+            background: #fff;
+            border: 1px solid #e3ece7;
+            border-radius: 14px;
+            box-shadow: 0 18px 44px rgba(20,54,43,.18);
+            max-width: 285px;
+            padding: 1rem;
+            position: absolute;
+            right: 16%;
+            top: 38%;
+            width: 26%;
+            z-index: 3;
+        }
+        .hero-preview-top { align-items: center; color: #1d5148; display: flex; font-size: .78rem; font-weight: 750; justify-content: space-between; }
+        .hero-preview-tag { background: #e7f5ec; border-radius: 999px; color: #167b70; font-size: .62rem; padding: .3rem .55rem; }
+        .hero-preview-progress { background: #e9f0ec; border-radius: 999px; height: 7px; margin: .85rem 0 .45rem; overflow: hidden; }
+        .hero-preview-progress span { background: #20a77b; border-radius: inherit; display: block; height: 100%; width: 72%; }
+        .hero-preview-foot { color: #73827c; display: flex; font-size: .65rem; justify-content: space-between; }
+        .hero-slide { background-position: center; }
+        .hero::before { background: linear-gradient(90deg, #fff 0%, #fff 44%, rgba(255,255,255,.74) 57%, transparent 78%); }
+        .hero::after { display: none; }
+        .hero > .container { align-self: center; }
+        .hero > .container > .row { max-width: 54%; }
+        .hero .eyebrow { color: #167b70; }
+        .hero h1 { color: #173b36; font-size: clamp(2.5rem, 4vw, 4.15rem); max-width: 590px; }
+        .hero-copy { color: #61736e; font-size: 1.04rem; }
+        .hero-note { color: #72837e; }
+        .btn-teal { background: #167b70; }
+        .btn-teal:hover { background: #105e56; box-shadow: 0 12px 28px rgba(22,123,112,.2); }
+        .hero-carousel-controls { bottom: 5%; right: 5%; }
+        .hero-slide-picker, .hero-slide-toggle { background: rgba(20,91,85,.65); }
+        .hero-slide-picker[aria-pressed="true"] { background: #167b70; border-color: #167b70; }
+        .stats-section { background: #17665f; border-radius: 14px; margin: 12px auto 0; max-width: 1140px; padding: 30px 24px 22px; width: calc(100% - 48px); }
+        .stats-section .text-center { display: none; }
+        .stats-section .stat-item { border-right: 1px solid rgba(255,255,255,.2); }
+        .stats-section .stat-item:last-child { border-right: 0; }
+        .stat-value { font-size: clamp(2.3rem, 3vw, 3.2rem); }
+        .section-pad { padding: clamp(60px, 7vw, 88px) 0; }
+        .section-pad .row.g-5 { align-items: center; }
+        .feature-section, .role-section { background: #f5faf7; }
+        .feature-card, .role-card { border-radius: 14px; }
+        .insights-section { background: #fff; }
+        .closing { background: #e5f4e6; border-radius: 16px; color: #183330; margin: 24px auto; max-width: 1140px; padding: 46px 24px; width: calc(100% - 48px); }
+        .closing .eyebrow { color: #167b70; }
+        .closing h2 { color: #183330; }
+        .closing p { color: #61736e; }
+        .faq-section { background: #fff; padding: 72px 0; }
+        .faq-list { margin: 0 auto; max-width: 780px; }
+        .faq-list .accordion-item { border: 0; border-bottom: 1px solid #e7eeea; }
+        .faq-list .accordion-button { background: #fff; box-shadow: none; color: #183330; font-size: .98rem; font-weight: 700; padding: 1.15rem .25rem; }
+        .faq-list .accordion-button:not(.collapsed) { color: #167b70; }
+        .faq-list .accordion-body { color: #667873; line-height: 1.75; padding: 0 .25rem 1.25rem; }
+        .feature-section .row.g-4 { margin-left: auto; margin-right: auto; max-width: 1020px; }
+        .feature-section .row.g-4 > article { width: 50%; }
+        .feature-card { background: #fff; border-color: #edf2ee; box-shadow: 0 10px 28px rgba(20,54,43,.055); min-height: 195px; padding: 1.7rem; }
+        .feature-index { background: #eaf6ed; border-radius: 50%; height: 42px; margin-bottom: 1rem; width: 42px; }
+        .role-section { background: #f4f9f6; }
+        .role-section .role-card { background: #fff; border-radius: 12px; }
+        .closing { position: relative; }
+        .closing .btn-teal { margin-top: 1.2rem; }
+        footer { background: #17665f; color: rgba(255,255,255,.8); padding: 2.4rem 0; }
+        footer strong { color: #fff; }
+        @media (max-width: 991.98px) {
+            .hero { min-height: 720px; padding-top: 340px; }
+            .hero-slides { bottom: auto; height: 285px; left: 5%; right: 5%; top: 28px; width: 90%; }
+            .hero::before { background: linear-gradient(180deg, transparent 0, rgba(255,255,255,.05) 36%, #f8fbf9 48%, #f8fbf9 100%); }
+            .hero > .container > .row { max-width: none; }
+            .hero > .container > .row > div { width: 100%; }
+            .hero-preview-card { right: 11%; top: 110px; width: 38%; }
+            .hero-carousel-controls { right: 8%; top: 260px; bottom: auto; }
+            .stats-section { padding: 26px 16px; }
+        }
+        @media (max-width: 575.98px) {
+            .hero { min-height: 680px; padding: 330px 0 48px; }
+            .hero-slides { height: 260px; left: 4%; right: 4%; width: 92%; }
+            .hero-carousel-controls { top: 230px; }
+            .hero-preview-card { display: none; }
+            .feature-section .row.g-4 > article { width: 100%; }
+            .stats-section, .closing { border-radius: 12px; margin-left: auto; margin-right: auto; width: calc(100% - 28px); }
+            .stats-section .stat-item { border-bottom: 1px solid rgba(255,255,255,.2); border-right: 0; padding: 14px 0; }
+            .stats-section .stat-item:last-child { border-bottom: 0; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .faq-list *, .hero-slides * { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+        }
     </style>
 </head>
 <body>
@@ -569,9 +682,10 @@
     <nav class="navbar navbar-expand-lg site-nav">
         <div class="container py-2">
             <a class="brand-mark" href="{% url 'home' %}" aria-label="Mathias Catholic Hospital Yeji appraisal home">
-                <span class="brand-symbol" aria-hidden="true">✚</span>
-                <span>
-Performance Appraisal System<br><small class="fw-normal opacity-75">Staff performance & development</small></span>
+                            <img src="{% static 'images/staff-colla1.webp' %}" alt="Colleagues working together around a laptop" loading="lazy" class="brand-symbol" width="50" height="50">
+
+                <!-- <span class="brand-symbol" aria-hidden="true">✚</span> -->
+                <span style="font-weight: bolder; font-size: larger;">Performance Management  System<br><small class="fw-normal opacity-75">Mathias Cath. Hospital - Staff Appraisal</small></span>
             </a>
             <button class="navbar-toggler border-0 text-white" type="button" data-bs-toggle="collapse" data-bs-target="#homeNav" aria-controls="homeNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
@@ -582,7 +696,7 @@ Performance Appraisal System<br><small class="fw-normal opacity-75">Staff perfor
                     <a class="nav-link-custom" href="#features"><i class="bi bi-grid-1x2" aria-hidden="true"></i><span>Features</span></a>
                     <a class="nav-link-custom" href="#process"><i class="bi bi-diagram-3" aria-hidden="true"></i><span>How it works</span></a>
                     <a class="nav-link-custom" href="#team"><i class="bi bi-people" aria-hidden="true"></i><span>Our people</span></a>
-                    <a class="nav-link-custom" href="#insights"><i class="bi bi-journal-text" aria-hidden="true"></i><span>Guides</span></a>
+                    <a class="nav-link-custom" href="#faq"><i class="bi bi-question-circle" aria-hidden="true"></i><span>FAQ</span></a>
                     <a class="nav-link-custom" href="{% url 'support' %}"><i class="bi bi-life-preserver" aria-hidden="true"></i><span>Support</span></a>
                     <a class="btn btn-teal ms-lg-3 mt-2 mt-lg-0" href="{% url 'login' %}">Staff sign in <span aria-hidden="true">→</span></a>
                 </div>
@@ -595,13 +709,18 @@ Performance Appraisal System<br><small class="fw-normal opacity-75">Staff perfor
             <div class="hero-slides" aria-hidden="true">
                 <div class="hero-slide is-active" data-hero-slide style="background-image: url('{% static 'images/heroImage1.webp' %}')"></div>
                 <div class="hero-slide" data-hero-slide style="background-image: url('{% static 'images/heroImage2.webp' %}')"></div>
-                <div class="hero-slide" data-hero-slide style="background-image: url('{% static 'images/loginimgwebp' %}')"></div>
+                <div class="hero-slide" data-hero-slide style="background-image: url('{% static 'images/loginimg.webp' %}')"></div>
             </div>
             
             <div class="container position-relative">
+                <div class="hero-preview-card" aria-label="Appraisal progress example">
+                    <div class="hero-preview-top"><span>Annual appraisal</span><span class="hero-preview-tag">In progress</span></div>
+                    <div class="hero-preview-progress" aria-hidden="true"><span></span></div>
+                    <div class="hero-preview-foot"><span>Review progress</span><strong>3 of 4 stages</strong></div>
+                </div>
                 <div class="row">
                     <div class="col-lg-9 col-xl-8 reveal">
-                        <div class="eyebrow">Welcome to</div>
+                        <div class="eyebrow">Recognising the people behind every act of care.</div>
                         <h1>Mathias Catholic Hospital Appraisal System</h1>
                         <p class="hero-copy">
                             A clear, supportive appraisal process for the dedicated staff of
@@ -658,7 +777,7 @@ Performance Appraisal System<br><small class="fw-normal opacity-75">Staff perfor
                         <div class="section-kicker mb-3">What the system supports</div>
                         <h2 class="section-title mb-3" id="features-title">Appraisal essentials, all in one place.</h2>
                         <p class="section-copy mb-0">Simple tools help staff prepare, reflect and move through each review stage with clarity.</p>
-                    </div>Your contribution matters.
+                    </div>
 
                 </div>
                 <div class="row g-4">
@@ -814,6 +933,34 @@ Performance Appraisal System<br><small class="fw-normal opacity-75">Staff perfor
             </div>
         </section>
 
+        <section class="faq-section" id="faq" aria-labelledby="faq-title">
+            <div class="container">
+                <div class="text-center mb-4 reveal">
+                    <div class="section-kicker mb-3">Need a hand?</div>
+                    <h2 class="section-title mb-2" id="faq-title">Frequently asked questions</h2>
+                    <p class="section-copy mb-0">Quick answers about using the appraisal system.</p>
+                </div>
+                <div class="accordion faq-list reveal" id="homeFaq">
+                    <div class="accordion-item">
+                        <h3 class="accordion-header" id="faq-heading-one"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq-answer-one" aria-expanded="false" aria-controls="faq-answer-one">Who can use the appraisal system?</button></h3>
+                        <div id="faq-answer-one" class="accordion-collapse collapse" aria-labelledby="faq-heading-one" data-bs-parent="#homeFaq"><div class="accordion-body">Hospital employees, supervisors, department heads and HR use the system according to their assigned roles.</div></div>
+                    </div>
+                    <div class="accordion-item">
+                        <h3 class="accordion-header" id="faq-heading-two"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq-answer-two" aria-expanded="false" aria-controls="faq-answer-two">How do I access my account?</button></h3>
+                        <div id="faq-answer-two" class="accordion-collapse collapse" aria-labelledby="faq-heading-two" data-bs-parent="#homeFaq"><div class="accordion-body">Choose Staff sign in and use the account details provided by the hospital. Contact support if you need help signing in.</div></div>
+                    </div>
+                    <div class="accordion-item">
+                        <h3 class="accordion-header" id="faq-heading-three"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq-answer-three" aria-expanded="false" aria-controls="faq-answer-three">What happens during an appraisal?</button></h3>
+                        <div id="faq-answer-three" class="accordion-collapse collapse" aria-labelledby="faq-heading-three" data-bs-parent="#homeFaq"><div class="accordion-body">Employees record goals and progress, then their supervisor, department head and HR complete their review stages.</div></div>
+                    </div>
+                    <div class="accordion-item">
+                        <h3 class="accordion-header" id="faq-heading-four"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq-answer-four" aria-expanded="false" aria-controls="faq-answer-four">Where can I get help?</button></h3>
+                        <div id="faq-answer-four" class="accordion-collapse collapse" aria-labelledby="faq-heading-four" data-bs-parent="#homeFaq"><div class="accordion-body">Visit the Support page for guidance or contact your hospital HR team.</div></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <section class="section-pad insights-section" id="insights" aria-labelledby="insights-title">
             <div class="container">
                 <div class="row justify-content-center text-center mb-5 reveal">
@@ -860,9 +1007,9 @@ Performance Appraisal System<br><small class="fw-normal opacity-75">Staff perfor
                         <h2 class="mb-3">Your contribution matters.</h2>
                         <p class="mb-0">Sign in to set your goals, continue a review or support a colleague through their appraisal.</p>
                     </div>
-                    <!-- <div class="col-lg-4 text-lg-end reveal">
-                        <a class="btn btn-teal btn-lg" href="{% url 'login' %}">Sign in to continue <span aria-hidden="true">→</span></a>
-                    </div> -->
+                    <div class="col-lg-4 text-lg-end reveal">
+                        <a class="btn btn-teal btn-lg" href="{% url 'login' %}">Staff sign in <span aria-hidden="true">→</span></a>
+                    </div>
                 </div>
             </div>
         </section>

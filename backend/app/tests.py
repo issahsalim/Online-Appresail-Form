@@ -1,11 +1,8 @@
 from datetime import datetime
-<<<<<<< Updated upstream
 import io
 import json
-from pathlib import Path
-=======
 from io import BytesIO
->>>>>>> Stashed changes
+from pathlib import Path
 import tempfile
 from unittest.mock import MagicMock, patch
 
@@ -354,7 +351,7 @@ class StaffRegistrationTests(TestCase):
 
         response = self.client.post(reverse('password_reset_request'), {'staff_id': user.username})
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Welcome, Amina')
+        self.assertContains(response, 'Welcome, <strong>Amina</strong>')
         self.assertContains(response, 'What was the name of your first school?')
 
         with patch('app.views.send_password_reset_code.delay') as queue_reset_email, patch(
@@ -1248,6 +1245,15 @@ class AccountProfileTests(TestCase):
                 self.assertEqual(photo_response['Content-Type'], 'image/png')
                 photo_response.close()
 
+                photo_path = self.profile.profile_photo.name
+                response = self.client.post(reverse('profile'), {
+                    'action': 'remove_profile_photo',
+                })
+                self.assertRedirects(response, reverse('profile'))
+                self.profile.refresh_from_db()
+                self.assertFalse(self.profile.profile_photo)
+                self.assertFalse(self.profile.profile_photo.storage.exists(photo_path))
+
     def test_profile_photo_upload_rejects_non_images_and_files_over_five_mb(self):
         invalid_uploads = (
             SimpleUploadedFile(
@@ -1277,6 +1283,7 @@ class AccountProfileTests(TestCase):
             'title': 'ms',
             'other_title': '',
             'other_names': 'Taylor',
+            'mobile_contact': '+233 20 123 4567',
             'gender': 'female',
             'job_title': 'Analyst',
             'appointment_to_present_grade_date': '2020-04-15',
@@ -1291,12 +1298,15 @@ class AccountProfileTests(TestCase):
         self.profile.refresh_from_db()
         self.assertEqual(self.profile.title, 'ms')
         self.assertEqual(self.profile.other_names, 'Taylor')
+        self.assertEqual(self.profile.mobile_contact, '+233 20 123 4567')
         self.assertEqual(self.profile.gender, 'female')
         self.assertEqual(self.profile.job_title, 'Analyst')
         self.assertEqual(
             str(self.profile.appointment_to_present_grade_date),
             '2020-04-15',
         )
+        response = self.client.get(reverse('profile'))
+        self.assertContains(response, '+233 20 123 4567')
 
     def test_password_change_requires_correct_current_password_and_keeps_user_logged_in(self):
         url = reverse('password_change')
@@ -4359,6 +4369,8 @@ class PreviousAppraisalWorkflowTests(TestCase):
         )
         self.assertEqual(preview.status_code, 200)
         self.assertTrue(preview['Content-Disposition'].startswith('inline;'))
+        download.close()
+        preview.close()
 
     def test_invalid_year_is_reported_and_not_saved(self):
         current_year = timezone.localdate().year
@@ -4448,12 +4460,11 @@ class PreviousAppraisalWorkflowTests(TestCase):
             reverse('view_previous_appraisal_file', args=[appraisal.pk]),
         )
         self.assertEqual(response.status_code, 404)
-        self.assertEqual(
-            self.client.get(
-                reverse('previous_appraisal_file', args=[appraisal.pk]),
-            ).status_code,
-            200,
+        download = self.client.get(
+            reverse('previous_appraisal_file', args=[appraisal.pk]),
         )
+        self.assertEqual(download.status_code, 200)
+        download.close()
 
     def test_supervisors_and_hods_can_upload_from_their_dashboards(self):
         current_year = timezone.localdate().year

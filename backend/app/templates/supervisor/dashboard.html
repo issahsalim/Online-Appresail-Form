@@ -286,17 +286,17 @@
             </div>
             <button class="role-sidebar-link active" type="button" data-role-section-target="assigned">
                 <span class="role-sidebar-link-copy">
-                    <span class="role-sidebar-link-title">Assigned appraisals</span>
+                    <span class="role-sidebar-link-title">Dashboard</span>
                     <span class="role-sidebar-link-note">All team appraisal records</span>
                 </span>
-                <span class="role-sidebar-count">{{ assigned_appraisals.count }}</span>
+                
             </button>
             <button class="role-sidebar-link" type="button" data-role-section-target="pending">
                 <span class="role-sidebar-link-copy">
                     <span class="role-sidebar-link-title">Pending review</span>
                     <span class="role-sidebar-link-note">Appraisals needing your review</span>
                 </span>
-                <span class="role-sidebar-count">{{ pending_reviews.count }}</span>
+            
             </button>
             {% if request.user.profile.role == 'Supervisor' %}
                 <button class="role-sidebar-link" type="button" data-role-section-target="create">
@@ -319,7 +319,6 @@
                     <span class="role-sidebar-link-title">Previous appraisals</span>
                     <span class="role-sidebar-link-note">Upload and view your past records</span>
                 </span>
-                <span class="role-sidebar-count">{{ previous_appraisals|length }}</span>
             </button>
             <button class="role-sidebar-link" type="button" data-role-section-target="support">
                 <span class="role-sidebar-link-copy"><span class="role-sidebar-link-title">Support</span><span class="role-sidebar-link-note">Help and FAQs</span></span>
