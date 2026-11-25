@@ -1353,7 +1353,7 @@ def employee_dashboard(request):
     appraisal_counts = all_appraisals.aggregate(
         total=Count('pk'),
         incomplete=Count('pk', filter=~Q(status='completed')),
-        submitted=Count('pk', filter=Q(status='completed')),
+        completed=Count('pk', filter=Q(status='completed')),
     )
     returned_statuses = (
         'returned_employee',
@@ -1383,7 +1383,7 @@ def employee_dashboard(request):
         'active_appraisal_cards': active_appraisal_cards,
         'active_appraisal_count': appraisal_counts['total'],
         'incomplete_appraisal_count': appraisal_counts['incomplete'],
-        'submitted_appraisal_count': appraisal_counts['submitted'],
+        'completed_appraisal_count': appraisal_counts['completed'],
         'appraisal_trend': appraisal_trend,
         'assigned_supervisor': assigned_supervisor,
         'all_appraisals': all_appraisals,

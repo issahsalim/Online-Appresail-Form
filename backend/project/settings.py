@@ -44,6 +44,7 @@ DEBUG =False
 
 
 
+
 # ALLOWED_HOSTS = ["localhost","appraisal.mchyeji.org","192.168.1.70","192.168.0.212"]
 ALLOWED_HOSTS = ["*"]
 

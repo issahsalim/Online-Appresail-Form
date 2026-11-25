@@ -44,7 +44,7 @@ class StaffLoginForm(AuthenticationForm):
 
 class StaffIdEntryForm(forms.Form):
     staff_id = forms.CharField(max_length=100, label='Staff ID', widget=forms.TextInput(attrs={'autofocus': True, 'placeholder': 'MCH-123456'}))
-    email = forms.EmailField(label='Email Address', widget=forms.EmailInput(attrs={'placeholder': 'you@gmail.com'}))
+    email = forms.EmailField(label='Email Address', widget=forms.EmailInput(attrs={'placeholder': 'you@example.com'}))
 
     def __init__(self, *args, exclude_pk=None, exclude_user_pk=None, **kwargs):
         super().__init__(*args, **kwargs)
