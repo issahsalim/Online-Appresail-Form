@@ -652,6 +652,8 @@
         .closing .btn-teal { margin-top: 1.2rem; }
         footer { background: #17665f; color: rgba(255,255,255,.8); padding: 2.4rem 0; }
         footer strong { color: #fff; }
+        .home-brand-copy { color: #174b3e; font-size: 1rem; font-weight: 800; line-height: 1.15; }
+        .home-brand-copy small { color: #59746a; font-size: .68rem; font-weight: 500; }
         @media (max-width: 991.98px) {
             .hero { min-height: 720px; padding-top: 340px; }
             .hero-slides { bottom: auto; height: 285px; left: 5%; right: 5%; top: 28px; width: 90%; }
@@ -671,6 +673,15 @@
             .stats-section, .closing { border-radius: 12px; margin-left: auto; margin-right: auto; width: calc(100% - 28px); }
             .stats-section .stat-item { border-bottom: 1px solid rgba(255,255,255,.2); border-right: 0; padding: 14px 0; }
             .stats-section .stat-item:last-child { border-bottom: 0; }
+            .site-nav .container { gap: .45rem; }
+            .brand-mark { gap: .45rem; max-width: calc(100% - 52px); }
+            .brand-symbol { height: 36px; width: 36px; }
+            .home-brand-copy { font-size: .8rem; }
+            .home-brand-copy small { display: block; font-size: .59rem; }
+            .hero h1 { font-size: clamp(2.05rem, 10vw, 2.7rem); }
+            .hero-copy { font-size: .96rem; line-height: 1.6; }
+            .faq-section { padding: 54px 0; }
+            .closing { padding: 34px 20px; }
         }
         @media (prefers-reduced-motion: reduce) {
             .faq-list *, .hero-slides * { animation-duration: .01ms !important; transition-duration: .01ms !important; }
@@ -685,7 +696,7 @@
                             <img src="{% static 'images/staff-colla1.webp' %}" alt="Colleagues working together around a laptop" loading="lazy" class="brand-symbol" width="50" height="50">
 
                 <!-- <span class="brand-symbol" aria-hidden="true">✚</span> -->
-                <span style="font-weight: bolder; font-size: larger;">Performance Management  System<br><small class="fw-normal opacity-75">Mathias Cath. Hospital - Staff Appraisal</small></span>
+                <span class="home-brand-copy">Performance Management System<br><small>Mathias Cath. Hospital · Staff Appraisal</small></span>
             </a>
             <button class="navbar-toggler border-0 text-white" type="button" data-bs-toggle="collapse" data-bs-target="#homeNav" aria-controls="homeNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>

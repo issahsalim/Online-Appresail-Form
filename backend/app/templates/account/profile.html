@@ -360,9 +360,10 @@
         .profile-password-link:hover { background: #f4f6f7; color: #243142; }
         @media (max-width: 640px) {
             .profile-page { padding: 1.1rem .75rem 2rem; }
-            .profile-card { max-height: calc(100vh - 150px); }
+            .profile-card { max-height: none; }
             .profile-card-header { padding: 1rem 1.1rem; }
             .profile-identity { margin-inline: 1.1rem; padding: 1.2rem .1rem; }
+            .profile-photo-controls { flex-basis: 64px; width: 64px; }
             .profile-photo-form { flex-basis: 64px; height: 64px; width: 64px; }
             .profile-avatar { font-size: 1.15rem; height: 64px; width: 64px; }
             .profile-avatar-edit-badge { height: 24px; width: 24px; }
@@ -374,6 +375,18 @@
             .profile-form-actions { flex-direction: column-reverse; }
             .profile-save,
             .profile-password-link { width: 100%; }
+        }
+        @media (max-width: 420px) {
+            .profile-card-header { align-items: center; }
+            .profile-identity { align-items: flex-start; flex-direction: column; gap: .8rem; }
+            .profile-photo-controls { align-self: center; }
+            .profile-identity-copy { text-align: center; width: 100%; }
+            .profile-role { justify-content: center; }
+            .profile-photo-caption { margin-inline: auto; max-width: 260px; }
+            .profile-information { padding-inline: .85rem; }
+            .profile-edit { margin-inline: .75rem; }
+            .profile-card-footer { padding: .75rem; }
+            .profile-close-button { width: 100%; }
         }
     </style>
 
@@ -450,24 +463,24 @@
         {% endfor %}
 
         <script>
-            const profileTitleSelect = document.querySelector('.profile-title-select');
-            const profileOtherTitleField = document.getElementById('other-title-field');
-            if (profileTitleSelect && profileOtherTitleField) {
-                const updateOtherTitleVisibility = () => {
-                    const showOtherTitle = profileTitleSelect.value === 'other';
-                    profileOtherTitleField.hidden = !showOtherTitle;
-                };
-                profileTitleSelect.addEventListener('change', updateOtherTitleVisibility);
-                updateOtherTitleVisibility();
-            }
-            const profilePhotoInput = document.querySelector('.profile-photo-input');
-            if (profilePhotoInput) {
-                profilePhotoInput.addEventListener('change', function () {
-                    if (profilePhotoInput.files.length) {
-                        profilePhotoInput.form.requestSubmit();
-                    }
-                });
-            }
+            document.addEventListener('DOMContentLoaded', () => {
+                const profileTitleSelect = document.querySelector('.profile-title-select');
+                const profileOtherTitleField = document.getElementById('other-title-field');
+                if (profileTitleSelect && profileOtherTitleField) {
+                    const updateOtherTitleVisibility = () => {
+                        profileOtherTitleField.hidden = profileTitleSelect.value !== 'other';
+                    };
+                    profileTitleSelect.addEventListener('change', updateOtherTitleVisibility);
+                    updateOtherTitleVisibility();
+                }
+
+                const profilePhotoInput = document.querySelector('.profile-photo-input');
+                if (profilePhotoInput) {
+                    profilePhotoInput.addEventListener('change', () => {
+                        if (profilePhotoInput.files.length) profilePhotoInput.form.requestSubmit();
+                    });
+                }
+            });
         </script>
 
         <div class="profile-information">
