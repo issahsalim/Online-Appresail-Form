@@ -563,7 +563,7 @@ def _staff_id_upload_template_response():
 def _staff_ids_redirect(request):
     params = {}
     query = request.POST.get('q', request.GET.get('q', '')).strip()
-    page = request.POST.get('page', request.GET.get('page', '1'))
+    page = request.POST.get('page', request.GET.get('page'))
     if query:
         params['q'] = query
     if page:
@@ -1783,6 +1783,13 @@ def profile(request):
     employee_profile = request.user.profile
     photo_form = ProfilePhotoForm(instance=employee_profile)
     if request.method == 'POST':
+        if request.POST.get('action') == 'remove_profile_photo':
+            if employee_profile.profile_photo:
+                employee_profile.profile_photo.delete(save=False)
+                employee_profile.profile_photo = ''
+                employee_profile.save(update_fields=['profile_photo'])
+            messages.success(request, "Your profile photo was removed.")
+            return redirect('profile')
         if request.POST.get('action') == 'upload_profile_photo':
             photo_form = ProfilePhotoForm(
                 request.POST,

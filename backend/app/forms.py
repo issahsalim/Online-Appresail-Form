@@ -28,7 +28,7 @@ class StaffLoginForm(AuthenticationForm):
         widget=forms.TextInput(attrs={
             # 'autofocus': True,
             'autocomplete': 'username',
-            'placeholder': 'MOH-123456',
+            'placeholder': 'Enter your Staff ID',
         }),
     )
     password = forms.CharField(
@@ -42,8 +42,8 @@ class StaffLoginForm(AuthenticationForm):
 
 
 class StaffIdEntryForm(forms.Form):
-    staff_id = forms.CharField(max_length=100, label='Staff ID', widget=forms.TextInput(attrs={'autofocus': True, 'placeholder': 'MOH-123456'}))
-    email = forms.EmailField(label='Work email', widget=forms.EmailInput(attrs={'placeholder': 'work.email@yourorg.com'}))
+    staff_id = forms.CharField(max_length=100, label='Staff ID', widget=forms.TextInput(attrs={'autofocus': True, 'placeholder': 'MCH-123456'}))
+    email = forms.EmailField(label='Email Address', widget=forms.EmailInput(attrs={'placeholder': 'you@gmail.com'}))
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -307,6 +307,8 @@ class AppraisalCycleForm(forms.ModelForm):
 
 
 class UserProfileForm(forms.ModelForm):
+    first_name = forms.CharField(max_length=150, label='First Name')
+    last_name = forms.CharField(max_length=150, label='Surname')
     title = forms.ChoiceField(
         choices=[('', 'Select title')] + EmployeeProfile.TITLE_CHOICES,
         required=False,
@@ -317,6 +319,7 @@ class UserProfileForm(forms.ModelForm):
         choices=[('', 'Select gender')] + EmployeeProfile.GENDER_CHOICES,
         required=False,
     )
+    mobile_contact = forms.CharField(required=False, max_length=30)
     job_title = forms.CharField(required=False, max_length=150)
     appointment_to_present_grade_date = forms.DateField(
         required=False,
@@ -329,25 +332,41 @@ class UserProfileForm(forms.ModelForm):
         labels = {
             'first_name': 'First name',
             'last_name': 'Surname',
-            'email': 'Email address',
+            'email': 'Email Address',
         }
+
+    field_order = [
+        'title', 'other_title', 'first_name', 'last_name', 'other_names',
+        'mobile_contact', 'gender', 'email', 'job_title',
+        'appointment_to_present_grade_date',
+    ]
 
     def __init__(self, *args, profile=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.profile = profile
         self.fields['title'].label = 'Title'
         self.fields['other_title'].label = 'Other title (specify)'
-        self.fields['other_names'].label = 'Other name(s)'
+        self.fields['other_names'].label = 'Other Name(s)'
         self.fields['gender'].label = 'Gender'
+        self.fields['mobile_contact'].label = 'Mobile Contact'
         self.fields['job_title'].label = 'Present job title/position'
         self.fields['appointment_to_present_grade_date'].label = (
             'Date of appointment to present grade'
         )
+        self.fields['other_title'].widget.attrs.update({
+            'class': 'profile-other-title-input',
+            'placeholder': 'Specify your title',
+        })
+        self.fields['title'].widget.attrs.update({
+            'class': 'profile-title-select',
+            'data-other-title-target': 'other-title-field',
+        })
         if profile:
             for field in (
                 'title',
                 'other_title',
                 'other_names',
+                'mobile_contact',
                 'gender',
                 'job_title',
                 'appointment_to_present_grade_date',
@@ -361,6 +380,7 @@ class UserProfileForm(forms.ModelForm):
                 'title',
                 'other_title',
                 'other_names',
+                'mobile_contact',
                 'gender',
                 'job_title',
                 'appointment_to_present_grade_date',
@@ -370,6 +390,7 @@ class UserProfileForm(forms.ModelForm):
                 'title',
                 'other_title',
                 'other_names',
+                'mobile_contact',
                 'gender',
                 'job_title',
                 'appointment_to_present_grade_date',

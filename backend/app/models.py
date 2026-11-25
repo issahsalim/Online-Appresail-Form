@@ -53,6 +53,7 @@ class EmployeeProfile(models.Model):
     title = models.CharField(max_length=10, choices=TITLE_CHOICES, blank=True)
     other_title = models.CharField(max_length=50, blank=True)
     other_names = models.CharField(max_length=150, blank=True)
+    mobile_contact = models.CharField(max_length=30, blank=True)
     gender = models.CharField(max_length=10, choices=GENDER_CHOICES, blank=True)
     job_title = models.CharField(max_length=150, blank=True)
     appointment_to_present_grade_date = models.DateField(null=True, blank=True)
