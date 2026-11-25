@@ -15,3 +15,8 @@ backend/celerybeat-schedule*
 backend/db.sqlite3 
 backend/db.sqlite3.bak 
 settings.py/
+
+PROPOSAL.md 
+adl 
+
+settings.py 

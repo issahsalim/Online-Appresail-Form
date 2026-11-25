@@ -18,7 +18,11 @@
         /* Optional: Custom Styles */
         body {
             background-color: #f8f9fa; /* Light gray background */
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
         }
+        .navbar-appraisal + .container { flex: 1 0 auto; width: 100%; }
         .appraisal-paper {
             background: #fff;
             border: 1px solid #a43a10;
@@ -951,7 +955,7 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <!-- <a class="navbar-support-link" href="{% url 'support' %}" data-global-support-link><i class="bi bi-life-preserver" aria-hidden="true"></i><span>Support</span></a> -->
+                        <a class="navbar-support-link" href="{% url 'support' %}" data-global-support-link><i class="bi bi-life-preserver" aria-hidden="true"></i><span>Support</span></a>
                     </li>
                     {% if user.is_authenticated %}
                         <li class="nav-item dropdown navbar-notifications">
