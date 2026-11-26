@@ -183,8 +183,13 @@
         .home-apply-band { background: linear-gradient(120deg,#fff,#f7f9fc); padding: 3.5rem 1rem; text-align: center; }
         .home-apply-band h2 { color: var(--home-navy); font-size: 1.35rem; font-weight: 850; margin: 0 0 1.2rem; }
         .home-apply-band .home-nav-cta { display: inline-flex; }
-        .home-footer { background: var(--home-navy); color: rgba(255,255,255,.78); padding: 1.45rem 1rem; text-align: center; }
-        .home-footer p { font-size: .78rem; margin: 0; }
+        .home-footer { background: var(--home-navy); color: rgba(255,255,255,.78); isolation: isolate; overflow: hidden; padding: 3.15rem 1rem 1.45rem; position: relative; text-align: center; }
+        .home-footer::before,
+        .home-footer::after { background-repeat: repeat-x; background-size: 240px 100%; content: ""; inset: 0 0 auto; pointer-events: none; position: absolute; }
+        .home-footer::before { animation: footer-wave-drift 14s linear infinite; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 36' preserveAspectRatio='none'%3E%3Cpath d='M0 18 C40 3 80 3 120 18 S200 33 240 18 V36 H0Z' fill='%2307875f'/%3E%3C/svg%3E"); height: 36px; opacity: .78; }
+        .home-footer::after { animation: footer-wave-drift 20s linear infinite reverse; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 42' preserveAspectRatio='none'%3E%3Cpath d='M0 22 C40 8 80 8 120 22 S200 36 240 22 V42 H0Z' fill='%2310a868'/%3E%3C/svg%3E"); height: 42px; opacity: .3; }
+        .home-footer p { font-size: .78rem; margin: 0; position: relative; z-index: 1; }
+        @keyframes footer-wave-drift { to { background-position-x: 240px; } }
         .home-reveal { opacity: 0; transform: translateY(22px); transition: opacity .65s ease,transform .65s cubic-bezier(.2,.7,.25,1); }
         .home-reveal.is-visible { opacity: 1; transform: translateY(0); }
         .home-reveal-delay-1 { transition-delay: .08s; }
@@ -266,8 +271,8 @@
             <img class="home-hero-image" src="{% static 'images/heroImage1.webp' %}" alt="Hospital staff working together" fetchpriority="high">
             <div class="home-hero-content">
                 <div class="home-hero-copy home-reveal">
-                    <div class="home-eyebrow">MATHIAS CATHOLIC HOSPITAL · YEJI</div>
-                    <h1 id="homeHeroTitle">Staff Performance Management<span>Appraisal System</span></h1>
+                    <div class="home-eyebrow"></div>
+                    <h1 id="homeHeroTitle">Staff Performance<span>Appraisal System</span></h1>
                     <div class="home-title-rule" aria-hidden="true"></div>
                     <p>Supporting staff growth through clear goals, thoughtful reviews, and constructive feedback.</p>
                     <p>Employees and reviewers work together throughout each appraisal cycle to strengthen professional development and quality care.</p>
