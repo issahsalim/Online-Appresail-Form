@@ -36,26 +36,10 @@ if env_file.is_file():
 SECRET_KEY = os.environ["DJANGO_SECRET_KEY"]
 
 # SECURITY WARNING: don't run with debug turned on in production!
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
 debug_value = os.environ["DEBUG"].strip().lower()
 if debug_value not in {"true", "false", "release"}:
     raise ValueError("DEBUG must be set to 'true', 'false', or 'release'")
 DEBUG = debug_value == "true"
-=======
->>>>>>> c5922a9 (db optimazation fixed)
-debug_value = os.environ["DEBUG"].lower()
-if debug_value not in {"true", "false"}:
-    raise ValueError("DEBUG must be set to 'true' or 'false'")
-# DEBUG = debug_value == "true"
-DEBUG =False 
-
-<<<<<<< HEAD
-
-=======
->>>>>>> e07184b (db optimazation fixed)
->>>>>>> c5922a9 (db optimazation fixed)
 
 
 # ALLOWED_HOSTS = ["localhost","appraisal.mchyeji.org","192.168.1.70","192.168.0.212"]

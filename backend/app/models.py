@@ -1,11 +1,7 @@
 from decimal import Decimal, ROUND_HALF_UP
 
 from django.db import models
-<<<<<<< HEAD
 from django.db.models.functions import Lower, Upper
-=======
-from django.db.models.functions import Upper
->>>>>>> c5922a9 (db optimazation fixed)
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, MaxValueValidator
@@ -953,7 +949,6 @@ class StaffId(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-<<<<<<< HEAD
         constraints = [
             models.UniqueConstraint(
                 Upper('name'),
@@ -963,12 +958,6 @@ class StaffId(models.Model):
                 Lower('email'),
                 condition=models.Q(email__gt=''),
                 name='unique_staffid_email_ci',
-=======
-        indexes = [
-            models.Index(
-                Upper('name'),
-                name='app_staff_name_upper_idx',
->>>>>>> c5922a9 (db optimazation fixed)
             ),
         ]
 
