@@ -3629,6 +3629,8 @@ def employee_submission_slip(request, appraisal_id):
         'appraisal': appraisal,
         'read_only': True,
         'print_mode': True,
+        'auto_print': True,
+        'back_to_dashboard': True,
         'trainings': appraisal.trainings.all(),
         'targets': appraisal.targets.all(),
         'competencies': appraisal.competency_scores.select_related(
