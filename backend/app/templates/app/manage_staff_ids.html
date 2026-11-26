@@ -28,6 +28,7 @@
                 <input type="hidden" name="action" value="add">
                 <input type="hidden" name="q" value="{{ search_query }}">
                 <input type="hidden" name="page" value="{{ page_obj.number }}">
+                {% for error in entry_form.non_field_errors %}<span class="staff-error" role="alert">{{ error }}</span>{% endfor %}
                 {% for field in entry_form %}
                     <div class="staff-field">
                         <label for="{{ field.id_for_label }}">{{ field.label }}</label>

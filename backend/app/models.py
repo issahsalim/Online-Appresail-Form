@@ -1,11 +1,11 @@
 from decimal import Decimal, ROUND_HALF_UP
 
 from django.db import models
-from django.db.models.functions import Upper
+from django.db.models.functions import Lower, Upper
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, MaxValueValidator
-from django.db.models.signals import post_save
+from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 from django.contrib.auth.models import Group
 from django.utils import timezone
@@ -113,6 +113,14 @@ class AppNotification(models.Model):
 
     def __str__(self):
         return f"{self.title} for {self.recipient}"
+
+
+@receiver(post_save, sender=AppNotification)
+@receiver(post_delete, sender=AppNotification)
+def invalidate_cached_notifications(sender, instance, **kwargs):
+    from .notification_cache import invalidate_notification_cache
+
+    invalidate_notification_cache(instance.recipient_id)
 
 
 class AuditLog(models.Model):
@@ -928,7 +936,7 @@ class PreviousAppraisal(models.Model):
 
 
 class StaffId(models.Model):
-    name = models.CharField(max_length=100, unique=True)
+    name = models.CharField(max_length=100)
     email = models.EmailField(blank=True)
     registered_user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
@@ -940,10 +948,15 @@ class StaffId(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        indexes = [
-            models.Index(
+        constraints = [
+            models.UniqueConstraint(
                 Upper('name'),
-                name='app_staff_name_upper_idx',
+                name='unique_staffid_name_ci',
+            ),
+            models.UniqueConstraint(
+                Lower('email'),
+                condition=models.Q(email__gt=''),
+                name='unique_staffid_email_ci',
             ),
         ]
 

@@ -80,6 +80,10 @@ from .forms import (
     StaffIdUploadForm,
 )
 from .notifications import mark_as_read, notify_users
+from .notification_cache import (
+    get_unread_notification_count,
+    invalidate_notification_cache,
+)
 from .audit import record_auth_event
 from .tasks import create_backup, send_password_reset_code, send_registration_code
 
@@ -469,7 +473,8 @@ def _parse_staff_id_upload(uploaded_file):
         raise ValidationError('Upload no more than 5,000 staff IDs at a time.')
 
     staff_rows = []
-    seen = {}
+    seen_ids = set()
+    seen_emails = set()
     for row_number, row in enumerate(rows[1:], start=2):
         values = list(row)
         staff_id = str(values[staff_id_column] or '').strip() if staff_id_column < len(values) else ''
@@ -486,55 +491,68 @@ def _parse_staff_id_upload(uploaded_file):
             raise ValidationError(f'Email on row {row_number} is invalid.') from error
 
         normalized_id = staff_id.casefold()
-        if normalized_id in seen and seen[normalized_id] != email:
-            raise ValidationError(f'Staff ID on row {row_number} has conflicting emails.')
-        if normalized_id not in seen:
-            seen[normalized_id] = email
-            staff_rows.append((staff_id, email))
+        normalized_email = email.casefold()
+        if normalized_id in seen_ids:
+            raise ValidationError(f'Staff ID on row {row_number} duplicates an earlier row.')
+        if normalized_email in seen_emails:
+            raise ValidationError(f'Email on row {row_number} is already used in this file.')
+        seen_ids.add(normalized_id)
+        seen_emails.add(normalized_email)
+        staff_rows.append((staff_id, email))
     return staff_rows
 
 
 def _save_staff_id_rows(staff_rows):
     added = 0
-    updated = 0
+    staff_ids_seen = set()
+    emails_seen = set()
     with transaction.atomic():
         chunk_size = 200
         for start in range(0, len(staff_rows), chunk_size):
             rows = staff_rows[start:start + chunk_size]
-            name_match = Q()
-            for staff_id, _email in rows:
-                name_match |= Q(name__iexact=staff_id)
-
-            existing_by_name = {}
-            for existing in StaffId.objects.filter(name_match).order_by('pk'):
-                existing_by_name.setdefault(existing.name.casefold(), existing)
-
-            new_staff_ids = []
-            changed_staff_ids = []
+            normalized_names = []
+            normalized_emails = []
             for staff_id, email in rows:
-                existing = existing_by_name.get(staff_id.casefold())
-                if existing:
-                    if existing.registered_user_id:
-                        continue
-                    if existing.email != email:
-                        existing.email = email
-                        changed_staff_ids.append(existing)
-                    continue
-                new_staff_ids.append(StaffId(name=staff_id, email=email))
+                normalized_name = staff_id.upper()
+                normalized_email = email.casefold()
+                if normalized_name in staff_ids_seen:
+                    raise ValidationError('The upload contains a duplicate Staff ID.')
+                if normalized_email in emails_seen:
+                    raise ValidationError('The upload contains a duplicate email address.')
+                staff_ids_seen.add(normalized_name)
+                emails_seen.add(normalized_email)
+                normalized_names.append(normalized_name)
+                normalized_emails.append(normalized_email)
 
-            if changed_staff_ids:
-                StaffId.objects.bulk_update(
-                    changed_staff_ids,
-                    ['email'],
-                    batch_size=chunk_size,
+            existing_staff = StaffId.objects.annotate(
+                normalized_name=Upper('name'),
+                normalized_email=Lower('email'),
+            ).filter(
+                Q(normalized_name__in=normalized_names)
+                | Q(normalized_email__in=normalized_emails)
+            )
+            if existing_staff.exists():
+                raise ValidationError(
+                    'At least one Staff ID or email is already in the staff directory. '
+                    'Correct the duplicate entries and try again.'
                 )
-                updated += len(changed_staff_ids)
 
-            if not new_staff_ids:
-                continue
+            existing_usernames = User.objects.annotate(
+                normalized_username=Upper('username'),
+            ).filter(normalized_username__in=normalized_names)
+            if existing_usernames.exists():
+                raise ValidationError(
+                    'At least one Staff ID is already used by an account. '
+                    'Correct the duplicate entry and try again.'
+                )
+
+            new_staff_ids = [
+                StaffId(name=staff_id, email=email)
+                for staff_id, email in rows
+            ]
             try:
                 # Keep a savepoint so a concurrent insert can be handled without
-                # rolling back the other rows in this upload chunk.
+                # leaving partially imported rows if an ID or email races.
                 with transaction.atomic():
                     StaffId.objects.bulk_create(
                         new_staff_ids,
@@ -542,16 +560,11 @@ def _save_staff_id_rows(staff_rows):
                     )
                 added += len(new_staff_ids)
             except IntegrityError:
-                # Preserve the previous behavior for a rare unique-name race:
-                # import each row independently and skip only conflicting rows.
-                for staff_id in new_staff_ids:
-                    try:
-                        with transaction.atomic():
-                            staff_id.save(force_insert=True)
-                        added += 1
-                    except IntegrityError:
-                        continue
-    return added, updated
+                raise ValidationError(
+                    'A Staff ID or email was added at the same time. '
+                    'Refresh the page and check for duplicates.'
+                )
+    return added, 0
 
 
 def _staff_ids_csv_response(staff_ids, filename):
@@ -631,18 +644,15 @@ def manage_staff_ids(request):
     action = request.POST.get('action') if request.method == 'POST' else ''
     if action == 'update':
         staff = get_object_or_404(StaffId.objects.select_related('registered_user'), pk=request.POST.get('staff_pk'))
-        edit_form = StaffIdEntryForm(request.POST)
+        edit_form = StaffIdEntryForm(
+            request.POST,
+            exclude_pk=staff.pk,
+            exclude_user_pk=staff.registered_user_id,
+        )
         if edit_form.is_valid():
             staff_id = edit_form.cleaned_data['staff_id']
             email = edit_form.cleaned_data['email']
-            duplicate_staff_id = StaffId.objects.filter(name__iexact=staff_id).exclude(pk=staff.pk).exists()
-            username_matches = User.objects.filter(username__iexact=staff_id)
-            if staff.registered_user_id:
-                username_matches = username_matches.exclude(pk=staff.registered_user_id)
-            duplicate_username = username_matches.exists()
-            if duplicate_staff_id or duplicate_username:
-                messages.error(request, 'That staff ID is already assigned to another staff member or account.')
-            else:
+            try:
                 with transaction.atomic():
                     staff.name = staff_id
                     staff.email = email
@@ -651,9 +661,20 @@ def manage_staff_ids(request):
                         staff.registered_user.username = staff_id
                         staff.registered_user.email = email
                         staff.registered_user.save(update_fields=['username', 'email'])
+            except IntegrityError:
+                messages.error(
+                    request,
+                    'That Staff ID or email was just assigned to another staff member. Refresh and check the directory.',
+                )
+            else:
                 messages.success(request, f'Staff record {staff_id} updated.')
         else:
-            messages.error(request, 'Enter a valid staff ID and work email before saving.')
+            errors = [
+                str(message)
+                for field_errors in edit_form.errors.values()
+                for message in field_errors
+            ]
+            messages.error(request, ' '.join(errors) or 'Enter a valid Staff ID and work email before saving.')
         return _staff_ids_redirect(request)
     elif action == 'delete':
         staff = get_object_or_404(StaffId.objects.select_related('registered_user'), pk=request.POST.get('staff_pk'))
@@ -680,26 +701,29 @@ def manage_staff_ids(request):
     elif action == 'add':
         entry_form = StaffIdEntryForm(request.POST)
         if entry_form.is_valid():
-            added, updated = _save_staff_id_rows([(
-                entry_form.cleaned_data['staff_id'],
-                entry_form.cleaned_data['email'],
-            )])
-            if added or updated:
-                messages.success(request, 'Staff ID and work email saved.')
-                return _staff_ids_redirect(request)
-            entry_form.add_error('staff_id', 'This staff ID already has an account or is already listed.')
+            try:
+                added, _updated = _save_staff_id_rows([(
+                    entry_form.cleaned_data['staff_id'],
+                    entry_form.cleaned_data['email'],
+                )])
+            except ValidationError as error:
+                entry_form.add_error(None, error)
+            else:
+                if added:
+                    messages.success(request, 'Staff ID and work email saved.')
+                    return _staff_ids_redirect(request)
     elif action == 'upload':
         upload_form = StaffIdUploadForm(request.POST, request.FILES)
         if upload_form.is_valid():
             try:
                 staff_rows = _parse_staff_id_upload(upload_form.cleaned_data['file'])
-                added, updated = _save_staff_id_rows(staff_rows)
+                added, _updated = _save_staff_id_rows(staff_rows)
             except ValidationError as error:
                 upload_form.add_error('file', error)
             else:
                 messages.success(
                     request,
-                    f'Import complete: {added} added, {updated} updated. Already registered IDs were skipped.',
+                    f'Import complete: {added} added.',
                 )
                 return _staff_ids_redirect(request)
 
@@ -1938,9 +1962,7 @@ def notifications(request):
     page = Paginator(notification_list, 20).get_page(request.GET.get('page', 1))
     return render(request, 'account/notifications.html', {
         'notification_page': page,
-        'unread_notification_count': notification_list.filter(
-            read_at__isnull=True,
-        ).count(),
+        'unread_notification_count': get_unread_notification_count(request.user.pk),
     })
 
 
@@ -1949,10 +1971,7 @@ def notification_status(request):
     if request.method != 'GET':
         return JsonResponse({'error': 'Invalid request method.'}, status=405)
 
-    unread_count = AppNotification.objects.filter(
-        recipient=request.user,
-        read_at__isnull=True,
-    ).count()
+    unread_count = get_unread_notification_count(request.user.pk)
     response = JsonResponse({'unread_count': unread_count})
     response['Cache-Control'] = 'no-store'
     return response
@@ -1988,10 +2007,12 @@ def delete_noti(request,noti_id):
 @login_required
 def mark_all_notifications_read(request):
     if request.method == 'POST':
-        AppNotification.objects.filter(
+        updated = AppNotification.objects.filter(
             recipient=request.user,
             read_at__isnull=True,
         ).update(read_at=timezone.now())
+        if updated:
+            invalidate_notification_cache(request.user.pk)
     return redirect('notifications')
 
 

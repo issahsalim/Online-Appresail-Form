@@ -1,6 +1,7 @@
 from django.utils import timezone
 
 from .models import AppNotification
+from .notification_cache import invalidate_notification_cache
 
 
 def notify_users(users, *, title, message, url=''):
@@ -21,6 +22,8 @@ def notify_users(users, *, title, message, url=''):
         )
         for user in recipients.values()
     ])
+    for user_id in recipients:
+        invalidate_notification_cache(user_id)
 
 
 def mark_as_read(notification):

@@ -6,6 +6,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.forms.models import BaseInlineFormSet
 from django.utils import timezone
+from django.db.models.functions import Lower, Upper
 from .models import (
     Appraisal,
     AppraisalTraining,
@@ -45,16 +46,42 @@ class StaffIdEntryForm(forms.Form):
     staff_id = forms.CharField(max_length=100, label='Staff ID', widget=forms.TextInput(attrs={'autofocus': True, 'placeholder': 'MCH-123456'}))
     email = forms.EmailField(label='Email Address', widget=forms.EmailInput(attrs={'placeholder': 'you@gmail.com'}))
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, exclude_pk=None, exclude_user_pk=None, **kwargs):
         super().__init__(*args, **kwargs)
+        self.exclude_pk = exclude_pk
+        self.exclude_user_pk = exclude_user_pk
         for field in self.fields.values():
             field.widget.attrs['class'] = 'form-control'
 
     def clean_staff_id(self):
-        return self.cleaned_data['staff_id'].strip()
+        staff_id = self.cleaned_data['staff_id'].strip()
+        staff_ids = StaffId.objects.annotate(
+            normalized_name=Upper('name'),
+        ).filter(normalized_name=staff_id.upper())
+        if self.exclude_pk is not None:
+            staff_ids = staff_ids.exclude(pk=self.exclude_pk)
+        if staff_ids.exists():
+            raise ValidationError('This Staff ID is already assigned to another staff member.')
+
+        users = get_user_model().objects.annotate(
+            normalized_username=Upper('username'),
+        ).filter(normalized_username=staff_id.upper())
+        if self.exclude_user_pk is not None:
+            users = users.exclude(pk=self.exclude_user_pk)
+        if users.exists():
+            raise ValidationError('This Staff ID is already used by an account.')
+        return staff_id
 
     def clean_email(self):
-        return self.cleaned_data['email'].strip().lower()
+        email = self.cleaned_data['email'].strip().lower()
+        staff_ids = StaffId.objects.exclude(email='').annotate(
+            normalized_email=Lower('email'),
+        ).filter(normalized_email=email)
+        if self.exclude_pk is not None:
+            staff_ids = staff_ids.exclude(pk=self.exclude_pk)
+        if staff_ids.exists():
+            raise ValidationError('This email address is already assigned to another staff member.')
+        return email
 
 
 class StaffIdUploadForm(forms.Form):

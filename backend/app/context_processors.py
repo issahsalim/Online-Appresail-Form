@@ -1,4 +1,7 @@
-from .models import AppNotification
+from .notification_cache import (
+    get_latest_notifications,
+    get_unread_notification_count,
+)
 
 
 def app_notifications(request):
@@ -8,12 +11,7 @@ def app_notifications(request):
             'unread_notification_count': 0,
         }
 
-    recipient_notifications = AppNotification.objects.filter(
-        recipient=request.user,
-    )
     return {
-        'navbar_notifications': recipient_notifications[:6],
-        'unread_notification_count': recipient_notifications.filter(
-            read_at__isnull=True,
-        ).count(),
+        'navbar_notifications': get_latest_notifications(request.user.pk),
+        'unread_notification_count': get_unread_notification_count(request.user.pk),
     }
