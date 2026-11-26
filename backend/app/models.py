@@ -382,6 +382,7 @@ class Appraisal(models.Model):
     
     # Workflow Status
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
+    reference_number = models.CharField(max_length=32, unique=True, null=True, blank=True)
 
     # Timestamps (Audit Trail)
     employee_signed_at = models.DateTimeField(null=True, blank=True)
