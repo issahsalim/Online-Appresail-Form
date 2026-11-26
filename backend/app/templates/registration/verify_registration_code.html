@@ -68,7 +68,8 @@
             <form method="post" action="{% url 'resend_registration_code' %}" class="staff-registration-resend">
                 {% csrf_token %}
                 <span>Didn't get a code?</span>
-                <button type="submit">Resend</button>
+                <button type="submit" data-resend-button hidden>Resend</button>
+                <span data-resend-countdown role="status" aria-live="polite" data-seconds="{{ resend_seconds }}"></span>
             </form>
 
             <a class="staff-registration-back" href="{% url 'employee_registration' %}">← Start again</a>
@@ -76,4 +77,35 @@
     </section>
 </main>
 <script src="{% static 'js/registration-code-input.js' %}" defer></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const button = document.querySelector('[data-resend-button]');
+        const countdown = document.querySelector('[data-resend-countdown]');
+        if (!button || !countdown) return;
+
+        const form = button.form;
+        let remaining = Number.parseInt(countdown.dataset.seconds, 10) || 0;
+        if (remaining <= 0) {
+            button.hidden = false;
+            return;
+        }
+
+        if (form) {
+            form.addEventListener('submit', function (event) {
+                if (button.hidden) event.preventDefault();
+            });
+        }
+        const updateCountdown = function () {
+            if (remaining <= 0) {
+                countdown.textContent = '';
+                button.hidden = false;
+                return;
+            }
+            countdown.textContent = `Resend available in ${remaining}s`;
+            remaining -= 1;
+            window.setTimeout(updateCountdown, 1000);
+        };
+        updateCountdown();
+    });
+</script>
 {% endblock %}

@@ -7,7 +7,7 @@ from pathlib import Path
 import redis
 from celery import shared_task
 from django.conf import settings
-from django.core.mail import EmailMultiAlternatives, send_mail
+from django.core.mail import EmailMultiAlternatives
 from django.contrib.staticfiles import finders
 from django.db import OperationalError
 from django.template.loader import render_to_string
@@ -38,13 +38,34 @@ def send_registration_code(registration_code_id, code):
     if registration_code.verified_at or registration_code.expires_at <= timezone.now():
         return 'expired'
 
-    send_mail(
+    text_body = (
+        'Hello,\n\n'
+        f'Your staff account verification code is {code}. It expires in 10 minutes.\n\n'
+        'For your security, do not share this code with anyone. '
+        'If you did not request an account, you can ignore this email.'
+    )
+    html_body = render_to_string('emails/registration_code.html', {'code': code})
+    logo_path = finders.find('images/mathias-catholic-hospital-logo.png')
+    if not logo_path:
+        raise FileNotFoundError('Registration email logo was not found in static files.')
+
+    email = EmailMultiAlternatives(
         'Your staff account verification code',
-        f'Your verification code is {code}. It expires in 10 minutes.',
+        text_body,
         settings.DEFAULT_FROM_EMAIL,
         [registration_code.staff_id.email],
-        fail_silently=False,
     )
+    email.attach_alternative(html_body, 'text/html')
+    with open(logo_path, 'rb') as logo_file:
+        logo = MIMEImage(logo_file.read(), _subtype='png')
+    logo.add_header('Content-ID', '<registration-code-logo>')
+    logo.add_header(
+        'Content-Disposition',
+        'inline',
+        filename='mathias-catholic-hospital-logo.png',
+    )
+    email.attach(logo)
+    email.send(fail_silently=False)
     return 'sent'
 
 

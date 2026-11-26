@@ -1,6 +1,7 @@
 from decimal import Decimal, ROUND_HALF_UP
 
 from django.db import models
+from django.db.models.functions import Upper
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, MaxValueValidator
@@ -68,6 +69,14 @@ class EmployeeProfile(models.Model):
         blank=True,
     )
 
+    class Meta:
+        indexes = [
+            models.Index(
+                fields=['department', 'role'],
+                name='app_profile_dept_role_idx',
+            ),
+        ]
+
     def __str__(self):
         dept = self.department.name if self.department else 'No Dept'
         return f"{self.user.username} - {self.role} ({dept})"
@@ -87,6 +96,16 @@ class AppNotification(models.Model):
 
     class Meta:
         ordering = ['-created_at', '-pk']
+        indexes = [
+            models.Index(
+                fields=['recipient', '-created_at', '-id'],
+                name='app_notif_rec_created_idx',
+            ),
+            models.Index(
+                fields=['recipient', 'read_at'],
+                name='app_notif_rec_unread_idx',
+            ),
+        ]
 
     @property
     def is_read(self):
@@ -132,6 +151,10 @@ class AuditLog(models.Model):
         indexes = [
             models.Index(fields=['created_at']),
             models.Index(fields=['actor_is_superuser', 'created_at']),
+            models.Index(
+                fields=['action', '-created_at', '-id'],
+                name='app_audit_action_created_idx',
+            ),
             models.Index(fields=['model_name', 'object_id']),
         ]
 
@@ -170,6 +193,12 @@ class BackupRun(models.Model):
 
     class Meta:
         ordering = ['-created_at', '-pk']
+        indexes = [
+            models.Index(
+                fields=['status', 'completed_at'],
+                name='app_backup_status_done_idx',
+            ),
+        ]
 
     def __str__(self):
         return f"{self.get_status_display()} backup #{self.pk}"
@@ -405,6 +434,24 @@ class Appraisal(models.Model):
     hod_comments = models.TextField(blank=True, null=True)
     hr_comments = models.TextField(blank=True, null=True)
 
+    class Meta:
+        indexes = [
+            models.Index(
+                fields=['supervisor', 'status'],
+                name='app_appr_sup_status_idx',
+            ),
+            models.Index(
+                fields=['hod', 'status'],
+                name='app_appr_hod_status_idx',
+            ),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['employee', 'cycle'],
+                name='unique_appraisal_employee_cycle',
+            ),
+        ]
+
     def __str__(self):
         return f"{self.employee.user.username} - {self.cycle.year} ({self.get_status_display()})"
 
@@ -554,8 +601,12 @@ class Appraisal(models.Model):
         if any(score is None for score in targets):
             raise ValidationError('Score every target before submitting this appraisal.')
 
-        competency_scores = self.competency_scores.prefetch_related('statement_scores')
-        if not competency_scores.exists():
+        competency_scores = list(
+            self.competency_scores.select_related('competency').prefetch_related(
+                'statement_scores',
+            )
+        )
+        if not competency_scores:
             raise ValidationError('At least one competency statement must be selected.')
         for competency_score in competency_scores:
             statements = list(competency_score.statement_scores.all())
@@ -597,6 +648,12 @@ class AppraisalReturn(models.Model):
 
     class Meta:
         ordering = ['-created_at', '-pk']
+        indexes = [
+            models.Index(
+                fields=['appraisal', '-created_at', '-id'],
+                name='app_ret_app_created_idx',
+            ),
+        ]
 
     def __str__(self):
         return f"{self.appraisal} returned by {self.reviewer_name} ({self.stage})"
@@ -837,6 +894,12 @@ class PreviousAppraisal(models.Model):
             ),
         ]
         ordering = ['-appraisal_cycle', '-pk']
+        indexes = [
+            models.Index(
+                fields=['status', '-appraisal_cycle'],
+                name='app_prev_status_cycle_idx',
+            ),
+        ]
 
     def clean(self):
         super().clean()
@@ -876,6 +939,14 @@ class StaffId(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        indexes = [
+            models.Index(
+                Upper('name'),
+                name='app_staff_name_upper_idx',
+            ),
+        ]
+
     def __str__(self):
         return self.name 
 
@@ -894,6 +965,12 @@ class RegistrationCode(models.Model):
 
     class Meta:
         ordering = ['-created_at', '-pk']
+        indexes = [
+            models.Index(
+                fields=['staff_id', 'created_at'],
+                name='app_regcode_staff_created_idx',
+            ),
+        ]
 
     def __str__(self):
         return f"Registration code for staff ID {self.staff_id_id}"
@@ -913,6 +990,12 @@ class PasswordResetCode(models.Model):
 
     class Meta:
         ordering = ['-created_at', '-pk']
+        indexes = [
+            models.Index(
+                fields=['staff_id', 'created_at'],
+                name='app_pwdcode_staff_created_idx',
+            ),
+        ]
 
     def __str__(self):
         return f"Password reset code for staff ID {self.staff_id_id}"

@@ -209,7 +209,13 @@ body:has(.staff-registration-page) > .container { max-width: none; padding: 0; w
     text-decoration: underline;
     text-underline-offset: 3px;
 }
+.staff-registration-resend button[hidden] { display: none !important; }
 .staff-registration-resend button:hover { color: var(--registration-navy); }
+.staff-registration-resend button:disabled {
+    color: #8a989f;
+    cursor: not-allowed;
+    text-decoration: none;
+}
 .staff-registration-resend button:focus-visible { outline: 3px solid rgba(19, 141, 128, .55); outline-offset: 3px; }
 .staff-registration-help,
 .staff-registration-help ul {
