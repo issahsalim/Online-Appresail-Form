@@ -1413,8 +1413,11 @@
                                 <a href="{% url 'fill_targets_year' card.cycle.year %}" class="employee-action">View {{ card.cycle.year }} appraisal</a>
                             {% endif %}
                             {% if card.is_completed %}
-                                <a href="{% url 'employee_appraisal_pdf' card.appraisal.id %}" class="employee-action-secondary">Download completed appraisal PDF</a>
+                                <a href="{% url 'employee_appraisal_pdf' card.appraisal.id %}" class="employee-action-secondary">Download</a>
                             {% endif %}
+                        {% endif %}
+                        {% if card.appraisal.reference_number %}
+                            <a href="{% url 'employee_submission_slip' card.appraisal.id %}" class="employee-action-secondary">Print submission slip</a>
                         {% endif %}
                 </div>
             </article>
@@ -1515,6 +1518,9 @@
                                             {% endif %}
                                             {% if item.status == 'completed' %}
                                                 <a href="{% url 'employee_appraisal_pdf' item.id %}" class="btn btn-sm btn-outline-dark" title="Download / Print PDF">Print</a>
+                                            {% endif %}
+                                            {% if item.reference_number %}
+                                                <a href="{% url 'employee_submission_slip' item.id %}" class="btn btn-sm btn-outline-success">Submission slip</a>
                                             {% endif %}
                                         </div>
                                     </td>

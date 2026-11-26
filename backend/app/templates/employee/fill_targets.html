@@ -41,7 +41,7 @@
         align-items: center;
         display: grid;
         gap: clamp(.5rem, 2vw, 1.5rem);
-        grid-template-columns: minmax(64px, 120px) minmax(0, 1fr) minmax(64px, 120px);
+        grid-template-columns: minmax(64px, 100px) minmax(0, 1fr) 72px minmax(64px, 100px);
         margin: 0 auto 1.25rem;
         max-width: 1050px;
         text-align: center;
@@ -54,6 +54,20 @@
         object-fit: contain;
         width: 110px;
     }
+    .appraisal-document-header .appraisal-employee-photo {
+        border: 1px solid #d9e1e5;
+        border-radius: 8px;
+        height: 76px;
+        object-fit: cover;
+        width: 64px;
+    }
+    .appraisal-document-reference {
+        color: #173747;
+        font-size: .76rem;
+        font-weight: 750;
+        margin-top: .35rem;
+    }
+    .appraisal-document-reference strong { color: #087c58; letter-spacing: .04em; }
     .appraisal-document-header h1 {
         font-size: clamp(1.05rem, 2.4vw, 1.8rem);
         font-weight: 800;
@@ -396,8 +410,9 @@
             padding: 0 .35rem;
         }
         .appraisal-document { padding: .4rem; }
-        .appraisal-document-header { grid-template-columns: 52px minmax(0, 1fr) 52px; gap: .35rem; }
+        .appraisal-document-header { grid-template-columns: 38px minmax(0, 1fr) 38px 38px; gap: .3rem; }
         .appraisal-document-header img { max-height: 58px; width: 52px; }
+        .appraisal-document-header .appraisal-employee-photo { height: 48px; width: 36px; }
         .appraisal-document-header h1 { font-size: .93rem; }
         .appraisal-document-header p { font-size: .65rem; }
         .appraisal-document-header .appraisal-document-subtitle { font-size: .58rem; }
@@ -680,7 +695,13 @@
                 <p>PUBLIC SERVICES PERFORMANCE MANAGEMENT</p>
                 <p class="appraisal-document-subtitle">(STAFF PERFORMANCE PLANNING, REVIEW AND APPRAISAL FORM)</p>
                 <strong class="appraisal-confidential">STRICTLY CONFIDENTIAL</strong>
+                {% if appraisal.reference_number %}
+                    <div class="appraisal-document-reference">Reference number: <strong>{{ appraisal.reference_number }}</strong></div>
+                {% endif %}
             </div>
+            {% if appraisal.employee.profile_photo %}
+                <img class="appraisal-employee-photo" src="{% url 'profile_photo_file' %}" alt="Employee profile photo">
+            {% endif %}
             <img src="{% static 'images/mathias-catholic-hospital-logo.png' %}" alt="Mathias Catholic Hospital logo">
         </header>
 

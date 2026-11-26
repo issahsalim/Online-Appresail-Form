@@ -292,6 +292,9 @@ def _notify_hr_of_submission(appraisal):
 
 
 def _submit_appraisal_to_next_stage(appraisal, profile):
+    if not appraisal.reference_number:
+        appraisal.reference_number = f"MCHY-{appraisal.cycle.year}-{appraisal.pk:06d}"
+
     if profile.role == 'HOD':
         appraisal.status = 'pending_hr'
         appraisal.hod_signed_at = timezone.now()
@@ -300,6 +303,7 @@ def _submit_appraisal_to_next_stage(appraisal, profile):
             'status',
             'hod_signed_at',
             'employee_signed_at',
+            'reference_number',
         ])
         _notify_hr_of_submission(appraisal)
         return 'HR'
@@ -319,6 +323,7 @@ def _submit_appraisal_to_next_stage(appraisal, profile):
         'supervisor',
         'status',
         'employee_signed_at',
+        'reference_number',
     ])
     notify_users(
         [assigned_reviewer.user],
@@ -2070,7 +2075,11 @@ def submit_to_supervisor(request, appraisal_id):
             return redirect('employee_dashboard')
 
         destination = _submit_appraisal_to_next_stage(appraisal, request.user.profile)
+        if destination is None:
+            messages.error(request, "We could not submit your appraisal. Please contact HR for help.")
+            return redirect('employee_dashboard')
         messages.success(request, f"Appraisal submitted to {destination} successfully!")
+        return redirect('employee_submission_slip', appraisal_id=appraisal.id)
     
     return redirect(
         'hod_dashboard'
@@ -3590,6 +3599,42 @@ def employee_appraisal_pdf(request, appraisal_id):
         'trainings': appraisal.trainings.all(),
         'targets': score_context['score_breakdown']['targets'],
         **score_context,
+        'return_history': appraisal.returns.select_related('reviewer'),
+        'assigned_supervisor': appraisal.supervisor,
+    })
+
+
+@login_required
+def employee_submission_slip(request, appraisal_id):
+    appraisal = get_object_or_404(
+        Appraisal.objects.select_related(
+            'employee__user',
+            'employee__department',
+            'supervisor__user',
+            'hod__user',
+            'cycle',
+        ).prefetch_related(
+            'targets',
+            'trainings',
+            'competency_scores__competency',
+        ),
+        pk=appraisal_id,
+        employee=request.user.profile,
+    )
+    if not appraisal.reference_number or not appraisal.employee_signed_at:
+        messages.error(request, 'A submission slip is available after your appraisal has been submitted.')
+        return redirect('employee_dashboard')
+
+    return render(request, 'employee/fill_targets.html', {
+        'appraisal': appraisal,
+        'read_only': True,
+        'print_mode': True,
+        'trainings': appraisal.trainings.all(),
+        'targets': appraisal.targets.all(),
+        'competencies': appraisal.competency_scores.select_related(
+            'competency',
+        ).prefetch_related('statement_scores'),
+        **_score_breakdown_context(appraisal),
         'return_history': appraisal.returns.select_related('reviewer'),
         'assigned_supervisor': appraisal.supervisor,
     })

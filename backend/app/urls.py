@@ -16,6 +16,7 @@ urlpatterns = [
     path('employee/fill-targets/<int:year>/', views.fill_targets, name='fill_targets_year'),
     path('employee/appraisal/<int:appraisal_id>/', views.employee_appraisal_detail, name='employee_appraisal_detail'),
     path('employee/appraisal/<int:appraisal_id>/pdf/', views.employee_appraisal_pdf, name='employee_appraisal_pdf'),
+    path('employee/appraisal/<int:appraisal_id>/submission-slip/', views.employee_submission_slip, name='employee_submission_slip'),
     path('employee/submit/<int:appraisal_id>/', views.submit_to_supervisor, name='submit_to_supervisor'),
     path(
         'login/',
