@@ -61,7 +61,7 @@ class EmployeeProfile(models.Model):
         max_length=32,
         choices=SECURITY_QUESTION_CHOICES,
         blank=True,
-    )
+    ) 
     security_answer_hash = models.CharField(max_length=128, blank=True)
     profile_photo = models.ImageField(
         upload_to='profile_photos/%Y/%m/',
