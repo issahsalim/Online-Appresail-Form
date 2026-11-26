@@ -677,8 +677,11 @@
 <main class="appraisal-form-page{% if print_mode %} appraisal-print-mode{% endif %}">
     <div class="appraisal-toolbar no-print">
         {% if print_mode %}
-            <a href="{% url 'employee_appraisal_detail' appraisal.id %}" class="btn btn-outline-secondary">Back to appraisal</a>
-            <button type="button" class="btn appraisal-button-primary" onclick="window.print()">Download / Save as PDF</button>
+            <a href="{% if back_to_dashboard %}{% url 'employee_dashboard' %}{% else %}{% url 'employee_appraisal_detail' appraisal.id %}{% endif %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left" aria-hidden="true"></i>
+                {% if back_to_dashboard %}Back to dashboard{% else %}Back to appraisal{% endif %}
+            </a>
+            <button type="button" class="btn appraisal-button-primary" onclick="window.print()"><i class="bi bi-printer" aria-hidden="true"></i> Print Application Summary</button>
         {% else %}
             <a href="{% url dashboard_url_name %}" class="btn btn-outline-secondary">Dashboard </a>
             {% if read_only and allow_pdf and appraisal.status == 'completed' %}
@@ -1329,4 +1332,11 @@
         }
     })();
 </script>
+{% if auto_print %}
+<script>
+    window.addEventListener('load', () => {
+        window.setTimeout(() => window.print(), 150);
+    }, { once: true });
+</script>
+{% endif %}
 {% endblock %}
