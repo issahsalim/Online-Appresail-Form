@@ -179,8 +179,34 @@
         }
         .profile-avatar-edit-badge svg { height: 15px; width: 15px; }
         .profile-photo-error { color: #963f32; font-size: .75rem; margin: .5rem 1.5rem; }
-        .profile-photo-caption { color: #778393; font-size: .72rem; margin: .45rem 0 0; }
         .profile-identity-copy { min-width: 0; }
+        .profile-edit-trigger {
+            align-items: center;
+            background: #07875f;
+            border: 1px solid #07875f;
+            border-radius: 9px;
+            color: #fff;
+            display: inline-flex;
+            flex: 0 0 auto;
+            font-size: .88rem;
+            font-weight: 700;
+            gap: .55rem;
+            justify-content: center;
+            margin-left: auto;
+            min-height: 46px;
+            min-width: 180px;
+            padding: .7rem 1.05rem;
+            transition: background .18s ease, box-shadow .18s ease, transform .18s ease;
+        }
+        .profile-edit-trigger svg { height: 19px; width: 19px; }
+        .profile-edit-trigger:hover,
+        .profile-edit-trigger:focus-visible {
+            background: #056e4d;
+            box-shadow: 0 5px 14px rgba(7, 135, 95, .2);
+            color: #fff;
+            transform: translateY(-1px);
+        }
+        .profile-edit-trigger:focus-visible { outline: 3px solid rgba(7, 135, 95, .2); outline-offset: 2px; }
         .profile-identity h2 {
             color: #202b3a;
             font-size: 1.35rem;
@@ -289,11 +315,27 @@
         }
         .profile-edit summary::before { background: #e6f7ee; border-radius: 8px; color: #07875f; content: "✎"; display: inline-grid; height: 30px; margin-right: .7rem; place-items: center; width: 30px; }
         .profile-edit summary { justify-content: flex-start; }
+        .profile-edit summary::before { content: none; }
         .profile-edit summary::after { margin-left: auto; }
         .profile-edit summary::-webkit-details-marker { display: none; }
         .profile-edit summary::after { content: "+"; font-size: 1.15rem; font-weight: 500; }
+        .profile-edit[open] summary::after { content: "-"; }
+        .profile-edit-icon {
+            align-items: center;
+            background: #e6f7ee;
+            border-radius: 8px;
+            color: #07875f;
+            display: inline-flex;
+            flex: 0 0 30px;
+            height: 30px;
+            justify-content: center;
+            margin-right: .7rem;
+            width: 30px;
+        }
+        .profile-edit-icon svg { height: 17px; width: 17px; }
         .profile-edit[open] summary::after { content: "−"; }
         .profile-form-body { border-top: 1px solid #e9efec; padding: 1.1rem 0 1.3rem; }
+        .profile-edit[open] summary::after { content: "-"; }
         .profile-edit-intro { color: #778393; font-size: .8rem; margin: 0 0 1.2rem; }
         .profile-field-grid { display: grid; gap: 1rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
         .profile-field-title { grid-column: 1 / -1; max-width: 220px; }
@@ -363,6 +405,7 @@
             .profile-card { max-height: none; }
             .profile-card-header { padding: 1rem 1.1rem; }
             .profile-identity { margin-inline: 1.1rem; padding: 1.2rem .1rem; }
+            .profile-edit-trigger { min-width: 0; }
             .profile-photo-controls { flex-basis: 64px; width: 64px; }
             .profile-photo-form { flex-basis: 64px; height: 64px; width: 64px; }
             .profile-avatar { font-size: 1.15rem; height: 64px; width: 64px; }
@@ -382,7 +425,6 @@
             .profile-photo-controls { align-self: center; }
             .profile-identity-copy { text-align: center; width: 100%; }
             .profile-role { justify-content: center; }
-            .profile-photo-caption { margin-inline: auto; max-width: 260px; }
             .profile-information { padding-inline: .85rem; }
             .profile-edit { margin-inline: .75rem; }
             .profile-card-footer { padding: .75rem; }
@@ -412,7 +454,7 @@
                     accept="image/*"
                     required
                 >
-                <label class="profile-avatar profile-avatar-picker" for="{{ photo_form.profile_photo.id_for_label }}" title="Upload or change profile photo">
+                <label class="profile-avatar profile-avatar-picker" for="{{ photo_form.profile_photo.id_for_label }}">
                 {% if request.user.profile.profile_photo %}
                     <img class="profile-avatar-image" src="{% url 'profile_photo_file' %}" alt="">
                 {% else %}
@@ -425,11 +467,9 @@
                             <path d="M4 8.5h3l1.5-2h7l1.5 2h3v10H4v-10Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
                             <circle cx="12" cy="13" r="3.2" stroke="currentColor" stroke-width="1.7"/>
                         </svg>
-                        Change photo
                     </span>
-                    <span class="visually-hidden">Upload or change profile photo</span>
                 </label>
-                <button class="profile-avatar-edit-badge" type="button" aria-label="Upload or change profile photo" onclick="document.getElementById('{{ photo_form.profile_photo.id_for_label }}').click()">
+                <button class="profile-avatar-edit-badge" type="button" aria-label="Upload or change profile photo" title="Upload or change profile photo" onclick="document.getElementById('{{ photo_form.profile_photo.id_for_label }}').click()">
                         <svg viewBox="0 0 24 24" fill="none">
                             <path d="m14.5 5.5 4 4M4.5 19.5l4.3-.9L19.2 8.2a2.1 2.1 0 0 0-3-3L5.8 15.6l-1.3 3.9Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
@@ -455,8 +495,13 @@
                     </svg>
                     {{ request.user.profile.get_role_display|default:request.user.profile.role }}
                 </span>
-                <p class="profile-photo-caption">Upload or replace your profile photo. Maximum size: 5 MB.</p>
             </div>
+            <button class="profile-edit-trigger" type="button" aria-controls="profile-edit-panel">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="m14.5 5.5 4 4M4.5 19.5l4.3-.9L19.2 8.2a2.1 2.1 0 0 0-3-3L5.8 15.6l-1.3 3.9Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>Update Profile</span>
+            </button>
         </div>
         {% for error in photo_form.profile_photo.errors %}
             <p class="profile-photo-error">{{ error }}</p>
@@ -472,6 +517,19 @@
                     };
                     profileTitleSelect.addEventListener('change', updateOtherTitleVisibility);
                     updateOtherTitleVisibility();
+                }
+
+                const editProfileTrigger = document.querySelector('.profile-edit-trigger');
+                const editProfilePanel = document.getElementById('profile-edit-panel');
+                if (editProfileTrigger && editProfilePanel) {
+                    editProfileTrigger.addEventListener('click', () => {
+                        editProfilePanel.open = true;
+                        editProfilePanel.scrollIntoView({
+                            behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+                            block: 'center',
+                        });
+                        editProfilePanel.querySelector('summary')?.focus({ preventScroll: true });
+                    });
                 }
 
                 const profilePhotoInput = document.querySelector('.profile-photo-input');
@@ -590,8 +648,15 @@
         
         
 
-        <details class="profile-edit"{% if form.errors %} open{% endif %}>
-            <summary>Edit personal information</summary>
+        <details class="profile-edit" id="profile-edit-panel"{% if form.errors %} open{% endif %}>
+            <summary>
+                <span class="profile-edit-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <path d="m14.5 5.5 4 4M4.5 19.5l4.3-.9L19.2 8.2a2.1 2.1 0 0 0-3-3L5.8 15.6l-1.3 3.9Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </span>
+                Edit personal information
+            </summary>
             <form method="post" class="profile-form-body">
                 {% csrf_token %}
                 <p class="profile-edit-intro">Update the personal information associated with your account.</p>
