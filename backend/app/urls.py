@@ -25,7 +25,7 @@ urlpatterns = [
             authentication_form=StaffLoginForm,
         ),
         name='login',
-    ),
+    ), 
     path('register/', views.employee_registration, name='employee_registration'),
     path('register/verify/', views.verify_registration_code, name='verify_registration_code'),
     path('register/verify/resend/', views.resend_registration_code, name='resend_registration_code'),
