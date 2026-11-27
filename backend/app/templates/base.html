@@ -369,6 +369,11 @@
             .role-sidebar-nav { transition-duration: .01ms !important; }
         }
         .navbar-appraisal {
+            --bs-navbar-color: #315d4d;
+            --bs-navbar-hover-color: #07875f;
+            --bs-navbar-brand-color: #07875f;
+            --bs-navbar-brand-hover-color: #056e4d;
+            --bs-navbar-toggler-border-color: #c9ddd2;
             background: linear-gradient(110deg, #ddfff0 0%, #fff8cc 100%);
             box-shadow: 0 3px 14px rgba(32, 63, 48, .08);
             border: 0;
@@ -381,11 +386,17 @@
         }
         .navbar-appraisal .navbar-brand {
             align-items: center;
-            color: #07875f;
+            color: #07875f !important;
             display: inline-flex;
             gap: .7rem;
             letter-spacing: .02em;
+            line-height: 1.2;
         }
+        .navbar-appraisal .navbar-brand:hover,
+        .navbar-appraisal .navbar-brand:focus-visible { color: #056e4d !important; }
+        .navbar-appraisal .navbar-toggler { border-color: #c9ddd2; border-radius: 9px; padding: .4rem .55rem; }
+        .navbar-appraisal .navbar-toggler:focus { box-shadow: 0 0 0 .2rem rgba(7,135,95,.16); }
+        .navbar-appraisal .navbar-toggler-icon { filter: none; }
         .navbar-support-link {
             align-items: center;
             color: #315d4d;
@@ -405,12 +416,32 @@
         }
         .navbar-support-link i { color: #16845d; font-size: 1rem; }
         .navbar-brand-mark {
-            height: 40px;
+            background: #fff;
+            border-radius: 50%;
+            height: 42px;
             object-fit: contain;
-            width: 40px;
+            padding: 3px;
+            width: 42px;
         }
         .navbar-brand-copy { display: grid; gap: .05rem; line-height: 1.15; }
-        .navbar-brand-copy small { color: #4a9d77; font-size: .68rem; font-weight: 500; }
+        .navbar-appraisal .navbar-brand-copy { color: #07875f; font-size: .88rem; font-weight: 800; }
+        .navbar-appraisal .navbar-brand-copy small { color: #4a9d77; font-size: .68rem; font-weight: 600; }
+        .navbar-appraisal .navbar-collapse { min-width: 0; }
+        .navbar-appraisal .navbar-nav { align-items: center; gap: .35rem; }
+        .navbar-appraisal .navbar-notifications { order: 1; }
+        .navbar-appraisal .navbar-account { order: 2; }
+        .navbar-appraisal .navbar-nav:has(.navbar-account.show) .navbar-notifications-toggle,
+        .navbar-appraisal .navbar-nav:has(.navbar-account.show) .navbar-notifications-toggle * {
+            animation: none !important;
+            transform: none !important;
+        }
+        .navbar-appraisal .navbar-nav .nav-link { border-radius: 8px; color: #315d4d !important; display: block; font-size: .78rem; font-weight: 750; opacity: 1; padding: .65rem .8rem; position: relative; transition: background .18s ease,color .18s ease; visibility: visible; }
+        .navbar-appraisal .navbar-nav .nav-link::after { background: #07875f; bottom: .28rem; content: ""; height: 2px; left: .8rem; position: absolute; transform: scaleX(0); transform-origin: left; transition: transform .2s ease; width: calc(100% - 1.6rem); }
+        .navbar-appraisal .navbar-nav .nav-link:hover,
+        .navbar-appraisal .navbar-nav .nav-link:focus-visible { background: rgba(255,255,255,.7); color: #056e4d !important; }
+        .navbar-appraisal .navbar-nav .nav-link:hover::after,
+        .navbar-appraisal .navbar-nav .nav-link:focus-visible::after,
+        .navbar-appraisal .navbar-nav .nav-link[aria-current="page"]::after { transform: scaleX(1); }
         .navbar-account-toggle {
             align-items: center;
             background: rgba(255, 255, 255, .88);
@@ -529,13 +560,13 @@
             margin: .2rem;
             min-height: 42px;
             padding: .4rem .65rem;
-            transition: background .18s ease, border-color .18s ease, transform .18s ease;
+            transition: background .18s ease, border-color .18s ease, color .18s ease, transform .18s ease;
         }
         .navbar-notifications-toggle:hover,
         .navbar-notifications-toggle:focus-visible {
             background: #fff;
             border-color: #cde8d7;
-            color: #6e0505;
+            color: #056e4d;
             transform: translateY(-1px);
         }
         .navbar-notifications-toggle:focus-visible { outline: 3px solid rgba(7, 135, 95, .18); outline-offset: 2px; }
@@ -550,7 +581,7 @@
         .navbar-notifications-toggle:hover .navbar-notifications-icon { animation: notification-bell-ring .45s ease; }
         .navbar-notification-count {
             align-items: center;
-            background: #6e0505;
+            background: #c43d4b;
             border-radius: 999px;
             color: #fff;
             display: inline-flex;
@@ -567,11 +598,10 @@
             z-index: 1;
         }
         .navbar-notifications-toggle.has-unread .navbar-notifications-icon {
-            animation: notification-unread-ring 3.4s ease-in-out infinite;
             transform-origin: 50% 10%;
         }
         .navbar-notifications-toggle.has-unread .navbar-notification-count {
-            animation: notification-count-pulse 2.8s ease-out infinite;
+            box-shadow: 0 0 0 3px rgba(196, 61, 75, .1);
         }
         .navbar-notifications-toggle.is-arriving .navbar-notifications-icon {
             animation: notification-bell-ring .9s ease-in-out 2;
@@ -650,7 +680,7 @@
             width: 7px;
         }
         .navbar-notification-title { color: #173747; display: block; font-size: .84rem; font-weight: 750; line-height: 1.3; }
-        .navbar-notification-message { color: #657983; display: block; font-size: .76rem; line-height: 1.45; margin-top: .22rem; }
+        .navbar-notification-message { color: #657983; display: block; font-size: .76rem; line-height: 1.45; margin-top: .22rem; overflow-wrap: anywhere; }
         .navbar-notification-time { color: #84939a; display: block; font-size: .68rem; margin-top: .38rem; }
         .navbar-notifications-empty {
             color: #73847a;
@@ -731,12 +761,55 @@
         }
         @media (max-width: 575.98px) {
             .navbar-notifications-menu {
-                max-height: min(65vh, 420px);
-                width: min(340px, calc(100vw - 1rem));
+                max-height: min(70vh, 520px);
+                width: calc(100vw - 1rem);
+            }
+            .navbar-notifications-heading { font-size: .98rem; padding: .85rem .8rem; }
+            .navbar-notification-unread-count { font-size: .74rem; }
+            .navbar-notification-open { padding: .85rem .7rem .85rem 1.05rem; }
+            .navbar-notification-title { font-size: .96rem; line-height: 1.4; }
+            .navbar-notification-message { font-size: .9rem; line-height: 1.55; }
+            .navbar-notification-time { font-size: .76rem; }
+            .navbar-notifications-empty { font-size: .9rem; }
+            .navbar-notification-all {
+                box-sizing: border-box;
+                justify-content: center;
+                margin: .5rem 0 0;
+                min-height: 46px;
+                padding: .75rem .65rem;
+                width: 100%;
             }
         }
         @media (max-width: 991.98px) {
+            .navbar-appraisal { padding-block: .25rem; }
+            .navbar-appraisal > .container { flex-wrap: wrap; gap: .2rem .75rem; padding-inline: 1rem; }
+            .navbar-appraisal .navbar-brand { flex: 1 1 auto; min-width: 0; }
+            .navbar-appraisal .navbar-brand-copy { font-size: .82rem; }
+            .navbar-appraisal .navbar-brand-copy small { font-size: .64rem; }
+            .navbar-appraisal .navbar-toggler { flex: 0 0 auto; margin-left: auto; }
+            .navbar-appraisal .navbar-collapse { flex-basis: 100%; padding: .45rem 0 .25rem; }
+            .navbar-appraisal .navbar-nav { align-items: center; flex-direction: row; flex-wrap: nowrap; gap: .55rem; justify-content: flex-end; width: 100%; }
+            .navbar-appraisal .navbar-nav > .nav-item { flex: 0 0 auto; width: auto; }
+            .navbar-appraisal .navbar-nav .nav-link { min-height: 42px; padding: .7rem .8rem; }
+            .navbar-appraisal .navbar-account { flex: 0 1 auto; min-width: 0; }
+            .navbar-appraisal .navbar-account-toggle { margin: .2rem 0; max-width: min(100%, 260px); min-width: 0; width: auto; }
+            .navbar-appraisal .navbar-account-copy { max-width: 150px; min-width: 0; }
+            .navbar-appraisal .navbar-account-copy strong,
+            .navbar-appraisal .navbar-account-copy small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+            .navbar-appraisal .navbar-account-menu { max-width: calc(100vw - 1rem); min-width: min(250px, calc(100vw - 1rem)); }
+            .navbar-appraisal .navbar-notifications { align-items: center; display: flex; flex: 0 0 auto; flex-direction: row; width: auto; }
+            .navbar-appraisal .navbar-notifications-toggle { margin: .2rem 0; }
+            .navbar-appraisal .navbar-notifications-menu { max-width: calc(100vw - 1rem); }
             .navbar-account-toggle { justify-content: flex-start; margin: .25rem 0; min-height: 48px; }
+        }
+        @media (max-width: 359.98px) {
+            .navbar-appraisal > .container { padding-inline: .65rem; }
+            .navbar-appraisal .navbar-brand { gap: .45rem; }
+            .navbar-brand-mark { height: 36px; width: 36px; }
+            .navbar-appraisal .navbar-brand-copy { font-size: .72rem; }
+            .navbar-appraisal .navbar-brand-copy small { display: none; }
+            .navbar-appraisal .navbar-account-copy { max-width: 92px; }
+            .navbar-appraisal .navbar-account-toggle { gap: .35rem; padding-right: .5rem; }
         }
         @media (min-width: 768px) {
             body:has(.role-dashboard-shell) .role-dashboard-shell {
@@ -948,7 +1021,7 @@
 <small>Staff performance & development</small></span>
             </a>
             
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle main navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             
@@ -961,8 +1034,10 @@
                                 class="navbar-notifications-toggle{% if unread_notification_count %} has-unread{% endif %}"
                                 type="button"
                                 data-bs-toggle="dropdown"
+                                data-bs-boundary="viewport"
                                 data-notification-status-url="{% url 'notification_status' %}"
                                 data-unread-count="{{ unread_notification_count }}"
+                                aria-controls="navbarNotificationsMenu"
                                 aria-expanded="false"
                                 aria-label="Notifications{% if unread_notification_count %}, {{ unread_notification_count }} unread{% endif %}"
                             >
@@ -971,11 +1046,11 @@
                                         <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
                                     </svg>
                                     {% if unread_notification_count %}
-                                        <span class="navbar-notification-count">{{ unread_notification_count }}</span>
+                                        <span class="navbar-notification-count" aria-hidden="true" title="{{ unread_notification_count }} unread notification{{ unread_notification_count|pluralize }}">{{ unread_notification_count }}</span>
                                     {% endif %}
                                 </span>
                             </button>
-                            <div class="dropdown-menu dropdown-menu-end navbar-notifications-menu">
+                            <div class="dropdown-menu navbar-notifications-menu" id="navbarNotificationsMenu" aria-label="Recent notifications">
                                 <div class="navbar-notifications-heading">
                                     <span>Recent notifications</span>
                                     {% if unread_notification_count %}
@@ -1167,13 +1242,158 @@
             outline: 0;
         }
         :is(.hr-dashboard-shell, .role-dashboard-shell) [data-search-status] { color: #77877d; font-size: .72rem; }
+        /* Keep every role dashboard in the same green palette as the shared navbar. */
+        body:has(.role-dashboard-shell) .role-dashboard-shell > .role-dashboard-sidebar,
+        body:has(.hr-dashboard-shell) .hr-dashboard-sidebar {
+            background: linear-gradient(110deg, #00ad78 0%, #009e83 100%) !important;
+            border: 0 !important;
+            border-bottom: 1px solid #07875f !important;
+            box-shadow: 0 5px 16px rgba(7,135,95,.12) !important;
+            color: #fff !important;
+        }
+        body:has(.role-dashboard-shell) .role-dashboard-shell .role-sidebar-brand,
+        body:has(.hr-dashboard-shell) .hr-sidebar-brand,
+        body:has(.role-dashboard-shell) .role-dashboard-shell .role-sidebar-drawer-brand,
+        body:has(.hr-dashboard-shell) .hr-sidebar-drawer-brand { color: #fff !important; }
+        body:has(.role-dashboard-shell) .role-dashboard-shell .role-sidebar-label,
+        body:has(.hr-dashboard-shell) .hr-sidebar-label { color: #c7e9dc !important; }
+        body:has(.role-dashboard-shell) .role-dashboard-shell .role-sidebar-link,
+        body:has(.hr-dashboard-shell) .hr-sidebar-link { color: rgba(255,255,255,.88) !important; }
+        body:has(.role-dashboard-shell) .role-dashboard-shell .role-sidebar-link:hover,
+        body:has(.hr-dashboard-shell) .hr-sidebar-link:hover {
+            background: rgba(255,255,255,.13) !important;
+            color: #fff !important;
+        }
+        body:has(.role-dashboard-shell) .role-dashboard-shell .role-sidebar-link.active,
+        body:has(.hr-dashboard-shell) .hr-sidebar-link.active {
+            background: #fff !important;
+            box-shadow: inset 0 -3px #e4b83f !important;
+            color: #0b302b !important;
+        }
+        body:has(.role-dashboard-shell) .role-dashboard-shell .role-sidebar-link.active .role-sidebar-link-note,
+        body:has(.hr-dashboard-shell) .hr-sidebar-link.active .hr-sidebar-link-note { color: #527268 !important; }
+        body:has(.role-dashboard-shell) .role-dashboard-shell .role-sidebar-icon,
+        body:has(.hr-dashboard-shell) .hr-sidebar-icon {
+            background: rgba(255,255,255,.13) !important;
+            border-color: rgba(255,255,255,.2) !important;
+            color: #d8f6e9 !important;
+        }
+        body:has(.role-dashboard-shell) .role-dashboard-shell .role-sidebar-link.active .role-sidebar-icon,
+        body:has(.hr-dashboard-shell) .hr-sidebar-link.active .hr-sidebar-icon {
+            background: #e5f5ed !important;
+            border-color: #d2eadc !important;
+            color: #07875f !important;
+        }
+        body:has(.role-dashboard-shell) .role-dashboard-shell .role-sidebar-count,
+        body:has(.hr-dashboard-shell) .hr-sidebar-count {
+            background: rgba(255,255,255,.16) !important;
+            border-color: rgba(255,255,255,.28) !important;
+            color: #fff !important;
+        }
+        body:has(.role-dashboard-shell) .role-dashboard-shell .role-sidebar-link.active .role-sidebar-count,
+        body:has(.hr-dashboard-shell) .hr-sidebar-link.active .hr-sidebar-count {
+            background: #e5f5ed !important;
+            border-color: #d2eadc !important;
+            color: #07875f !important;
+        }
+        .supervisor-page .supervisor-action,
+        .hod-page .hod-action,
+        .hr-dashboard-shell .hr-overview-filter-button {
+            background: #07875f;
+            border-color: #07875f;
+            color: #fff;
+        }
+        .supervisor-page .supervisor-action:hover,
+        .hod-page .hod-action:hover,
+        .hr-dashboard-shell .hr-overview-filter-button:hover {
+            background: #056e4d;
+            border-color: #056e4d;
+            color: #fff;
+        }
+        .supervisor-page .supervisor-action-secondary,
+        .hod-page .hod-action-secondary {
+            background: #eef8f3;
+            border-color: #d3e9dc;
+            color: #176c54;
+        }
+        .supervisor-page .supervisor-action-secondary:hover,
+        .hod-page .hod-action-secondary:hover { background: #e2f3e9; border-color: #b9ddc8; color: #0b5c43; }
+        .supervisor-page .supervisor-tabs .nav-link.active,
+        .hod-page .hod-tabs .nav-link.active {
+            box-shadow: inset 0 -3px #e4b83f;
+            color: #07875f;
+        }
+        .supervisor-page .supervisor-tab-count,
+        .hod-page .hod-tab-count { background: #e7f5ed; color: #087254; }
+        .hod-page .hod-hero { background: linear-gradient(105deg, #07875f 0%, #0b302b 100%); }
+        .supervisor-page .supervisor-table thead th,
+        .hod-page .hod-table th { background: #0b302b; color: #f3fff8; }
+        .hr-dashboard-header h2,
+        .supervisor-view-heading h1,
+        .hod-hero h1,
+        .employee-dashboard-content > header h2 { color: #0b302b; }
+        @media (max-width: 767.98px) {
+            body:has(.role-dashboard-shell) .role-dashboard-shell .role-sidebar-nav,
+            body:has(.hr-dashboard-shell) .hr-sidebar-nav {
+                background: linear-gradient(160deg, #00ad78 0%, #009e83 100%) !important;
+            }
+            body:has(.supervisor-page) .supervisor-page .role-sidebar-toggle,
+            body:has(.hod-page) .hod-page .role-sidebar-toggle,
+            body:has(.supervisor-page) .supervisor-page .role-sidebar-close,
+            body:has(.hod-page) .hod-page .role-sidebar-close,
+            body:has(.hr-dashboard-shell) .hr-sidebar-toggle,
+            body:has(.hr-dashboard-shell) .hr-sidebar-close {
+                background: #07875f !important;
+                border-color: rgba(228,184,63,.72) !important;
+                color: #fff !important;
+            }
+            body:has(.supervisor-page) .supervisor-page .role-sidebar-toggle,
+            body:has(.hod-page) .hod-page .role-sidebar-toggle,
+            body:has(.hr-dashboard-shell) .hr-sidebar-toggle {
+                left: auto !important;
+                margin: .65rem .85rem !important;
+                position: relative !important;
+                right: auto !important;
+                top: auto !important;
+                z-index: 1031 !important;
+            }
+            body:has(.supervisor-page) .supervisor-page .role-sidebar-toggle,
+            body:has(.hod-page) .hod-page .role-sidebar-toggle,
+            body:has(.hr-dashboard-shell) .hr-sidebar-toggle {
+                align-items: center !important;
+                border-radius: 10px !important;
+                box-shadow: 0 5px 14px rgba(11,71,53,.16) !important;
+                display: inline-flex !important;
+                height: 44px !important;
+                justify-content: center !important;
+                min-height: 44px !important;
+                min-width: 44px !important;
+                padding: .5rem !important;
+                width: 44px !important;
+            }
+            body:has(.supervisor-page) .supervisor-page .role-sidebar-toggle:focus-visible,
+            body:has(.hod-page) .hod-page .role-sidebar-toggle:focus-visible,
+            body:has(.hr-dashboard-shell) .hr-sidebar-toggle:focus-visible,
+            body:has(.supervisor-page) .supervisor-page .role-sidebar-close:focus-visible,
+            body:has(.hod-page) .hod-page .role-sidebar-close:focus-visible,
+            body:has(.hr-dashboard-shell) .hr-sidebar-close:focus-visible {
+                outline: 3px solid rgba(228,184,63,.75) !important;
+                outline-offset: 2px;
+            }
+            body:has(.supervisor-page) .supervisor-dashboard-content,
+            body:has(.hr-dashboard-shell) .hr-dashboard-content {
+                padding-top: .25rem !important;
+            }
+        }
         @media (max-width: 575.98px) {
             :is(.hr-dashboard-shell, .role-dashboard-shell) table.table,
             :is(.hr-dashboard-shell, .role-dashboard-shell) table.employee-table { min-width: 560px; }
         }
     </style>
 
-    {% include 'partials/site_footer.html' %}
+    {% block site_footer %}
+        {% include 'partials/site_footer.html' %}
+    {% endblock %}
 
     <div class="modal fade" id="appConfirmationModal" tabindex="-1" aria-labelledby="appConfirmationTitle" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
@@ -1361,9 +1581,11 @@
                     if (!badge) {
                         badge = document.createElement('span');
                         badge.className = 'navbar-notification-count';
+                        badge.setAttribute('aria-hidden', 'true');
                         iconWrap.append(badge);
                     }
                     badge.textContent = String(count);
+                    badge.title = `${count} unread notification${count === 1 ? '' : 's'}`;
                 } else {
                     badge?.remove();
                 }
@@ -1434,6 +1656,47 @@
             document.addEventListener('visibilitychange', () => {
                 if (!document.hidden) refreshUnreadCount();
             });
+        })();
+    </script>
+    <script>
+        (() => {
+            const toggle = document.querySelector('.navbar-notifications-toggle');
+            const menu = document.querySelector('.navbar-notifications-menu');
+            if (!toggle || !menu) return;
+
+            const mobileViewport = window.matchMedia('(max-width: 991.98px)');
+            const clearMobilePosition = () => {
+                ['position', 'left', 'right', 'top', 'transform', 'margin'].forEach((property) => {
+                    menu.style.removeProperty(property);
+                });
+            };
+
+            function placeMenuBesideBell() {
+                if (!mobileViewport.matches || !menu.classList.contains('show')) return;
+
+                const bell = toggle.getBoundingClientRect();
+                const viewportWidth = document.documentElement.clientWidth;
+                const edge = 8;
+                const menuWidth = Math.min(menu.offsetWidth, viewportWidth - edge * 2);
+                const left = Math.min(
+                    Math.max(edge, bell.left),
+                    viewportWidth - menuWidth - edge,
+                );
+
+                menu.style.setProperty('position', 'fixed', 'important');
+                menu.style.setProperty('left', `${left}px`, 'important');
+                menu.style.setProperty('right', 'auto', 'important');
+                menu.style.setProperty('top', `${bell.bottom + 8}px`, 'important');
+                menu.style.setProperty('transform', 'none', 'important');
+                menu.style.setProperty('margin', '0', 'important');
+            }
+
+            toggle.addEventListener('shown.bs.dropdown', () => {
+                window.requestAnimationFrame(placeMenuBesideBell);
+            });
+            toggle.addEventListener('hidden.bs.dropdown', clearMobilePosition);
+            window.addEventListener('resize', placeMenuBesideBell, { passive: true });
+            window.addEventListener('scroll', placeMenuBesideBell, { passive: true, capture: true });
         })();
     </script>
     <script>

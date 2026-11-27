@@ -5,7 +5,7 @@
 {% block content %}
 <div class="container py-4 py-md-5">
     <style>
-        .notifications-page { color: #294653; margin: 0 auto; max-width: 920px; }
+        .notifications-page { color: #294653; margin: 0 auto; max-width: 1200px; width: 100%; }
         .notifications-header {
             align-items: center;
             background: #fff;
@@ -38,11 +38,13 @@
         .notification-indicator { background: #c8d2d8; border-radius: 50%; flex: 0 0 9px; height: 9px; margin-top: .4rem; }
         .notification-row.unread .notification-indicator { background: #23495b; }
         .notification-content { flex: 1; min-width: 0; }
-        .notification-content button { background: none; border: 0; color: inherit; padding: 0; text-align: left; width: 100%; }
+        .notification-content button { background: none; border: 0; color: inherit; display: block; padding: 0; text-align: left; width: 100%; }
         .notification-content button:hover .notification-title { text-decoration: underline; }
         .notification-title { color: #173747; display: block; font-size: .92rem; font-weight: 750; }
         .notification-message { color: #627781; display: block; font-size: .86rem; line-height: 1.5; margin-top: .22rem; }
         .notification-time { color: #84939a; display: block; font-size: .74rem; margin-top: .38rem; }
+        .notification-delete { color: #8a4650; display: inline-block; font-size: .75rem; margin-top: .5rem; text-decoration: none; }
+        .notification-delete:hover, .notification-delete:focus-visible { color: #6f2530; text-decoration: underline; }
         .notifications-empty { color: #72828b; padding: 3rem 1.5rem; text-align: center; }
         .notifications-pagination { display: flex; gap: .35rem; justify-content: center; margin-top: 1rem; }
         .notifications-pagination a,
@@ -90,13 +92,13 @@
                     <div class="notification-content">
                         <form action="{% url 'open_notification' notification.id %}" method="post">
                             {% csrf_token %}
-                            
+                            <button type="submit" aria-label="Open notification: {{ notification.title }}">
                                 <span class="notification-title">{{ notification.title }} </span>
                                 <span class="notification-message">{{ notification.message }}</span>
                                 <span class="notification-time">{{ notification.created_at|date:"M j, Y, P" }}</span>
-                                  <a href="{% url 'delete_noti' notification.id %}">delete</a> 
-                                 
+                            </button>
                         </form>
+                        <a class="notification-delete" href="{% url 'delete_noti' notification.id %}">Delete</a>
                     </div>
                 </article>
             {% empty %}
