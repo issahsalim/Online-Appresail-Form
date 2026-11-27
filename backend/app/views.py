@@ -515,6 +515,7 @@ def _save_staff_id_rows(staff_rows):
         chunk_size = 200
         for start in range(0, len(staff_rows), chunk_size):
             rows = staff_rows[start:start + chunk_size]
+<<<<<<< HEAD
             normalized_names = []
             normalized_emails = []
             for staff_id, email in rows:
@@ -558,6 +559,42 @@ def _save_staff_id_rows(staff_rows):
             try:
                 # Keep a savepoint so a concurrent insert can be handled without
                 # leaving partially imported rows if an ID or email races.
+=======
+            name_match = Q()
+            for staff_id, _email in rows:
+                name_match |= Q(name__iexact=staff_id)
+
+            existing_by_name = {}
+            for existing in StaffId.objects.filter(name_match).order_by('pk'):
+                existing_by_name.setdefault(existing.name.casefold(), existing)
+
+            new_staff_ids = []
+            changed_staff_ids = []
+            for staff_id, email in rows:
+                existing = existing_by_name.get(staff_id.casefold())
+                if existing:
+                    if existing.registered_user_id:
+                        continue
+                    if existing.email != email:
+                        existing.email = email
+                        changed_staff_ids.append(existing)
+                    continue
+                new_staff_ids.append(StaffId(name=staff_id, email=email))
+
+            if changed_staff_ids:
+                StaffId.objects.bulk_update(
+                    changed_staff_ids,
+                    ['email'],
+                    batch_size=chunk_size,
+                )
+                updated += len(changed_staff_ids)
+
+            if not new_staff_ids:
+                continue
+            try:
+                # Keep a savepoint so a concurrent insert can be handled without
+                # rolling back the other rows in this upload chunk.
+>>>>>>> c5922a9 (db optimazation fixed)
                 with transaction.atomic():
                     StaffId.objects.bulk_create(
                         new_staff_ids,
@@ -565,11 +602,24 @@ def _save_staff_id_rows(staff_rows):
                     )
                 added += len(new_staff_ids)
             except IntegrityError:
+<<<<<<< HEAD
                 raise ValidationError(
                     'A Staff ID or email was added at the same time. '
                     'Refresh the page and check for duplicates.'
                 )
     return added, 0
+=======
+                # Preserve the previous behavior for a rare unique-name race:
+                # import each row independently and skip only conflicting rows.
+                for staff_id in new_staff_ids:
+                    try:
+                        with transaction.atomic():
+                            staff_id.save(force_insert=True)
+                        added += 1
+                    except IntegrityError:
+                        continue
+    return added, updated
+>>>>>>> c5922a9 (db optimazation fixed)
 
 
 def _staff_ids_csv_response(staff_ids, filename):
