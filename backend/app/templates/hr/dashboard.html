@@ -643,7 +643,7 @@
             aria-expanded="false"
             aria-label="Open menu"
         >
-            <span aria-hidden="true">☰</span>
+            <i class="bi bi-list" aria-hidden="true"></i>
         </button>
         <div class="hr-sidebar-brand">
             <img class="hr-sidebar-mark" src="{% static 'images/mathias-catholic-hospital-logo.png' %}" alt="Mathias Catholic Hospital">
@@ -655,7 +655,7 @@
             <div class="hr-sidebar-drawer-brand">
                 <img class="hr-sidebar-mark" src="{% static 'images/mathias-catholic-hospital-logo.png' %}" alt="">
                 <span class="hr-sidebar-drawer-copy">Mathias Catholic Hospital<small></small></span>
-                <button class="hr-sidebar-close" type="button" aria-label="Close menu" data-sidebar-close>×</button>
+                <button class="hr-sidebar-close" type="button" aria-label="Close menu" data-sidebar-close><i class="bi bi-x-lg" aria-hidden="true"></i></button>
             </div>
             <button class="hr-sidebar-link active" type="button" data-dashboard-target="overview">
                 <!-- <span class="hr-sidebar-icon" aria-hidden="true">▦</span> -->
@@ -743,8 +743,7 @@
                 <span class="hr-sidebar-link-copy"><span class="hr-sidebar-link-title">Support</span><span class="hr-sidebar-link-note">Help and FAQs</span></span>
             </button>
         </nav>
-        <div class="hr-sidebar-label">Signed in as</div>
-        <div class="small px-2 text-white-50">{{ request.user.username }}</div>
+
     </aside>
 
     <main class="hr-dashboard-content">

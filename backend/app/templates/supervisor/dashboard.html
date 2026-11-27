@@ -270,7 +270,7 @@
 
     <aside class="role-dashboard-sidebar" aria-label="Supervisor dashboard navigation" data-default-section="assigned">
         <button class="role-sidebar-toggle" type="button" aria-controls="supervisor-dashboard-navigation" aria-expanded="false" aria-label="Open menu">
-            Menu
+            <i class="bi bi-list" aria-hidden="true"></i>
         </button>
         <div class="role-sidebar-brand">
             <img class="role-sidebar-mark" src="{% static 'images/mathias-catholic-hospital-logo.png' %}" alt="Mathias Catholic Hospital">
@@ -324,8 +324,7 @@
                 <span class="role-sidebar-link-copy"><span class="role-sidebar-link-title">Support</span><span class="role-sidebar-link-note">Help and FAQs</span></span>
             </button>
         </nav>
-        <div class="role-sidebar-label">Signed in as</div>
-        <div class="small px-2 text-white-50">{{ request.user.username }}</div>
+
     </aside>
 
     <main class="role-dashboard-content supervisor-dashboard-content">
