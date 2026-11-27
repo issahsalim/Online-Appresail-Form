@@ -119,14 +119,42 @@ WSGI_APPLICATION = 'project.wsgi.application'
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-        
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.environ.get("DB_NAME", "appraisal"),
+        "USER": os.environ.get("DB_USER", "appraisal_user"),
+        "PASSWORD": os.environ.get("DB_PASSWORD", "appraisal_password"),
+        "HOST": os.environ.get("DB_HOST", "localhost"),
+        "PORT": os.environ.get("DB_PORT", "5432"),
+        # Use psycopg's per-process connection pool instead of persistent Django connections.
+        "CONN_MAX_AGE": 0,
+        "CONN_HEALTH_CHECKS": True,
+        "OPTIONS": {
+            "pool": {
+                "min_size": int(os.environ.get("DB_POOL_MIN_SIZE", "1")),
+                "max_size": int(os.environ.get("DB_POOL_MAX_SIZE", "5")),
+                "timeout": float(os.environ.get("DB_POOL_TIMEOUT", "30")),
+            },
+        },
     }
+}
+
+# Keep this cache separate from Celery, which continues to use Redis database 0.
+# Django's Redis cache backend uses redis-py's connection pool.
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": os.environ.get(
+            "REDIS_CACHE_URL",
+            "redis://127.0.0.1:6379/1",
+        ),
+        "KEY_PREFIX": "appraisal",
+        "TIMEOUT": 300,
+    },
 }
 
 # Password validation
 # https://docs.djangoproject.com/en/6.1/ref/settings/#auth-password-validators
+
 
 AUTH_PASSWORD_VALIDATORS = [
     {

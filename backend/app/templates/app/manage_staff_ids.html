@@ -28,6 +28,7 @@
                 <input type="hidden" name="action" value="add">
                 <input type="hidden" name="q" value="{{ search_query }}">
                 <input type="hidden" name="page" value="{{ page_obj.number }}">
+                {% for error in entry_form.non_field_errors %}<span class="staff-error" role="alert">{{ error }}</span>{% endfor %}
                 {% for field in entry_form %}
                     <div class="staff-field">
                         <label for="{{ field.id_for_label }}">{{ field.label }}</label>
@@ -85,7 +86,20 @@
         </header>
         <div class="staff-table-scroll">
             <table class="staff-table table-striped">
+<<<<<<< HEAD
                 <thead><tr><th class="staff-number-column" scope="col">#.</th><th scope="col">Staff ID</th><th scope="col"> email</th><th scope="col">Account</th><th class="staff-download-column" scope="col">Download</th><th class="staff-actions-column" scope="col">Actions</th></tr></thead>
+=======
+                <thead>
+                    <tr>
+                        <th class="staff-number-column" scope="col">No.</th>
+                        <th scope="col">Staff ID</th>
+                        <th scope="col">Email</th>
+                        <th scope="col">Account</th>
+                        <th class="staff-download-column" scope="col">Download</th>
+                        <th class="staff-actions-column" scope="col">Actions</th>
+                    </tr>
+                </thead>
+>>>>>>> main
                 <tbody>
                     {% for staff in staff_ids %}
                         <tr>
@@ -162,7 +176,7 @@
 </div>
 
 <style>
-    .staff-id-page { color: #173747; margin: 0 auto; max-width: 1440px; padding: .5rem 0 2rem; }
+    .staff-id-page { color: #056e4d; margin: 0 auto; max-width: 1440px; padding: .5rem 0 2rem; }
     .staff-id-header, .staff-directory-header { align-items: center; display: flex; flex-wrap: wrap; gap: 1rem; justify-content: space-between; }
     .staff-id-header { margin-bottom: 1rem; }
     .staff-id-eyebrow { color: #16845d; display: block; font-size: .66rem; font-weight: 800; letter-spacing: .12em; margin-bottom: .25rem; text-transform: uppercase; }

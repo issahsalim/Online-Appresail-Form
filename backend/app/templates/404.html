@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+
+{% block title %}Page not found | Staff Appraisal System{% endblock %}
+
+{% block content %}
+<style>
+    .not-found-page {
+        align-items: center;
+        display: flex;
+        justify-content: center;
+        min-height: min(70vh, 720px);
+        padding-bottom: clamp(3rem, 8vw, 6rem);
+        padding-top: clamp(3rem, 8vw, 6rem);
+    }
+    .not-found-card {
+        background: #fff;
+        border: 1px solid #e2ece8;
+        border-radius: 24px;
+        box-shadow: 0 24px 70px rgba(16, 59, 55, .09);
+        max-width: 680px;
+        overflow: hidden;
+        padding: clamp(2rem, 7vw, 4.5rem);
+        position: relative;
+        text-align: center;
+        width: 100%;
+    }
+    /* .not-found-card::before {
+        background: linear-gradient(90deg, #148968, #bd3f4d);
+        content: "";
+        height: 5px;
+        inset: 0 0 auto;
+        position: absolute;
+    } */
+    .not-found-symbol {
+        align-items: center;
+        background: #edf6f0;
+        border: 1px solid #dcece2;
+        border-radius: 24px;
+        color: #148968;
+        display: inline-flex;
+        height: 76px;
+        justify-content: center;
+        margin-bottom: 1.4rem;
+        width: 76px;
+    }
+    .not-found-symbol svg { height: 38px; width: 38px; }
+    .not-found-code {
+        color: #bd3f4d;
+        font-size: clamp(4.3rem, 13vw, 7rem);
+        font-weight: 850;
+        letter-spacing: -.09em;
+        line-height: .95;
+        margin: 0 0 1rem;
+    }
+    .not-found-title {
+        color: #103b37;
+        font-size: clamp(1.55rem, 4vw, 2.2rem);
+        font-weight: 760;
+        letter-spacing: -.035em;
+        margin: 0 0 .8rem;
+    }
+    .not-found-copy {
+        color: #667873;
+        line-height: 1.75;
+        margin: 0 auto;
+        max-width: 440px;
+    }
+    .not-found-actions {
+        align-items: center;
+        display: flex;
+        flex-wrap: wrap;
+        gap: .75rem;
+        justify-content: center;
+        margin-top: 2rem;
+    }
+    .not-found-action {
+        align-items: center;
+        border-radius: 9px;
+        display: inline-flex;
+        font-size: .94rem;
+        font-weight: 700;
+        gap: .5rem;
+        justify-content: center;
+        min-height: 48px;
+        padding: .75rem 1.15rem;
+        text-decoration: none;
+        transition: background-color .18s ease, transform .18s ease;
+    }
+    .not-found-action:hover { transform: translateY(-1px); }
+    .not-found-action:focus-visible { outline: 3px solid #92c9ad; outline-offset: 3px; }
+    .not-found-action-primary { background: #148968; color: #fff; }
+    .not-found-action-primary:hover { background: #0f7257; color: #fff; }
+    .not-found-action-secondary { background: #f3f7f5; border: 1px solid #dce8e2; color: #174b3e; }
+    .not-found-action-secondary:hover { background: #e8f1ec; color: #103b37; }
+    .not-found-help { color: #788982; font-size: .88rem; margin: 1.6rem 0 0; }
+    .not-found-help a { color: #148968; font-weight: 700; text-underline-offset: 3px; }
+    @media (max-width: 480px) {
+        .not-found-card { border-radius: 18px; }
+        .not-found-actions { align-items: stretch; flex-direction: column; }
+        .not-found-action { width: 100%; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .not-found-action { transition: none; }
+        .not-found-action:hover { transform: none; }
+    }
+</style>
+
+<main class="not-found-page">
+    <section class="not-found-card" aria-labelledby="not-found-title">
+        <div class="not-found-symbol" aria-hidden="true">
+            <svg viewBox="0 0 40 40" fill="none">
+                <path d="M7 9.5A3.5 3.5 0 0 1 10.5 6H29a4 4 0 0 1 4 4v20a4 4 0 0 1-4 4H11a4 4 0 0 1-4-4V9.5Z" stroke="currentColor" stroke-width="2"/>
+                <path d="M13 14h14M13 20h8M13 26h5" stroke="currentColor" stroke-linecap="round" stroke-width="2"/>
+                <path d="m27 24 6 6m0-6-6 6" stroke="#bd3f4d" stroke-linecap="round" stroke-width="2"/>
+            </svg>
+        </div>
+        <p class="not-found-code" aria-hidden="true">404</p>
+        <h1 class="not-found-title" id="not-found-title">We can’t find that page</h1>
+        <p class="not-found-copy">
+            The page may have moved, or the address may be incorrect. Check the link or choose where you’d like to go next.
+        </p>
+        <div class="not-found-actions">
+            <a class="not-found-action not-found-action-primary" href="{% url 'home' %}">
+                <span aria-hidden="true">←</span> Go to home
+            </a>
+            {% if user.is_authenticated %}
+                <a class="not-found-action not-found-action-secondary" href="{% url 'dashboard_router' %}">Open my dashboard</a>
+            {% else %}
+                <a class="not-found-action not-found-action-secondary" href="{% url 'login' %}">Sign in</a>
+            {% endif %}
+        </div>
+        <p class="not-found-help">Still need help? <a href="{% url 'support' %}">Contact support</a>.</p>
+    </section>
+</main>
+{% endblock %}

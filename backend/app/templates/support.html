@@ -1,9 +1,18 @@
+<<<<<<< HEAD
+=======
+{% extends 'base.html' %}
+>>>>>>> main
 
+{% block title %}Support{% endblock %}
 
 {% block content %}
+<<<<<<< HEAD
 <div class="container py-3">
     <a class="support-back-link" href="{% url 'home' %}"><i class="bi bi-arrow-left" aria-hidden="true"></i> Back to home</a>
 </div>
+=======
+<a class="support-back-link" href="{% url 'dashboard_router' %}"><i class="bi bi-arrow-left" aria-hidden="true"></i> Back to dashboard</a>
+>>>>>>> main
 {% include 'partials/support_content.html' %}
 <style>
     .support-back-link { color: #087254; display: inline-flex; font-size: .88rem; font-weight: 700; gap: .45rem; margin-bottom: 1rem; text-decoration: none; }

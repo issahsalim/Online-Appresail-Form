@@ -1,4 +1,5 @@
 import logging
+import smtplib
 from datetime import timedelta
 from email.mime.image import MIMEImage
 from pathlib import Path
@@ -6,8 +7,9 @@ from pathlib import Path
 import redis
 from celery import shared_task
 from django.conf import settings
-from django.core.mail import EmailMultiAlternatives, send_mail
+from django.core.mail import EmailMultiAlternatives
 from django.contrib.staticfiles import finders
+from django.db import OperationalError
 from django.template.loader import render_to_string
 from django.utils import timezone
 
@@ -17,34 +19,72 @@ from .models import BackupRun, PasswordResetCode, RegistrationCode
 logger = logging.getLogger(__name__)
 
 
-@shared_task(name='app.tasks.send_registration_code', autoretry_for=(Exception,), retry_backoff=True, max_retries=3)
+@shared_task(
+    name='app.tasks.send_registration_code',
+    autoretry_for=(OperationalError, smtplib.SMTPException, ConnectionError, TimeoutError),
+    retry_backoff=True,
+    max_retries=3,
+)
 def send_registration_code(registration_code_id, code):
-    registration_code = RegistrationCode.objects.select_related('staff_id').get(
+    registration_code = RegistrationCode.objects.select_related('staff_id').filter(
         pk=registration_code_id,
-    )
+    ).first()
+    if registration_code is None:
+        logger.warning(
+            'Skipping registration email: registration code %s no longer exists.',
+            registration_code_id,
+        )
+        return 'missing'
     if registration_code.verified_at or registration_code.expires_at <= timezone.now():
         return 'expired'
 
-    send_mail(
+    text_body = (
+        'Hello,\n\n'
+        f'Your staff account verification code is {code}. It expires in 10 minutes.\n\n'
+        'For your security, do not share this code with anyone. '
+        'If you did not request an account, you can ignore this email.'
+    )
+    html_body = render_to_string('emails/registration_code.html', {'code': code})
+    logo_path = finders.find('images/mathias-catholic-hospital-logo.png')
+    if not logo_path:
+        raise FileNotFoundError('Registration email logo was not found in static files.')
+
+    email = EmailMultiAlternatives(
         'Your staff account verification code',
-        f'Your verification code is {code}. It expires in 10 minutes.',
+        text_body,
         settings.DEFAULT_FROM_EMAIL,
         [registration_code.staff_id.email],
-        fail_silently=False,
     )
+    email.attach_alternative(html_body, 'text/html')
+    with open(logo_path, 'rb') as logo_file:
+        logo = MIMEImage(logo_file.read(), _subtype='png')
+    logo.add_header('Content-ID', '<registration-code-logo>')
+    logo.add_header(
+        'Content-Disposition',
+        'inline',
+        filename='mathias-catholic-hospital-logo.png',
+    )
+    email.attach(logo)
+    email.send(fail_silently=False)
     return 'sent'
 
 
 @shared_task(
     name='app.tasks.send_password_reset_code',
-    autoretry_for=(Exception,),
+    autoretry_for=(OperationalError, smtplib.SMTPException, ConnectionError, TimeoutError),
     retry_backoff=True,
     max_retries=3,
 )
 def send_password_reset_code(password_reset_code_id, code):
     reset_code = PasswordResetCode.objects.select_related(
         'staff_id__registered_user',
-    ).get(pk=password_reset_code_id)
+    ).filter(pk=password_reset_code_id).first()
+    if reset_code is None:
+        logger.warning(
+            'Skipping password reset email: reset code %s no longer exists.',
+            password_reset_code_id,
+        )
+        return 'missing'
     if reset_code.verified_at or reset_code.expires_at <= timezone.now():
         return 'expired'
 
@@ -188,5 +228,3 @@ def _remove_expired_backups(backup_root, current_run_id):
                 logger.exception('Could not remove expired backup %s.', archive_path)
                 continue
         expired_run.delete()
-
-        

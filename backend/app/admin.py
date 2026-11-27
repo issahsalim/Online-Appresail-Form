@@ -2,6 +2,8 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.forms import UserChangeForm, UserCreationForm
 from django.contrib.auth.models import User
+from django import forms
+from django.contrib.auth.hashers import make_password
 from django.utils import timezone
 from .models import (
     Department, 
@@ -40,6 +42,56 @@ class StaffIdUserChangeForm(UserChangeForm):
         self.fields['username'].label = 'Staff ID'
 
 
+class EmployeeProfileAdminForm(forms.ModelForm):
+    security_answer_reset = forms.CharField(
+        required=False,
+        max_length=200,
+        label='Set a new security answer',
+        widget=forms.PasswordInput(render_value=False),
+        help_text='Leave blank to keep the current answer. The current answer is never displayed.',
+    )
+
+    class Meta:
+        model = EmployeeProfile
+        exclude = ('security_answer_hash',)
+
+    def clean_security_answer_reset(self):
+        return self.cleaned_data['security_answer_reset'].strip().casefold()
+
+    def clean(self):
+        cleaned_data = super().clean()
+        has_answer = bool(cleaned_data.get('security_answer_reset'))
+        has_saved_answer = bool(
+            self.instance.pk and self.instance.security_answer_hash
+        )
+        if cleaned_data.get('security_question') and not (has_answer or has_saved_answer):
+            self.add_error(
+                'security_answer_reset',
+                'Enter an answer when setting a security question.',
+            )
+        if (
+            self.instance.pk
+            and 'security_question' in cleaned_data
+            and cleaned_data['security_question'] != self.instance.security_question
+            and not has_answer
+        ):
+            self.add_error(
+                'security_answer_reset',
+                'Enter a new answer when changing the security question.',
+            )
+        return cleaned_data
+
+    def save(self, commit=True):
+        profile = super().save(commit=False)
+        answer = self.cleaned_data.get('security_answer_reset')
+        if answer:
+            profile.security_answer_hash = make_password(answer)
+        if commit:
+            profile.save()
+            self.save_m2m()
+        return profile
+
+
 class CustomUserAdmin(UserAdmin):
     add_form = StaffIdUserCreationForm
     form = StaffIdUserChangeForm
@@ -64,6 +116,7 @@ class DepartmentAdmin(admin.ModelAdmin):
 
 @admin.register(EmployeeProfile)
 class EmployeeProfileAdmin(admin.ModelAdmin):
+    form = EmployeeProfileAdminForm
     # THIS enables the auto-search text box for the User field!
     autocomplete_fields = ['user']
     
@@ -387,4 +440,3 @@ class PreviousAppraisalAdmin(admin.ModelAdmin):
         if request.user.is_superuser:
             return []
         return [field.name for field in self.model._meta.fields]
-        

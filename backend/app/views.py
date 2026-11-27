@@ -15,9 +15,9 @@ from django.conf import settings
 from django.core.paginator import Paginator
 from django.db import IntegrityError, transaction
 from django.db.models import Case, CharField, Count, F, Q, Value, When
+from django.db.models.functions import Lower, Upper
 from PIL import Image
-from django.db import transaction
-from django.db.models import Avg, Case, CharField, Count, F, Q, Value, When
+from django.db.models import Avg
 from django.urls import reverse
 from django.http import FileResponse, Http404, HttpResponse, HttpResponseForbidden, JsonResponse
 from django.utils import timezone
@@ -80,6 +80,10 @@ from .forms import (
     StaffIdUploadForm,
 )
 from .notifications import mark_as_read, notify_users
+from .notification_cache import (
+    get_unread_notification_count,
+    invalidate_notification_cache,
+)
 from .audit import record_auth_event
 from .tasks import create_backup, send_password_reset_code, send_registration_code
 
@@ -342,14 +346,15 @@ def _can_review_as_supervisor(profile, appraisal):
 
 
 def _return_request_context(appraisal):
+    return_requests = list(
+        appraisal.return_requests.select_related('requester', 'reviewer')
+    )
     return {
-        'pending_return_request': appraisal.return_requests.filter(
-            status='pending',
-        ).select_related('requester').first(),
-        'return_requests': appraisal.return_requests.select_related(
-            'requester',
-            'reviewer',
+        'pending_return_request': next(
+            (item for item in return_requests if item.status == 'pending'),
+            None,
         ),
+        'return_requests': return_requests,
         'return_request_form': AppraisalReturnRequestForm(),
         'return_decision_form': AppraisalReturnDecisionForm(),
     }
@@ -364,11 +369,12 @@ def _return_request_actor_profile(request):
 
 def _return_request_context_for_user(appraisal, profile):
     stage, _ = _return_request_stage_and_destination(appraisal, profile)
+    context = _return_request_context(appraisal)
     return {
-        **_return_request_context(appraisal),
+        **context,
         'can_request_return': (
             stage is not None
-            and not appraisal.return_requests.filter(status='pending').exists()
+            and context['pending_return_request'] is None
         ),
         'can_decide_return_request': _can_decide_return_request(profile, appraisal),
     }
@@ -472,7 +478,8 @@ def _parse_staff_id_upload(uploaded_file):
         raise ValidationError('Upload no more than 5,000 staff IDs at a time.')
 
     staff_rows = []
-    seen = {}
+    seen_ids = set()
+    seen_emails = set()
     for row_number, row in enumerate(rows[1:], start=2):
         values = list(row)
         staff_id = str(values[staff_id_column] or '').strip() if staff_id_column < len(values) else ''
@@ -489,35 +496,82 @@ def _parse_staff_id_upload(uploaded_file):
             raise ValidationError(f'Email on row {row_number} is invalid.') from error
 
         normalized_id = staff_id.casefold()
-        if normalized_id in seen and seen[normalized_id] != email:
-            raise ValidationError(f'Staff ID on row {row_number} has conflicting emails.')
-        if normalized_id not in seen:
-            seen[normalized_id] = email
-            staff_rows.append((staff_id, email))
+        normalized_email = email.casefold()
+        if normalized_id in seen_ids:
+            raise ValidationError(f'Staff ID on row {row_number} duplicates an earlier row.')
+        if normalized_email in seen_emails:
+            raise ValidationError(f'Email on row {row_number} is already used in this file.')
+        seen_ids.add(normalized_id)
+        seen_emails.add(normalized_email)
+        staff_rows.append((staff_id, email))
     return staff_rows
 
 
 def _save_staff_id_rows(staff_rows):
     added = 0
-    updated = 0
+    staff_ids_seen = set()
+    emails_seen = set()
     with transaction.atomic():
-        for staff_id, email in staff_rows:
-            existing = StaffId.objects.filter(name__iexact=staff_id).first()
-            if existing:
-                if existing.registered_user_id:
-                    continue
-                if existing.email != email:
-                    existing.email = email
-                    existing.save(update_fields=['email'])
-                    updated += 1
-                continue
+        chunk_size = 200
+        for start in range(0, len(staff_rows), chunk_size):
+            rows = staff_rows[start:start + chunk_size]
+
+            normalized_names = []
+            normalized_emails = []
+            for staff_id, email in rows:
+                normalized_name = staff_id.upper()
+                normalized_email = email.casefold()
+                if normalized_name in staff_ids_seen:
+                    raise ValidationError('The upload contains a duplicate Staff ID.')
+                if normalized_email in emails_seen:
+                    raise ValidationError('The upload contains a duplicate email address.')
+                staff_ids_seen.add(normalized_name)
+                emails_seen.add(normalized_email)
+                normalized_names.append(normalized_name)
+                normalized_emails.append(normalized_email)
+
+            existing_staff = StaffId.objects.annotate(
+                normalized_name=Upper('name'),
+                normalized_email=Lower('email'),
+            ).filter(
+                Q(normalized_name__in=normalized_names)
+                | Q(normalized_email__in=normalized_emails)
+            )
+            if existing_staff.exists():
+                raise ValidationError(
+                    'At least one Staff ID or email is already in the staff directory. '
+                    'Correct the duplicate entries and try again.'
+                )
+
+            existing_usernames = User.objects.annotate(
+                normalized_username=Upper('username'),
+            ).filter(normalized_username__in=normalized_names)
+            if existing_usernames.exists():
+                raise ValidationError(
+                    'At least one Staff ID is already used by an account. '
+                    'Correct the duplicate entry and try again.'
+                )
+
+            new_staff_ids = [
+                StaffId(name=staff_id, email=email)
+                for staff_id, email in rows
+            ]
             try:
+                # Keep a savepoint so a concurrent insert can be handled without
+                # leaving partially imported rows if an ID or email races.
                 with transaction.atomic():
-                    StaffId.objects.create(name=staff_id, email=email)
-                added += 1
+                    StaffId.objects.bulk_create(
+                        new_staff_ids,
+                        batch_size=chunk_size,
+                    )
+                added += len(new_staff_ids)
             except IntegrityError:
-                continue
-    return added, updated
+
+                raise ValidationError(
+                    'A Staff ID or email was added at the same time. '
+                    'Refresh the page and check for duplicates.'
+                )
+    return added, 0
 
 
 def _staff_ids_csv_response(staff_ids, filename):
@@ -597,18 +651,15 @@ def manage_staff_ids(request):
     action = request.POST.get('action') if request.method == 'POST' else ''
     if action == 'update':
         staff = get_object_or_404(StaffId.objects.select_related('registered_user'), pk=request.POST.get('staff_pk'))
-        edit_form = StaffIdEntryForm(request.POST)
+        edit_form = StaffIdEntryForm(
+            request.POST,
+            exclude_pk=staff.pk,
+            exclude_user_pk=staff.registered_user_id,
+        )
         if edit_form.is_valid():
             staff_id = edit_form.cleaned_data['staff_id']
             email = edit_form.cleaned_data['email']
-            duplicate_staff_id = StaffId.objects.filter(name__iexact=staff_id).exclude(pk=staff.pk).exists()
-            username_matches = User.objects.filter(username__iexact=staff_id)
-            if staff.registered_user_id:
-                username_matches = username_matches.exclude(pk=staff.registered_user_id)
-            duplicate_username = username_matches.exists()
-            if duplicate_staff_id or duplicate_username:
-                messages.error(request, 'That staff ID is already assigned to another staff member or account.')
-            else:
+            try:
                 with transaction.atomic():
                     staff.name = staff_id
                     staff.email = email
@@ -617,9 +668,20 @@ def manage_staff_ids(request):
                         staff.registered_user.username = staff_id
                         staff.registered_user.email = email
                         staff.registered_user.save(update_fields=['username', 'email'])
+            except IntegrityError:
+                messages.error(
+                    request,
+                    'That Staff ID or email was just assigned to another staff member. Refresh and check the directory.',
+                )
+            else:
                 messages.success(request, f'Staff record {staff_id} updated.')
         else:
-            messages.error(request, 'Enter a valid staff ID and work email before saving.')
+            errors = [
+                str(message)
+                for field_errors in edit_form.errors.values()
+                for message in field_errors
+            ]
+            messages.error(request, ' '.join(errors) or 'Enter a valid Staff ID and work email before saving.')
         return _staff_ids_redirect(request)
     elif action == 'delete':
         staff = get_object_or_404(StaffId.objects.select_related('registered_user'), pk=request.POST.get('staff_pk'))
@@ -646,26 +708,29 @@ def manage_staff_ids(request):
     elif action == 'add':
         entry_form = StaffIdEntryForm(request.POST)
         if entry_form.is_valid():
-            added, updated = _save_staff_id_rows([(
-                entry_form.cleaned_data['staff_id'],
-                entry_form.cleaned_data['email'],
-            )])
-            if added or updated:
-                messages.success(request, 'Staff ID and work email saved.')
-                return _staff_ids_redirect(request)
-            entry_form.add_error('staff_id', 'This staff ID already has an account or is already listed.')
+            try:
+                added, _updated = _save_staff_id_rows([(
+                    entry_form.cleaned_data['staff_id'],
+                    entry_form.cleaned_data['email'],
+                )])
+            except ValidationError as error:
+                entry_form.add_error(None, error)
+            else:
+                if added:
+                    messages.success(request, 'Staff ID and work email saved.')
+                    return _staff_ids_redirect(request)
     elif action == 'upload':
         upload_form = StaffIdUploadForm(request.POST, request.FILES)
         if upload_form.is_valid():
             try:
                 staff_rows = _parse_staff_id_upload(upload_form.cleaned_data['file'])
-                added, updated = _save_staff_id_rows(staff_rows)
+                added, _updated = _save_staff_id_rows(staff_rows)
             except ValidationError as error:
                 upload_form.add_error('file', error)
             else:
                 messages.success(
                     request,
-                    f'Import complete: {added} added, {updated} updated. Already registered IDs were skipped.',
+                    f'Import complete: {added} added.',
                 )
                 return _staff_ids_redirect(request)
 
@@ -767,7 +832,16 @@ def verify_registration_code(request):
             registration_code.save(update_fields=['attempts'])
             form.add_error('code', 'The code is incorrect.')
 
-    return render(request, 'registration/verify_registration_code.html', {'form': form})
+    resend_seconds = 0
+    if registration_code:
+        resend_seconds = max(
+            0,
+            60 - int((timezone.now() - registration_code.created_at).total_seconds()),
+        )
+    return render(request, 'registration/verify_registration_code.html', {
+        'form': form,
+        'resend_seconds': resend_seconds,
+    })
 
 
 @require_POST
@@ -783,6 +857,14 @@ def resend_registration_code(request):
         return redirect('employee_registration')
 
     now = timezone.now()
+    resend_seconds = max(
+        0,
+        60 - int((now - previous_code.created_at).total_seconds()),
+    )
+    if resend_seconds:
+        messages.info(request, f'Please wait {resend_seconds} seconds before requesting another code.')
+        return redirect('verify_registration_code')
+
     recent_code_count = RegistrationCode.objects.filter(
         staff_id=previous_code.staff_id,
         created_at__gte=now - timedelta(hours=1),
@@ -1014,6 +1096,10 @@ def request_password_reset(request):
         context.update({
             'step': stage,
             'form': form,
+            'resend_seconds': max(
+                0,
+                60 - int((timezone.now() - reset_code.created_at).total_seconds()),
+            ),
             'welcome_name': user.first_name or user.username,
             'masked_email': (
                 f"{reset_code.staff_id.email[:1]}***@"
@@ -1068,6 +1154,14 @@ def resend_password_reset_code(request):
         return redirect('password_reset_request')
 
     staff_id = reset_code.staff_id
+    resend_seconds = max(
+        0,
+        60 - int((timezone.now() - reset_code.created_at).total_seconds()),
+    )
+    if resend_seconds:
+        messages.info(request, f'Please wait {resend_seconds} seconds before requesting another code.')
+        return redirect('password_reset_request')
+
     replacement_code, error = _issue_password_reset_code(staff_id)
     if error:
         messages.error(request, error)
@@ -1179,27 +1273,53 @@ def _previous_appraisal_context(profile):
     }
 
 
+def _get_profile_appraisals_by_cycle(profile, cycles, assigned_supervisor=None):
+    """Load a profile's cycle appraisals together, creating only missing rows."""
+    cycles = list(cycles)
+    if not cycles:
+        return {}
+
+    appraisals_by_cycle = {
+        appraisal.cycle_id: appraisal
+        for appraisal in Appraisal.objects.filter(
+            employee=profile,
+            cycle_id__in=[cycle.pk for cycle in cycles],
+        ).select_related('cycle')
+    }
+
+    for cycle in cycles:
+        appraisal = appraisals_by_cycle.get(cycle.pk)
+        if appraisal is None:
+            appraisal, _ = Appraisal.objects.get_or_create(
+                employee=profile,
+                cycle=cycle,
+            )
+            appraisals_by_cycle[cycle.pk] = appraisal
+
+        if (
+            assigned_supervisor
+            and appraisal.status == 'draft'
+            and appraisal.supervisor_id != assigned_supervisor.pk
+        ):
+            appraisal.supervisor = assigned_supervisor
+            appraisal.save(update_fields=['supervisor'])
+
+    return appraisals_by_cycle
+
+
 @login_required
 def employee_dashboard(request):
     """Shows the employee's active cycle and appraisal history for every cycle."""
     profile = request.user.profile
-    active_cycles = list(
-        AppraisalCycle.objects.filter(is_active=True).order_by('-year')[:1]
-    )
-    all_cycles = AppraisalCycle.objects.order_by('-year')
+    all_cycles = list(AppraisalCycle.objects.order_by('-year'))
+    active_cycles = [cycle for cycle in all_cycles if cycle.is_active][:1]
 
     assigned_supervisor = get_assigned_supervisor(profile)
-    appraisals_by_cycle = {}
-    for cycle in all_cycles:
-        appraisal, _ = Appraisal.objects.get_or_create(
-            employee=profile,
-            cycle=cycle,
-        )
-        if appraisal.status == 'draft' and assigned_supervisor:
-            if appraisal.supervisor_id != assigned_supervisor.id:
-                appraisal.supervisor = assigned_supervisor
-                appraisal.save(update_fields=['supervisor'])
-        appraisals_by_cycle[cycle.id] = appraisal
+    appraisals_by_cycle = _get_profile_appraisals_by_cycle(
+        profile,
+        all_cycles,
+        assigned_supervisor,
+    )
 
     active_appraisal_cards = []
     for active_cycle in active_cycles:
@@ -1849,9 +1969,7 @@ def notifications(request):
     page = Paginator(notification_list, 20).get_page(request.GET.get('page', 1))
     return render(request, 'account/notifications.html', {
         'notification_page': page,
-        'unread_notification_count': notification_list.filter(
-            read_at__isnull=True,
-        ).count(),
+        'unread_notification_count': get_unread_notification_count(request.user.pk),
     })
 
 
@@ -1860,10 +1978,7 @@ def notification_status(request):
     if request.method != 'GET':
         return JsonResponse({'error': 'Invalid request method.'}, status=405)
 
-    unread_count = AppNotification.objects.filter(
-        recipient=request.user,
-        read_at__isnull=True,
-    ).count()
+    unread_count = get_unread_notification_count(request.user.pk)
     response = JsonResponse({'unread_count': unread_count})
     response['Cache-Control'] = 'no-store'
     return response
@@ -1899,10 +2014,12 @@ def delete_noti(request,noti_id):
 @login_required
 def mark_all_notifications_read(request):
     if request.method == 'POST':
-        AppNotification.objects.filter(
+        updated = AppNotification.objects.filter(
             recipient=request.user,
             read_at__isnull=True,
         ).update(read_at=timezone.now())
+        if updated:
+            invalidate_notification_cache(request.user.pk)
     return redirect('notifications')
 
 
@@ -1990,7 +2107,8 @@ def supervisor_dashboard(request):
         messages.error(request, "Access denied.")
         return redirect('dashboard_router')
 
-    cycle = AppraisalCycle.objects.filter(is_active=True).first()
+    appraisal_cycles = list(AppraisalCycle.objects.order_by('-year'))
+    cycle = next((item for item in appraisal_cycles if item.is_active), None)
     
     # if not cycle:
     #     messages.error(request, "No active appraisal cycle.")
@@ -2002,14 +2120,13 @@ def supervisor_dashboard(request):
     my_appraisal = None
     my_appraisals = []
     if has_supervisor:
-        for appraisal_cycle in AppraisalCycle.objects.order_by('-year'):
-            appraisal, _ = Appraisal.objects.get_or_create(
-                employee=profile,
-                cycle=appraisal_cycle,
-            )
-            if appraisal.status == 'draft' and appraisal.supervisor_id != assigned_supervisor.id:
-                appraisal.supervisor = assigned_supervisor
-                appraisal.save(update_fields=['supervisor'])
+        appraisals_by_cycle = _get_profile_appraisals_by_cycle(
+            profile,
+            appraisal_cycles,
+            assigned_supervisor,
+        )
+        for appraisal_cycle in appraisal_cycles:
+            appraisal = appraisals_by_cycle[appraisal_cycle.pk]
             my_appraisals.append(appraisal)
             if appraisal_cycle == cycle:
                 my_appraisal = appraisal
@@ -2018,7 +2135,7 @@ def supervisor_dashboard(request):
     pending_reviews = Appraisal.objects.filter(
         supervisor=profile,
         status__in=['pending_manager', 'returned_supervisor']
-    ).select_related('employee__user', 'cycle')
+    ).select_related('employee__user', 'employee__department', 'cycle')
     assigned_employees = EmployeeProfile.objects.filter(
         Q(role='Employee', department__supervisor_assignment__supervisor=profile)
         | Q(role='Supervisor', reporting_line__manager=profile)
@@ -2118,7 +2235,18 @@ def supervisor_create_appraisals(request):
 def supervisor_review(request, appraisal_id):
     """Allows a supervisor or assigned HOD to score their appraisee."""
     profile = request.user.profile
-    appraisal = get_object_or_404(Appraisal, id=appraisal_id, supervisor=profile)
+    appraisal = get_object_or_404(
+        Appraisal.objects.select_related(
+            'employee__user',
+            'employee__department',
+            'employee_department',
+            'supervisor__user',
+            'hod__user',
+            'cycle',
+        ),
+        id=appraisal_id,
+        supervisor=profile,
+    )
     if not _can_review_as_supervisor(profile, appraisal):
         messages.error(request, "You are not the assigned reviewer for this appraisal.")
         return redirect('dashboard_router')
@@ -2134,7 +2262,11 @@ def supervisor_review(request, appraisal_id):
     if request.method == 'POST':
         target_formset = SupervisorTargetFormSet(request.POST, instance=appraisal)
         appraiser_form = AppraiserReviewForm(request.POST, instance=appraisal)
-        comp_formset = SupervisorCompetencyFormSet(request.POST, instance=appraisal)
+        comp_formset = SupervisorCompetencyFormSet(
+            request.POST,
+            instance=appraisal,
+            queryset=appraisal.competency_scores.select_related('competency'),
+        )
         statement_score_formset = SupervisorCompetencyStatementFormSet(
             request.POST,
             queryset=statement_scores,
@@ -2181,7 +2313,10 @@ def supervisor_review(request, appraisal_id):
     else:
         target_formset = SupervisorTargetFormSet(instance=appraisal)
         appraiser_form = AppraiserReviewForm(instance=appraisal)
-        comp_formset = SupervisorCompetencyFormSet(instance=appraisal)
+        comp_formset = SupervisorCompetencyFormSet(
+            instance=appraisal,
+            queryset=appraisal.competency_scores.select_related('competency'),
+        )
         statement_score_formset = SupervisorCompetencyStatementFormSet(
             queryset=statement_scores,
             prefix='statement_scores',
@@ -2229,7 +2364,18 @@ def supervisor_review(request, appraisal_id):
 def supervisor_submit_to_hod(request, appraisal_id):
     """Sends employee appraisals to their HOD and supervisor appraisals to HR."""
     profile = request.user.profile
-    appraisal = get_object_or_404(Appraisal, id=appraisal_id, supervisor=profile)
+    appraisal = get_object_or_404(
+        Appraisal.objects.select_related(
+            'employee__user',
+            'employee__department',
+            'employee_department',
+            'supervisor__user',
+            'hod__user',
+            'cycle',
+        ),
+        id=appraisal_id,
+        supervisor=profile,
+    )
 
     if appraisal.status in ['pending_manager', 'returned_supervisor']:
         if appraisal.return_requests.filter(status='pending').exists():
@@ -2510,7 +2656,17 @@ def return_appraisal(request, appraisal_id):
         return redirect('dashboard_router')
 
     profile = request.user.profile
-    appraisal = get_object_or_404(Appraisal, id=appraisal_id)
+    appraisal = get_object_or_404(
+        Appraisal.objects.select_related(
+            'employee__user',
+            'employee__department',
+            'employee_department',
+            'supervisor__user',
+            'hod__user',
+            'cycle',
+        ),
+        id=appraisal_id,
+    )
     if appraisal.return_requests.filter(status='pending').exists():
         messages.error(
             request,
@@ -2628,15 +2784,17 @@ def hod_dashboard(request):
         messages.error(request, "Access denied. You are not an HOD.")
         return redirect('dashboard_router')
 
-    cycle = AppraisalCycle.objects.filter(is_active=True).first()
+    appraisal_cycles = list(AppraisalCycle.objects.order_by('-year'))
+    cycle = next((item for item in appraisal_cycles if item.is_active), None)
 
     my_appraisals = []
     my_appraisal = None
-    for appraisal_cycle in AppraisalCycle.objects.order_by('-year'):
-        appraisal, _ = Appraisal.objects.get_or_create(
-            employee=profile,
-            cycle=appraisal_cycle,
-        )
+    appraisals_by_cycle = _get_profile_appraisals_by_cycle(
+        profile,
+        appraisal_cycles,
+    )
+    for appraisal_cycle in appraisal_cycles:
+        appraisal = appraisals_by_cycle[appraisal_cycle.pk]
         my_appraisals.append(appraisal)
         if appraisal_cycle == cycle:
             my_appraisal = appraisal
@@ -2695,10 +2853,7 @@ def _render_read_only_appraisal(
         'allow_pdf': allow_pdf,
         'dashboard_url_name': dashboard_url_name,
         'trainings': appraisal.trainings.all(),
-        'targets': appraisal.targets.all(),
-        'competencies': appraisal.competency_scores.select_related(
-            'competency',
-        ).prefetch_related('statement_scores'),
+        'targets': score_context['score_breakdown']['targets'],
         **score_context,
         'return_history': appraisal.returns.select_related('reviewer'),
         **_return_request_context_for_user(appraisal, profile),
@@ -2724,6 +2879,7 @@ def supervisor_view_appraisal(request, appraisal_id):
     appraisal = get_object_or_404(
         Appraisal.objects.select_related(
             'employee__user',
+            'employee__department',
             'employee_department',
             'supervisor__user',
             'hod__user',
@@ -2752,6 +2908,7 @@ def hod_view_appraisal(request, appraisal_id):
     appraisal = get_object_or_404(
         Appraisal.objects.select_related(
             'employee__user',
+            'employee__department',
             'employee_department',
             'supervisor__user',
             'hod__user',
@@ -2776,7 +2933,18 @@ def hod_view_appraisal(request, appraisal_id):
 def hod_review(request, appraisal_id):
     """Allows the HOD to view the full appraisal and add their final comments."""
     profile = request.user.profile
-    appraisal = get_object_or_404(Appraisal, id=appraisal_id, hod=profile)
+    appraisal = get_object_or_404(
+        Appraisal.objects.select_related(
+            'employee__user',
+            'employee__department',
+            'employee_department',
+            'supervisor__user',
+            'hod__user',
+            'cycle',
+        ),
+        id=appraisal_id,
+        hod=profile,
+    )
 
     # SECURITY: Only review if it is actually pending HOD
     if appraisal.status not in ['pending_hod', 'returned_hod']:
@@ -2805,15 +2973,14 @@ def hod_review(request, appraisal_id):
         form = HODCommentForm(instance=appraisal)
 
     # We need to fetch the targets and competencies to display them (read-only)
-    targets = appraisal.targets.all()
-    competencies = appraisal.competency_scores.all()
+    score_context = _score_breakdown_context(appraisal)
+    targets = score_context['score_breakdown']['targets']
 
     return render(request, 'hod/review.html', {
         'appraisal': appraisal,
         'form': form,
         'targets': targets,
-        'competencies': competencies,
-        **_score_breakdown_context(appraisal),
+        **score_context,
         'trainings': appraisal.trainings.all(),
         'return_form': AppraisalReturnForm(),
         'return_history': appraisal.returns.select_related('reviewer'),
@@ -2931,31 +3098,60 @@ def hr_dashboard(request):
                 messages.error(request, "No user roles were submitted.")
                 return redirect(roles_dashboard_url)
 
-            blocked_role_changes = []
-            for user_profile in users:
-                new_role = submitted_roles.get(str(user_profile.id))
-                if not new_role or new_role == user_profile.role:
-                    continue
-
-                pending_as_supervisor = Appraisal.objects.filter(
-                    supervisor=user_profile,
+            changed_profiles = [
+                user_profile
+                for user_profile in users
+                if submitted_roles.get(str(user_profile.pk))
+                and submitted_roles[str(user_profile.pk)] != user_profile.role
+            ]
+            changed_profile_ids = [profile.pk for profile in changed_profiles]
+            pending_supervisor_counts = {
+                row['supervisor_id']: row['total']
+                for row in Appraisal.objects.filter(
+                    supervisor_id__in=changed_profile_ids,
                     status__in=['pending_manager', 'returned_supervisor'],
-                ).count()
-                pending_as_hod = Appraisal.objects.filter(
-                    hod=user_profile,
+                ).values('supervisor_id').annotate(total=Count('pk'))
+            }
+            pending_hod_counts = {
+                row['hod_id']: row['total']
+                for row in Appraisal.objects.filter(
+                    hod_id__in=changed_profile_ids,
                     status__in=['pending_hod', 'returned_hod', 'pending_hr'],
-                ).count()
-                has_assignments = DepartmentSupervisor.objects.filter(
-                    supervisor=user_profile,
-                ).exists()
+                ).values('hod_id').annotate(total=Count('pk'))
+            }
+            department_supervisor_ids = set(
+                DepartmentSupervisor.objects.filter(
+                    supervisor_id__in=changed_profile_ids,
+                ).values_list('supervisor_id', flat=True)
+            )
+            reporting_supervisor_ids = set(
+                SupervisorReporting.objects.filter(
+                    supervisor_id__in=changed_profile_ids,
+                ).values_list('supervisor_id', flat=True)
+            )
+            reporting_manager_ids = set(
+                SupervisorReporting.objects.filter(
+                    manager_id__in=changed_profile_ids,
+                ).values_list('manager_id', flat=True)
+            )
+            department_hod_ids = set(
+                AssignDepartmentHod.objects.filter(
+                    hod_id__in=changed_profile_ids,
+                ).values_list('hod_id', flat=True)
+            )
+
+            blocked_role_changes = []
+            for user_profile in changed_profiles:
+                profile_id = user_profile.pk
+                pending_as_supervisor = pending_supervisor_counts.get(profile_id, 0)
+                pending_as_hod = pending_hod_counts.get(profile_id, 0)
+                has_assignments = profile_id in department_supervisor_ids
                 if user_profile.role == 'Supervisor':
-                    has_assignments = has_assignments or SupervisorReporting.objects.filter(
-                        supervisor=user_profile,
-                    )
+                    has_assignments = has_assignments or profile_id in reporting_supervisor_ids
                 elif user_profile.role == 'HOD':
                     has_assignments = has_assignments or (
-                        SupervisorReporting.objects.filter(manager=user_profile).exists()
-                        or AssignDepartmentHod.objects.filter(hod=user_profile).exists()
+                        profile_id in reporting_manager_ids
+                        or profile_id in department_hod_ids
                     )
 
                 if pending_as_supervisor or pending_as_hod or has_assignments:
@@ -2985,22 +3181,21 @@ def hr_dashboard(request):
 
             changed_count = 0
             with transaction.atomic():
-                for user_profile in users:
-                    new_role = submitted_roles.get(str(user_profile.id))
-                    if new_role and user_profile.role != new_role:
-                        old_role = user_profile.get_role_display()
-                        user_profile.role = new_role
-                        user_profile.save(update_fields=['role'])
-                        notify_users(
-                            [user_profile.user],
-                            title='Your account role was updated',
-                            message=(
-                                f"Your role was changed from {old_role} to "
-                                f"{user_profile.get_role_display()} by HR."
-                            ),
-                            url=reverse('dashboard_router'),
-                        )
-                        changed_count += 1
+                for user_profile in changed_profiles:
+                    new_role = submitted_roles[str(user_profile.pk)]
+                    old_role = user_profile.get_role_display()
+                    user_profile.role = new_role
+                    user_profile.save(update_fields=['role'])
+                    notify_users(
+                        [user_profile.user],
+                        title='Your account role was updated',
+                        message=(
+                            f"Your role was changed from {old_role} to "
+                            f"{user_profile.get_role_display()} by HR."
+                        ),
+                        url=reverse('dashboard_router'),
+                    )
+                    changed_count += 1
 
             if changed_count:
                 messages.success(request, f"Updated {changed_count} user role(s).")
@@ -3011,7 +3206,14 @@ def hr_dashboard(request):
     # Get all appraisals that the HOD has pushed to HR
     pending_reviews = Appraisal.objects.filter(
         status='pending_hr'
-    ).select_related('employee__user', 'supervisor__user', 'hod__user', 'cycle')
+    ).select_related(
+        'employee__user',
+        'employee__department',
+        'employee_department',
+        'supervisor__user',
+        'hod__user',
+        'cycle',
+    )
 
     cycles = AppraisalCycle.objects.annotate(
         appraisal_count=Count('appraisals'),
@@ -3348,11 +3550,11 @@ def hr_completed_appraisal(request, appraisal_id):
         pk=appraisal_id,
         status='completed',
     )
+    score_context = _score_breakdown_context(appraisal)
     return render(request, 'hr/completed_appraisal.html', {
         'appraisal': appraisal,
-        'targets': appraisal.targets.all(),
-        'competencies': appraisal.competency_scores.select_related('competency'),
-        **_score_breakdown_context(appraisal),
+        'targets': score_context['score_breakdown']['targets'],
+        **score_context,
         'trainings': appraisal.trainings.all(),
         'return_history': appraisal.returns.select_related('reviewer'),
     })
@@ -3364,6 +3566,7 @@ def employee_appraisal_detail(request, appraisal_id):
     appraisal = get_object_or_404(
         Appraisal.objects.select_related(
             'employee__user',
+            'employee__department',
             'employee_department',
             'supervisor__user',
             'hod__user',
@@ -3390,14 +3593,50 @@ def employee_appraisal_pdf(request, appraisal_id):
         status='completed',
     ) 
 
+    score_context = _score_breakdown_context(appraisal)
     return render(request, 'employee/fill_targets.html', {
         'appraisal': appraisal,
         'read_only': True,
         'print_mode': True,
         'trainings': appraisal.trainings.all(),
+        'targets': score_context['score_breakdown']['targets'],
+        **score_context,
+        'return_history': appraisal.returns.select_related('reviewer'),
+        'assigned_supervisor': appraisal.supervisor,
+    })
+
+
+@login_required
+def employee_submission_slip(request, appraisal_id):
+    appraisal = get_object_or_404(
+        Appraisal.objects.select_related(
+            'employee__user',
+            'employee__department',
+            'supervisor__user',
+            'hod__user',
+            'cycle',
+        ).prefetch_related(
+            'targets',
+            'trainings',
+            'competency_scores__competency',
+        ),
+        pk=appraisal_id,
+        employee=request.user.profile,
+    )
+    if not appraisal.reference_number or not appraisal.employee_signed_at:
+        messages.error(request, 'A submission slip is available after your appraisal has been submitted.')
+        return redirect('employee_dashboard')
+
+    return render(request, 'employee/fill_targets.html', {
+        'appraisal': appraisal,
+        'read_only': True,
+        'print_mode': True,
+        'auto_print': True,
+        'back_to_dashboard': True,
+        'trainings': appraisal.trainings.all(),
         'targets': appraisal.targets.all(),
         'competencies': appraisal.competency_scores.select_related(
-            'competency', 
+            'competency',
         ).prefetch_related('statement_scores'),
         **_score_breakdown_context(appraisal),
         'return_history': appraisal.returns.select_related('reviewer'),
@@ -3618,7 +3857,17 @@ def hr_assignment_options(request):
 def hr_approve(request, appraisal_id):
     """Allows HR to view the full appraisal, add comments, and lock it forever."""
     profile = request.user.profile
-    appraisal = get_object_or_404(Appraisal, id=appraisal_id)
+    appraisal = get_object_or_404(
+        Appraisal.objects.select_related(
+            'employee__user',
+            'employee__department',
+            'employee_department',
+            'supervisor__user',
+            'hod__user',
+            'cycle',
+        ),
+        id=appraisal_id,
+    )
 
     if profile.role != 'HR' or appraisal.status != 'pending_hr':
         messages.warning(request, "This appraisal is not pending HR approval.")
@@ -3703,6 +3952,14 @@ def hr_approve(request, appraisal_id):
                 statement_form.instance.competency_score_id,
                 [],
             ).append(statement_form)
+    score_context = _score_breakdown_context(appraisal)
+    competency_scores = sorted(
+        (
+            group['score']
+            for group in score_context['score_breakdown']['groups']
+        ),
+        key=lambda score: score.competency.name,
+    )
     competency_groups = [
         {
             'score': competency_score,
@@ -3711,13 +3968,10 @@ def hr_approve(request, appraisal_id):
                 [],
             ),
         }
-        for competency_score in appraisal.competency_scores.select_related(
-            'competency',
-        ).order_by('competency__name')
+        for competency_score in competency_scores
     ]
 
-    targets = appraisal.targets.all()
-    competencies = appraisal.competency_scores.all()
+    targets = score_context['score_breakdown']['targets']
 
     return render(request, 'hr/review.html', {
         'appraisal': appraisal,
@@ -3727,8 +3981,7 @@ def hr_approve(request, appraisal_id):
         'statement_score_formset': statement_score_formset,
         'competency_groups': competency_groups,
         'targets': targets,
-        'competencies': competencies,
-        **_score_breakdown_context(appraisal),
+        **score_context,
         'trainings': appraisal.trainings.all(),
         'return_form': AppraisalReturnForm(),
         'return_history': appraisal.returns.select_related('reviewer'),
