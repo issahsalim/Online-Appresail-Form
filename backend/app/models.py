@@ -10,6 +10,8 @@ from django.dispatch import receiver
 from django.contrib.auth.models import Group
 from django.utils import timezone
 
+MIN_PREVIOUS_APPRAISAL_YEAR = 2023
+
 # ==========================================
 # 1. ORGANIZATIONAL STRUCTURE
 # ==========================================
@@ -913,9 +915,16 @@ class PreviousAppraisal(models.Model):
     def clean(self):
         super().clean()
         if (
-            self.appraisal_cycle
-            and self.appraisal_cycle >= timezone.localdate().year
+            self._state.adding
+            and self.appraisal_cycle
+            and self.appraisal_cycle < MIN_PREVIOUS_APPRAISAL_YEAR
         ):
+            raise ValidationError({
+                'appraisal_cycle': (
+                    f'Previous appraisal years must be {MIN_PREVIOUS_APPRAISAL_YEAR} or later.'
+                ),
+            })
+        if self.appraisal_cycle and self.appraisal_cycle >= timezone.localdate().year:
             raise ValidationError({
                 'appraisal_cycle': 'Enter a year earlier than the current year.',
             })

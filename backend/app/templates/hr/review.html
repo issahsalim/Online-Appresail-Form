@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% block content %}
 <div class="container mt-4 mb-5 hr-review-page">
+    {% include 'partials/hr_page_navigation.html' with active='pending' %}
     <style>
         .hr-review-page { color: #263238; max-width: 1180px; }
         .review-hero {

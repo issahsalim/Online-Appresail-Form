@@ -131,6 +131,42 @@
                 <span class="hr-cycle-icon" aria-hidden="true">＋</span>
                 <span class="hr-cycle-link-copy"><span class="hr-cycle-link-title">Appraisal cycles</span><span class="hr-cycle-link-note">Create and manage cycles</span></span>
             </a>
+            <a class="hr-cycle-link" href="{% url 'hr_dashboard' %}#pending">
+                <span class="hr-cycle-icon" aria-hidden="true">◷</span>
+                <span class="hr-cycle-link-copy"><span class="hr-cycle-link-title">Pending approvals</span><span class="hr-cycle-link-note">Reviews waiting for HR</span></span>
+            </a>
+            <a class="hr-cycle-link" href="{% url 'hr_dashboard' %}#completed">
+                <span class="hr-cycle-icon" aria-hidden="true">✓</span>
+                <span class="hr-cycle-link-copy"><span class="hr-cycle-link-title">Completed appraisals</span><span class="hr-cycle-link-note">Search finalized reviews</span></span>
+            </a>
+            <a class="hr-cycle-link" href="{% url 'hr_dashboard' %}#roles">
+                <span class="hr-cycle-icon" aria-hidden="true">♙</span>
+                <span class="hr-cycle-link-copy"><span class="hr-cycle-link-title">User roles</span><span class="hr-cycle-link-note">Manage staff access</span></span>
+            </a>
+            <a class="hr-cycle-link" href="{% url 'hr_dashboard' %}#assignments">
+                <span class="hr-cycle-icon" aria-hidden="true">⇄</span>
+                <span class="hr-cycle-link-copy"><span class="hr-cycle-link-title">Assignments</span><span class="hr-cycle-link-note">Manage department reviewers</span></span>
+            </a>
+            <a class="hr-cycle-link" href="{% url 'previous_appraisal_reviews' %}">
+                <span class="hr-cycle-icon" aria-hidden="true">▧</span>
+                <span class="hr-cycle-link-copy"><span class="hr-cycle-link-title">Previous appraisals</span><span class="hr-cycle-link-note">Review historical files</span></span>
+            </a>
+            <a class="hr-cycle-link" href="{% url 'audit_log' %}">
+                <span class="hr-cycle-icon" aria-hidden="true">▤</span>
+                <span class="hr-cycle-link-copy"><span class="hr-cycle-link-title">Audit log</span><span class="hr-cycle-link-note">View recorded changes</span></span>
+            </a>
+            <a class="hr-cycle-link" href="{% url 'backup_dashboard' %}">
+                <span class="hr-cycle-icon" aria-hidden="true">↓</span>
+                <span class="hr-cycle-link-copy"><span class="hr-cycle-link-title">Backups</span><span class="hr-cycle-link-note">Create and download backups</span></span>
+            </a>
+            <a class="hr-cycle-link" href="{% url 'manage_staff_ids' %}">
+                <span class="hr-cycle-icon" aria-hidden="true">＋</span>
+                <span class="hr-cycle-link-copy"><span class="hr-cycle-link-title">Staff registration</span><span class="hr-cycle-link-note">Manage approved staff IDs</span></span>
+            </a>
+            <a class="hr-cycle-link" href="{% url 'hr_dashboard' %}#support">
+                <span class="hr-cycle-icon" aria-hidden="true">?</span>
+                <span class="hr-cycle-link-copy"><span class="hr-cycle-link-title">Support</span><span class="hr-cycle-link-note">Help and FAQs</span></span>
+            </a>
         </nav>
         <div class="hr-cycle-nav-label">Signed in</div>
         <div class="small px-2 text-white-50">{{ request.user.username }}</div>

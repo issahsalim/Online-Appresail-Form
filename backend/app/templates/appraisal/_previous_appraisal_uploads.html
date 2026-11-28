@@ -23,7 +23,7 @@
         <div class="previous-appraisal-field previous-appraisal-file-field">
             <label for="{{ previous_appraisal_form.appraisal_file.id_for_label }}" class="form-label">{{ previous_appraisal_form.appraisal_file.label }}</label>
             {{ previous_appraisal_form.appraisal_file }}
-            <div class="previous-appraisal-file-hint">Accepted formats: PDF, DOC, or DOCX.</div>
+            <div class="previous-appraisal-file-hint">Accepted formats: PDF, DOC, or DOCX. Maximum size: 10 MB.</div>
             {% for error in previous_appraisal_form.appraisal_file.errors %}
                 <div class="invalid-feedback d-block">{{ error }}</div>
             {% endfor %}
@@ -38,33 +38,37 @@
         </div>
     </div>
 
-    <div class="previous-appraisal-list">
-        <h3>Approved previous appraisals</h3>
-        {% if approved_previous_appraisals %}
-            <div class="table-responsive">
-                <table class="table align-middle mb-0">
-                    <thead><tr><th>Year</th><th>Reviewed by</th><th>Reviewed on</th><th>File</th></tr></thead>
-                    <tbody>
-                        {% for item in approved_previous_appraisals %}
-                            <tr>
-                                <td>{{ item.appraisal_cycle }}</td>
-                                <td>{{ item.reviewed_by.get_full_name|default:item.reviewed_by.username|default:"HR" }}</td>
-                                <td>{{ item.reviewed_at|date:"d M Y" }}</td>
-                                <td>
-                                    <div class="previous-appraisal-actions">
-                                        {% if item.can_preview %}<a class="previous-appraisal-button previous-appraisal-button-secondary" href="{% url 'view_previous_appraisal_file' item.id %}" target="_blank" rel="noopener">View</a>{% endif %}
-                                        <a class="previous-appraisal-button" href="{% url 'previous_appraisal_file' item.id %}">Download</a>
-                                    </div>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        {% else %}
-            <p class="previous-appraisal-empty">No approved previous appraisal files yet.</p>
-        {% endif %}
-    </div>
+    {% if show_previous_appraisal_generator %}
+        {% include 'appraisal/_previous_appraisal_generator.html' %}
+    {% elif not hide_approved_previous_appraisals %}
+        <div class="previous-appraisal-list">
+            <h3>Approved previous appraisals</h3>
+            {% if approved_previous_appraisals %}
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead><tr><th>Year</th><th>Reviewed by</th><th>Reviewed on</th><th>File</th></tr></thead>
+                        <tbody>
+                            {% for item in approved_previous_appraisals %}
+                                <tr>
+                                    <td>{{ item.appraisal_cycle }}</td>
+                                    <td>{{ item.reviewed_by.get_full_name|default:item.reviewed_by.username|default:"HR" }}</td>
+                                    <td>{{ item.reviewed_at|date:"d M Y" }}</td>
+                                    <td>
+                                        <div class="previous-appraisal-actions">
+                                            {% if item.can_preview %}<a class="previous-appraisal-button previous-appraisal-button-secondary" href="{% url 'view_previous_appraisal_file' item.id %}" target="_blank" rel="noopener">View</a>{% endif %}
+                                            <a class="previous-appraisal-button" href="{% url 'previous_appraisal_file' item.id %}">Download</a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="previous-appraisal-empty">No approved previous appraisal files yet.</p>
+            {% endif %}
+        </div>
+    {% endif %}
 
     {% if previous_appraisals %}
         <div class="previous-appraisal-list">
@@ -86,12 +90,12 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-body">
-                <button type="button" class="btn-close previous-appraisal-modal-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close previous-appraisal-modal-close" data-dismiss-upload-modal aria-label="Close"></button>
                 <span class="previous-appraisal-success-mark" aria-hidden="true"><i class="bi bi-check-lg"></i></span>
                 <span class="previous-appraisal-success-eyebrow">Upload complete</span>
                 <h2 id="previousAppraisalSuccessTitle">Your appraisal was submitted</h2>
                 <p id="previousAppraisalSuccessMessage">Your file was uploaded successfully and is waiting for HR review.</p>
-                <div class="previous-appraisal-modal-progress"><span data-return-countdown>Returning to Previous Appraisals in 60 seconds</span><span class="previous-appraisal-modal-progress-track"><i></i></span></div>
+                <div class="previous-appraisal-modal-progress"><span data-return-countdown>Returning to Previous Appraisals in 10 seconds</span><span class="previous-appraisal-modal-progress-track"><i></i></span></div>
                 <button type="button" class="previous-appraisal-button previous-appraisal-return-button" data-return-to-history>Back to Previous Appraisals <i class="bi bi-arrow-right" aria-hidden="true"></i></button>
             </div>
         </div>
@@ -108,14 +112,14 @@
     .previous-appraisal-progress-track.is-indeterminate > span { animation: previous-appraisal-progress-pulse 1.15s ease-in-out infinite; width: 40%; }
     .previous-appraisal-success-modal .modal-content { border: 1px solid rgba(22,132,93,.13); border-radius: 18px; box-shadow: 0 24px 70px rgba(14,53,39,.2); overflow: hidden; }
     .previous-appraisal-success-modal .modal-body { padding: 2rem clamp(1.25rem, 5vw, 2.4rem) 1.7rem; position: relative; text-align: center; }
-    .previous-appraisal-modal-close { position: absolute; right: 1rem; top: 1rem; }
+    .previous-appraisal-modal-close { cursor: pointer; padding: .6rem; pointer-events: auto; position: absolute; right: .75rem; top: .75rem; z-index: 2; }
     .previous-appraisal-success-mark { align-items: center; background: linear-gradient(145deg, #e3f6e9, #d2f0df); border: 1px solid #c5e9d1; border-radius: 50%; color: #138054; display: flex; font-size: 1.8rem; height: 62px; justify-content: center; margin: 0 auto 1rem; width: 62px; }
     .previous-appraisal-success-eyebrow { color: #16845d; display: block; font-size: .68rem; font-weight: 800; letter-spacing: .13em; margin-bottom: .45rem; text-transform: uppercase; }
     .previous-appraisal-success-modal h2 { color: #173c32; font-size: clamp(1.2rem, 3vw, 1.55rem); font-weight: 780; margin: 0 0 .55rem; }
     .previous-appraisal-success-modal p { color: #718078; font-size: .84rem; line-height: 1.6; margin: 0 auto 1.2rem; max-width: 380px; }
     .previous-appraisal-modal-progress { color: #7c8b82; font-size: .68rem; margin: 0 auto 1.25rem; max-width: 300px; }
     .previous-appraisal-modal-progress-track { height: 4px; margin-top: .5rem; }
-    .previous-appraisal-modal-progress-track i { animation: previous-appraisal-countdown 60s linear forwards; background: #36a873; display: block; height: 100%; transform-origin: left; width: 100%; }
+    .previous-appraisal-modal-progress-track i { animation: previous-appraisal-countdown 10s linear forwards; background: #36a873; display: block; height: 100%; transform-origin: left; width: 100%; }
     .previous-appraisal-return-button { align-items: center; display: inline-flex; gap: .5rem; justify-content: center; }
     @keyframes previous-appraisal-progress-pulse { from { transform: translateX(-110%); } to { transform: translateX(260%); } }
     @keyframes previous-appraisal-countdown { to { transform: scaleX(0); } }
@@ -140,11 +144,19 @@
         const feedback = document.querySelector('[data-upload-feedback]');
         const countdown = modalElement.querySelector('[data-return-countdown]');
         const returnButton = modalElement.querySelector('[data-return-to-history]');
+        const closeButton = modalElement.querySelector('[data-dismiss-upload-modal]');
         let returnTimer = null;
-        let secondsRemaining = 60;
+        let secondsRemaining = 10;
+
+        function stopReturnTimer() {
+            if (returnTimer) {
+                window.clearInterval(returnTimer);
+                returnTimer = null;
+            }
+        }
 
         function returnToHistory() {
-            if (returnTimer) window.clearInterval(returnTimer);
+            stopReturnTimer();
             const returnUrl = `${window.location.pathname}${window.location.search}#history`;
             window.history.replaceState(null, '', returnUrl);
             window.location.reload();
@@ -152,10 +164,10 @@
 
         function showSuccessModal(message) {
             modalElement.querySelector('#previousAppraisalSuccessMessage').textContent = message;
-            secondsRemaining = 60;
+            stopReturnTimer();
+            secondsRemaining = 10;
             countdown.textContent = `Returning to Previous Appraisals in ${secondsRemaining} seconds`;
             bootstrap.Modal.getOrCreateInstance(modalElement).show();
-            if (returnTimer) window.clearInterval(returnTimer);
             returnTimer = window.setInterval(() => {
                 secondsRemaining -= 1;
                 countdown.textContent = `Returning to Previous Appraisals in ${secondsRemaining} second${secondsRemaining === 1 ? '' : 's'}`;
@@ -163,6 +175,11 @@
             }, 1000);
         }
 
+        modalElement.addEventListener('hidden.bs.modal', stopReturnTimer);
+        closeButton.addEventListener('click', () => {
+            stopReturnTimer();
+            bootstrap.Modal.getOrCreateInstance(modalElement).hide();
+        });
         returnButton.addEventListener('click', returnToHistory);
         form.addEventListener('submit', (event) => {
             if (!form.reportValidity()) return;
@@ -204,7 +221,22 @@
                     showSuccessModal(result.message || 'Your appraisal was uploaded successfully and is waiting for HR review.');
                 } else {
                     progressPanel.hidden = true;
-                    feedback.textContent = result.message || 'We could not upload your file. Please check it and try again.';
+                    const responsePath = request.responseURL ? new URL(request.responseURL).pathname : '';
+                    let errorMessage = result.message;
+                    if (!errorMessage && /login|sign-in/i.test(responsePath)) {
+                        errorMessage = 'Your session may have expired. Refresh the page, sign in again, and retry.';
+                    } else if (!errorMessage && request.status === 413) {
+                        errorMessage = 'The server rejected this upload because it is too large. Choose a file under 10 MB.';
+                    } else if (!errorMessage && request.status === 403) {
+                        errorMessage = 'The upload was blocked (HTTP 403). Refresh the page and try again.';
+                    } else if (!errorMessage && request.status >= 500) {
+                        errorMessage = `The server could not process the upload (HTTP ${request.status}). Please try again later.`;
+                    } else if (!errorMessage && request.status >= 400) {
+                        errorMessage = `The upload was rejected (HTTP ${request.status}). Check the file and try again.`;
+                    } else if (!errorMessage) {
+                        errorMessage = 'The server returned an unexpected response. Refresh the page and try again.';
+                    }
+                    feedback.textContent = errorMessage;
                     feedback.classList.add('is-error');
                     feedback.hidden = false;
                     submitButton.disabled = false;

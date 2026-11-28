@@ -784,6 +784,64 @@
         .employee-page .employee-history-card .employee-body {
             padding: clamp(1rem, 2.2vw, 1.5rem);
         }
+        .employee-appraisal-generator {
+            background: #fff;
+            border: 1px solid #e3ece6;
+            border-radius: 14px;
+            margin: 0 0 1.2rem;
+            overflow: hidden;
+        }
+        .employee-appraisal-generator-heading {
+            align-items: center;
+            background: linear-gradient(110deg, #f1faf5, #fff 78%);
+            border-bottom: 1px solid #e8efea;
+            display: flex;
+            gap: .8rem;
+            padding: 1rem 1.1rem;
+        }
+        .employee-appraisal-generator-icon,
+        .employee-appraisal-generator-empty-icon,
+        .employee-appraisal-generated-icon {
+            align-items: center;
+            background: #e3f5e9;
+            border: 1px solid #d5eddf;
+            border-radius: 12px;
+            color: #07875f;
+            display: inline-flex;
+            flex: 0 0 42px;
+            height: 42px;
+            justify-content: center;
+            width: 42px;
+        }
+        .employee-appraisal-generator-icon .bi,
+        .employee-appraisal-generator-empty-icon .bi,
+        .employee-appraisal-generated-icon .bi { font-size: 1.15rem; }
+        .employee-appraisal-generator-heading h3 {
+            color: #056e4d;
+            font-size: 1rem;
+            font-weight: 760;
+            margin: 0 0 .2rem;
+        }
+        .employee-appraisal-generator-heading p { color: #72828b; font-size: .8rem; margin: 0; }
+        .employee-appraisal-generator-form { padding: 1rem 1.1rem .9rem; }
+        .employee-appraisal-generator-form > label { color: #365461; display: block; font-size: .78rem; font-weight: 700; margin-bottom: .35rem; }
+        .employee-appraisal-generator-controls { align-items: end; display: grid; gap: .7rem; grid-template-columns: minmax(0, 1fr) auto; }
+        .employee-appraisal-generator-controls .form-select { border-color: #d5e1e4; border-radius: 9px; min-height: 43px; }
+        .employee-appraisal-generator-controls .form-select:focus { border-color: #54ae7c; box-shadow: 0 0 0 .2rem rgba(7,135,95,.12); }
+        .employee-appraisal-generator-controls .employee-action { min-height: 43px; }
+        .employee-appraisal-generator-controls .employee-action:disabled { cursor: not-allowed; opacity: .55; }
+        .employee-appraisal-generator-result { border-top: 1px solid #edf2ef; min-height: 235px; padding: 1rem; }
+        .employee-appraisal-generator-empty,
+        .employee-appraisal-generated-card { align-items: center; display: flex; flex-direction: column; justify-content: center; min-height: 200px; text-align: center; }
+        .employee-appraisal-generator-empty-icon { background: #fff7ed; border-color: #ffedd5; color: #e87924; flex-basis: 60px; height: 60px; margin-bottom: .8rem; width: 60px; }
+        .employee-appraisal-generator-empty-icon .bi { font-size: 1.5rem; }
+        .employee-appraisal-generator-empty h4,
+        .employee-appraisal-generated-card h4 { color: #18344b; font-size: 1.05rem; font-weight: 750; margin: 0 0 .35rem; }
+        .employee-appraisal-generator-empty p,
+        .employee-appraisal-generated-card p { color: #72828b; font-size: .82rem; line-height: 1.55; margin: 0; max-width: 460px; }
+        .employee-appraisal-generated-icon { border-radius: 50%; flex-basis: 56px; height: 56px; margin-bottom: .75rem; width: 56px; }
+        .employee-appraisal-generated-icon .bi { font-size: 1.45rem; }
+        .employee-appraisal-generated-card .employee-actions { justify-content: center; margin-top: .9rem; }
         .employee-history-note {
             align-items: center;
             background: #eff6ff;
@@ -841,6 +899,15 @@
             .employee-page .employee-history-card .employee-workspace-heading { align-items: flex-start; }
             .employee-history-note { align-items: flex-start; font-size: .85rem; }
             .employee-history-empty { min-height: 260px; }
+        }
+        @media (max-width: 575.98px) {
+            .employee-appraisal-generator-heading,
+            .employee-appraisal-generator-form { padding-inline: .85rem; }
+            .employee-appraisal-generator-controls { grid-template-columns: minmax(0, 1fr); }
+            .employee-appraisal-generator-controls .employee-action { width: 100%; }
+            .employee-appraisal-generator-result { min-height: 210px; padding: .75rem; }
+            .employee-appraisal-generated-card .employee-actions { flex-direction: column; width: 100%; }
+            .employee-appraisal-generated-card .employee-actions > * { width: 100%; }
         }
         .employee-table {
             border-collapse: separate;

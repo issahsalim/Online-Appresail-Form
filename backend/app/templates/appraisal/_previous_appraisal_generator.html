@@ -1,0 +1,67 @@
+<section class="employee-appraisal-generator" aria-labelledby="employee-appraisal-generator-title">
+    <header class="employee-appraisal-generator-heading">
+        <span class="employee-appraisal-generator-icon" aria-hidden="true"><i class="bi bi-file-earmark-text"></i></span>
+        <div>
+            <h3 id="employee-appraisal-generator-title">Generate Appraisal</h3>
+            <p>Select a year to access an appraisal approved by HR.</p>
+        </div>
+    </header>
+
+    <form class="employee-appraisal-generator-form" method="get" action="{% url 'employee_dashboard' %}#history">
+        <input type="hidden" name="generate_appraisal" value="1">
+        <label for="employee-appraisal-year">Year</label>
+        <div class="employee-appraisal-generator-controls">
+            <select class="form-select" id="employee-appraisal-year" name="appraisal_year" required {% if not appraisal_search_years %}disabled{% endif %}>
+                <option value="">Select year</option>
+                {% for year in appraisal_search_years %}
+                    <option value="{{ year }}"{% if selected_appraisal_year == year %} selected{% endif %}>{{ year }}</option>
+                {% endfor %}
+            </select>
+            <button class="employee-action" type="submit" {% if not appraisal_search_years %}disabled{% endif %}>Generate Appraisal</button>
+        </div>
+    </form>
+
+    <div class="employee-appraisal-generator-result" aria-live="polite">
+        {% if generated_previous_appraisal %}
+            <div class="employee-appraisal-generated-card" role="status">
+                <span class="employee-appraisal-generated-icon" aria-hidden="true"><i class="bi bi-file-earmark-check"></i></span>
+                <h4>{{ generated_previous_appraisal.appraisal_cycle }} appraisal is ready</h4>
+                <p>This appraisal was approved by HR{% if generated_previous_appraisal.reviewed_at %} on {{ generated_previous_appraisal.reviewed_at|date:"j F Y" }}{% endif %}.</p>
+                <div class="employee-actions">
+                    <a class="employee-action-secondary" href="{% url 'view_previous_appraisal_file' generated_previous_appraisal.id %}" target="_blank" rel="noopener">View appraisal</a>
+                    <a class="employee-action" href="{% url 'previous_appraisal_file' generated_previous_appraisal.id %}">Download appraisal</a>
+                </div>
+            </div>
+        {% elif invalid_appraisal_year %}
+            <div class="employee-appraisal-generator-empty" role="status">
+                <span class="employee-appraisal-generator-empty-icon" aria-hidden="true"><i class="bi bi-calendar-x"></i></span>
+                <h4>Choose a year from 2023 to {{ current_year }}</h4>
+                <p>Only appraisal years in this range can be searched.</p>
+            </div>
+        {% elif generate_appraisal_requested and selected_previous_appraisal.status == 'pending' %}
+            <div class="employee-appraisal-generator-empty" role="status">
+                <span class="employee-appraisal-generator-empty-icon" aria-hidden="true"><i class="bi bi-hourglass-split"></i></span>
+                <h4>Your {{ selected_appraisal_year }} appraisal is awaiting HR review</h4>
+                <p>You can view or download it after HR approves the file.</p>
+            </div>
+        {% elif generate_appraisal_requested and selected_previous_appraisal.status == 'rejected' %}
+            <div class="employee-appraisal-generator-empty" role="status">
+                <span class="employee-appraisal-generator-empty-icon" aria-hidden="true"><i class="bi bi-file-earmark-x"></i></span>
+                <h4>Your {{ selected_appraisal_year }} appraisal was not approved</h4>
+                <p>Check the submission status above and upload a corrected file if needed.</p>
+            </div>
+        {% elif generate_appraisal_requested %}
+            <div class="employee-appraisal-generator-empty" role="status">
+                <span class="employee-appraisal-generator-empty-icon" aria-hidden="true"><i class="bi bi-file-earmark-x"></i></span>
+                <h4>No appraisal file uploaded for {{ selected_appraisal_year|default:'that year' }}</h4>
+                <p>Upload your appraisal above. It will be available here after HR approves it.</p>
+            </div>
+        {% else %}
+            <div class="employee-appraisal-generator-empty">
+                <span class="employee-appraisal-generator-empty-icon" aria-hidden="true"><i class="bi bi-file-earmark-text"></i></span>
+                <h4>No Appraisal Generated</h4>
+                <p>Select a year above to check for your uploaded appraisal.</p>
+            </div>
+        {% endif %}
+    </div>
+</section>

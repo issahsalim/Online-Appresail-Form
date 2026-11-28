@@ -1,4 +1,6 @@
 # yourapp/forms.py
+import zipfile
+
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import get_user_model
@@ -20,6 +22,7 @@ from .models import (
     AppraisalCycle,
     PreviousAppraisal,
     StaffId,
+    MIN_PREVIOUS_APPRAISAL_YEAR,
 )
 
 
@@ -267,6 +270,11 @@ class EmployeeRegistrationForm(forms.Form):
 
 
 class PreviousAppraisalUploadForm(forms.ModelForm):
+    MAX_FILE_SIZE = 10 * 1024 * 1024
+    ALLOWED_EXTENSIONS = {'.pdf', '.doc', '.docx'}
+    PDF_SIGNATURE = b'%PDF-'
+    DOC_SIGNATURE = b'\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1'
+
     class Meta:
         model = PreviousAppraisal
         fields = ['appraisal_cycle', 'appraisal_file']
@@ -278,7 +286,7 @@ class PreviousAppraisalUploadForm(forms.ModelForm):
             'appraisal_cycle': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'e.g. 2025',
-                'min': 1,
+                'min': MIN_PREVIOUS_APPRAISAL_YEAR,
             }),
             'appraisal_file': forms.ClearableFileInput(attrs={
                 'class': 'form-control',
@@ -288,12 +296,43 @@ class PreviousAppraisalUploadForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['appraisal_cycle'].min_value = MIN_PREVIOUS_APPRAISAL_YEAR
+        self.fields['appraisal_cycle'].widget.attrs['min'] = MIN_PREVIOUS_APPRAISAL_YEAR
         self.fields['appraisal_cycle'].widget.attrs['max'] = (
             timezone.localdate().year - 1
         )
         self.fields['appraisal_cycle'].help_text = (
-            'Only years before the current year are accepted.'
+            f'Enter a year from {MIN_PREVIOUS_APPRAISAL_YEAR} through the previous year.'
         )
+
+    def clean_appraisal_file(self):
+        uploaded_file = self.cleaned_data['appraisal_file']
+        extension = uploaded_file.name.lower().rsplit('.', 1)
+        extension = f'.{extension[-1]}' if len(extension) == 2 else ''
+        if extension not in self.ALLOWED_EXTENSIONS:
+            raise ValidationError('Upload a PDF, DOC, or DOCX file.')
+        if uploaded_file.size > self.MAX_FILE_SIZE:
+            raise ValidationError('The file must be 10 MB or smaller.')
+
+        uploaded_file.seek(0)
+        signature = uploaded_file.read(8)
+        uploaded_file.seek(0)
+        if extension == '.pdf' and not signature.startswith(self.PDF_SIGNATURE):
+            raise ValidationError('This file does not appear to be a valid PDF.')
+        if extension == '.doc' and signature != self.DOC_SIGNATURE:
+            raise ValidationError('This file does not appear to be a valid DOC document.')
+        if extension == '.docx':
+            try:
+                with zipfile.ZipFile(uploaded_file) as document:
+                    valid_docx = 'word/document.xml' in document.namelist()
+            except (OSError, zipfile.BadZipFile):
+                valid_docx = False
+            finally:
+                uploaded_file.seek(0)
+            if not valid_docx:
+                raise ValidationError('This file does not appear to be a valid DOCX document.')
+
+        return uploaded_file
 
 
 class AppraisalCycleForm(forms.ModelForm):

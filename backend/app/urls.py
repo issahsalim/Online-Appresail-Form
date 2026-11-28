@@ -12,6 +12,7 @@ urlpatterns = [
     path('previous-appraisals/<int:appraisal_id>/view/', views.view_previous_appraisal_file, name='view_previous_appraisal_file'),
     path('hr/previous-appraisals/', views.previous_appraisal_reviews, name='previous_appraisal_reviews'),
     path('hr/previous-appraisals/<int:appraisal_id>/review/', views.review_previous_appraisal, name='review_previous_appraisal'),
+    path('hr/previous-appraisals/<int:appraisal_id>/delete/', views.delete_previous_appraisal, name='delete_previous_appraisal'),
     path('employee/fill-targets/', views.fill_targets, name='fill_targets'),
     path('employee/fill-targets/<int:year>/', views.fill_targets, name='fill_targets_year'),
     path('employee/appraisal/<int:appraisal_id>/', views.employee_appraisal_detail, name='employee_appraisal_detail'),

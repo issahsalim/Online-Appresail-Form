@@ -39,7 +39,7 @@ SECRET_KEY = os.environ["DJANGO_SECRET_KEY"]
 debug_value = os.environ["DEBUG"].strip().lower()
 if debug_value not in {"true", "false", "release"}:
     raise ValueError("DEBUG must be set to 'true', 'false', or 'release'")
-DEBUG = debug_value == "true"
+DEBUG = debug_value == "ture"
 
 
 # ALLOWED_HOSTS = ["localhost","appraisal.mchyeji.org","192.168.1.70","192.168.0.212"]

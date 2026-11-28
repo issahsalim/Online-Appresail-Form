@@ -1,0 +1,13 @@
+<nav class="hr-page-navigation" aria-label="HR workspace navigation">
+    <a href="{% url 'hr_dashboard' %}#overview"{% if active == 'dashboard' %} class="is-active" aria-current="page"{% endif %}>Dashboard</a>
+    <a href="{% url 'hr_dashboard' %}#pending"{% if active == 'pending' %} class="is-active" aria-current="page"{% endif %}>Pending approvals</a>
+    <a href="{% url 'hr_dashboard' %}#completed"{% if active == 'completed' %} class="is-active" aria-current="page"{% endif %}>Completed appraisals</a>
+    <a href="{% url 'hr_dashboard' %}#roles">User roles</a>
+    <a href="{% url 'hr_dashboard' %}#assignments"{% if active == 'assignments' %} class="is-active" aria-current="page"{% endif %}>Assignments</a>
+    <a href="{% url 'hr_dashboard' %}#cycles">Appraisal cycles</a>
+    <a href="{% url 'previous_appraisal_reviews' %}"{% if active == 'previous' %} class="is-active" aria-current="page"{% endif %}>Previous appraisals</a>
+    <a href="{% url 'audit_log' %}"{% if active == 'audit' %} class="is-active" aria-current="page"{% endif %}>Audit log</a>
+    <a href="{% url 'backup_dashboard' %}"{% if active == 'backups' %} class="is-active" aria-current="page"{% endif %}>Backups</a>
+    <a href="{% url 'manage_staff_ids' %}"{% if active == 'staff' %} class="is-active" aria-current="page"{% endif %}>Staff registration</a>
+    <a href="{% url 'hr_dashboard' %}#support">Support</a>
+</nav>

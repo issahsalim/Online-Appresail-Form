@@ -1,6 +1,7 @@
 import csv
 import io
 import logging
+import mimetypes
 from datetime import timedelta
 from pathlib import Path
 import secrets
@@ -1260,15 +1261,18 @@ def _dashboard_url_name_for_profile(profile):
 
 
 def _previous_appraisal_context(profile):
-    previous_appraisals = PreviousAppraisal.objects.filter(
-        employee=profile,
-    ).select_related('reviewed_by')
+    previous_appraisals = list(
+        PreviousAppraisal.objects.filter(
+            employee=profile,
+        ).select_related('reviewed_by')
+    )
     return {
         'previous_appraisal_form': PreviousAppraisalUploadForm(),
         'previous_appraisals': previous_appraisals,
-        'approved_previous_appraisals': previous_appraisals.filter(
-            status=PreviousAppraisal.Status.APPROVED,
-        ),
+        'approved_previous_appraisals': [
+            item for item in previous_appraisals
+            if item.status == PreviousAppraisal.Status.APPROVED
+        ],
         'current_year': timezone.localdate().year,
     }
 
@@ -1385,6 +1389,38 @@ def employee_dashboard(request):
         if year_data['score'] is not None:
             year_data['score'] = round(float(year_data['score']), 2)
 
+    previous_appraisal_context = _previous_appraisal_context(profile)
+    approved_previous_appraisals = previous_appraisal_context['approved_previous_appraisals']
+    own_previous_appraisals = previous_appraisal_context['previous_appraisals']
+    current_year = previous_appraisal_context['current_year']
+    appraisal_search_years = list(range(current_year, 2022, -1))
+    generate_appraisal_requested = request.GET.get('generate_appraisal') == '1'
+    selected_appraisal_year = None
+    selected_previous_appraisal = None
+    generated_previous_appraisal = None
+    invalid_appraisal_year = False
+    if generate_appraisal_requested:
+        try:
+            selected_appraisal_year = int(request.GET.get('appraisal_year', ''))
+        except (TypeError, ValueError):
+            selected_appraisal_year = None
+        if selected_appraisal_year not in appraisal_search_years:
+            selected_appraisal_year = None
+            invalid_appraisal_year = True
+        else:
+            selected_previous_appraisal = next(
+                (
+                    item for item in own_previous_appraisals
+                    if item.appraisal_cycle == selected_appraisal_year
+                ),
+                None,
+            )
+            if (
+                selected_previous_appraisal
+                and selected_previous_appraisal.status == PreviousAppraisal.Status.APPROVED
+            ):
+                generated_previous_appraisal = selected_previous_appraisal
+
     return render(request, 'employee/dashboard.html', {
         'active_cycles': active_cycles,
         'active_appraisal_cards': active_appraisal_cards,
@@ -1394,7 +1430,16 @@ def employee_dashboard(request):
         'appraisal_trend': appraisal_trend,
         'assigned_supervisor': assigned_supervisor,
         'all_appraisals': all_appraisals,
-        **_previous_appraisal_context(profile),
+        **previous_appraisal_context,
+        'approved_previous_appraisals': approved_previous_appraisals,
+        'appraisal_search_years': appraisal_search_years,
+        'show_previous_appraisal_generator': True,
+        'hide_approved_previous_appraisals': True,
+        'generate_appraisal_requested': generate_appraisal_requested,
+        'invalid_appraisal_year': invalid_appraisal_year,
+        'selected_appraisal_year': selected_appraisal_year,
+        'selected_previous_appraisal': selected_previous_appraisal,
+        'generated_previous_appraisal': generated_previous_appraisal,
         # Backward compatibility for single-cycle contexts
         'cycle': primary_card['cycle'] if primary_card else None,
         'appraisal': primary_card['appraisal'] if primary_card else None,
@@ -1429,6 +1474,23 @@ def upload_previous_appraisal(request):
             appraisal_cycle=appraisal_year,
             status=PreviousAppraisal.Status.REJECTED,
         ).first()
+        already_submitted = PreviousAppraisal.objects.filter(
+            employee=profile,
+            appraisal_cycle=appraisal_year,
+        ).exclude(
+            status=PreviousAppraisal.Status.REJECTED,
+        ).exists()
+        if already_submitted:
+            message = (
+                f'An appraisal for {appraisal_year} has already been submitted. '
+                'Choose a different year.'
+            )
+            if is_ajax:
+                return JsonResponse({'success': False, 'message': message}, status=400)
+            messages.error(request, message)
+            dashboard_url = _dashboard_url_name_for_profile(profile)
+            section = 'history' if dashboard_url == 'employee_dashboard' else 'previous'
+            return redirect(f"{reverse(dashboard_url)}#{section}")
 
     form = PreviousAppraisalUploadForm(
         request.POST,
@@ -1511,6 +1573,10 @@ def _previous_appraisal_file_response(request, appraisal_id, *, as_attachment):
         appraisal.appraisal_file.open('rb'),
         as_attachment=as_attachment,
         filename=appraisal.appraisal_file.name.rsplit('/', 1)[-1],
+        content_type=(
+            mimetypes.guess_type(appraisal.appraisal_file.name)[0]
+            or 'application/octet-stream'
+        ),
     )
 
 
@@ -1536,6 +1602,50 @@ def previous_appraisal_reviews(request):
         'pending_appraisals': pending_appraisals,
         'reviewed_appraisals': reviewed_appraisals,
     })
+
+
+@login_required
+@require_POST
+def delete_previous_appraisal(request, appraisal_id):
+    if not request.user.is_superuser:
+        return HttpResponseForbidden('Only a superuser can delete previous appraisal files.')
+
+    appraisal = get_object_or_404(
+        PreviousAppraisal.objects.select_related('employee__user'),
+        pk=appraisal_id,
+    )
+    appraisal_id = appraisal.pk
+    file_name = appraisal.appraisal_file.name
+    storage = appraisal.appraisal_file.storage
+    object_label = f'{appraisal.employee.user.username} - {appraisal.appraisal_cycle}'
+
+    with transaction.atomic():
+        AuditLog.objects.create(
+            actor=request.user,
+            actor_username=request.user.username,
+            actor_role='Superadmin',
+            actor_is_superuser=True,
+            action='deleted',
+            model_name='PreviousAppraisal',
+            object_id=str(appraisal_id),
+            object_label=object_label,
+            note='Superuser deleted a previous appraisal and its uploaded file.',
+        )
+        appraisal.delete()
+
+    try:
+        if file_name:
+            storage.delete(file_name)
+    except Exception:
+        logger.exception('Could not remove previous appraisal file %s.', file_name)
+        messages.warning(
+            request,
+            f'{object_label} was deleted, but its stored file could not be removed.',
+        )
+    else:
+        messages.success(request, f'{object_label} and its uploaded file were deleted.')
+
+    return redirect('previous_appraisal_reviews')
 
 
 @login_required

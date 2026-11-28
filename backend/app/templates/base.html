@@ -186,6 +186,46 @@
             padding: 2px;
         }
         .previous-appraisal-panel { padding: clamp(1rem, 2.5vw, 1.65rem); }
+        .hr-page-navigation {
+            align-items: center;
+            background: linear-gradient(90deg, #00ad78, #009e83);
+            border-radius: 12px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: .25rem;
+            margin: 0 0 1rem;
+            padding: .45rem;
+            position: sticky;
+            top: 4.5rem;
+            z-index: 1025;
+        }
+        .hr-page-navigation a {
+            border-radius: 8px;
+            color: rgba(255,255,255,.92);
+            flex: 0 0 auto;
+            font-size: .78rem;
+            font-weight: 700;
+            padding: .55rem .7rem;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+        .hr-page-navigation a:hover,
+        .hr-page-navigation a:focus-visible { background: rgba(255,255,255,.14); color: #fff; }
+        .hr-page-navigation a.is-active { background: #fff; box-shadow: inset 0 -3px #ffc857; color: #07875f; }
+        .previous-appraisal-heading { align-items: center; display: flex; gap: .85rem; margin-bottom: 1rem; }
+        .previous-appraisal-heading-icon {
+            align-items: center;
+            background: #e3f5e9;
+            border: 1px solid #d5eddf;
+            border-radius: 13px;
+            color: #07875f;
+            display: inline-flex;
+            flex: 0 0 44px;
+            height: 44px;
+            justify-content: center;
+            width: 44px;
+        }
+        .previous-appraisal-heading-icon svg { height: 22px; width: 22px; }
         .previous-appraisal-heading h2,
         .previous-appraisal-list h3 { color: #056e4d; font-size: 1rem; font-weight: 750; margin: 0 0 .35rem; }
         .previous-appraisal-heading p,
@@ -222,6 +262,17 @@
         .previous-appraisal-status { background: #f7f1df; border: 1px solid #ead9a6; border-radius: 999px; color: #765d18; font-size: .75rem; font-weight: 700; padding: .3rem .6rem; }
         .previous-appraisal-status.is-rejected { background: #fff3ef; border-color: #f2c7bd; color: #8a3f30; }
         @media (max-width: 700px) { .previous-appraisal-form { grid-template-columns: 1fr; } }
+        @media (max-width: 767.98px) {
+            .hr-page-navigation {
+                border-radius: 0;
+                flex-wrap: nowrap;
+                margin-inline: -.75rem;
+                overflow-x: auto;
+                overscroll-behavior-x: contain;
+                padding-inline: .75rem;
+                scrollbar-width: thin;
+            }
+        }
         .role-sidebar-label { color: #8fa5b1; font-size: .68rem; font-weight: 750; letter-spacing: .12em; margin: 1.2rem .7rem .55rem; text-transform: uppercase; }
         .role-sidebar-nav { display: grid; gap: .55rem; grid-template-columns: minmax(0, 1fr); }
         .role-sidebar-link {
@@ -1332,6 +1383,15 @@
         .hod-hero h1,
         .employee-dashboard-content > header h2 { color: #0b302b; }
         @media (max-width: 767.98px) {
+            body:has(.hr-dashboard-shell, .role-dashboard-shell) .navbar-appraisal > .container:has(> .navbar-toggler[aria-expanded="false"]) {
+                flex-wrap: nowrap;
+                gap: .5rem;
+            }
+            body:has(.hr-dashboard-shell, .role-dashboard-shell) .navbar-appraisal .navbar-brand {
+                flex: 1 1 auto;
+                min-width: 0;
+            }
+            body:has(.hr-dashboard-shell, .role-dashboard-shell) .navbar-appraisal .navbar-brand-copy { min-width: 0; }
             body:has(.role-dashboard-shell) .role-dashboard-shell .role-sidebar-nav,
             body:has(.hr-dashboard-shell) .hr-sidebar-nav {
                 background: linear-gradient(160deg, #00ad78 0%, #009e83 100%) !important;
@@ -1347,14 +1407,21 @@
                 color: #fff !important;
             }
             body:has(.supervisor-page) .supervisor-page .role-sidebar-toggle,
-            body:has(.hod-page) .hod-page .role-sidebar-toggle,
-            body:has(.hr-dashboard-shell) .hr-sidebar-toggle {
+            body:has(.hod-page) .hod-page .role-sidebar-toggle {
                 left: auto !important;
                 margin: .65rem .85rem !important;
                 position: relative !important;
                 right: auto !important;
                 top: auto !important;
                 z-index: 1031 !important;
+            }
+            body:has(.hr-dashboard-shell) .hr-sidebar-toggle {
+                left: .85rem !important;
+                margin: 0 !important;
+                position: fixed !important;
+                right: auto !important;
+                top: 8rem !important;
+                z-index: 1035 !important;
             }
             body:has(.supervisor-page) .supervisor-page .role-sidebar-toggle,
             body:has(.hod-page) .hod-page .role-sidebar-toggle,
